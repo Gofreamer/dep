@@ -30,7 +30,7 @@ export const JET_ENERGY: ResourceDef[] = [
     id: 'jres-rele', kind: 'RESOURCE', name: 'Relé de Transferência', faction: 'neutro', rarity: 'uncommon',
     tags: ['energia', 'transferência'], art: { motif: 'energia', seed: 'jres-rele' },
     resourceType: '*', amount: 1,
-    mods: { attachExtra: 0, retreatCostMod: -1 },
+    mods: { retreatCostMod: -1 },
     text: 'O Agente conectado recusta com 1 Energia a menos.'
   },
   {

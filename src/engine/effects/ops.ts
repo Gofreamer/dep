@@ -4,7 +4,7 @@ import {
   charDef, charactersInPlay, costSatisfied, defOf, findCard, matchCost, maxHp, opponentOf, player
 } from '../queries';
 import type { EffectCtx } from './core';
-import { evalCondition, randInt, rand, resolveChar, shuffleWithState, targetCandidates } from './core';
+import { capturePreStatuses, evalCondition, randInt, rand, resolveChar, shuffleWithState, targetCandidates } from './core';
 import {
   applyDamage, applyStatusToChar, attachToChar, computeAttackDamage, detachFromChar, drawCards, G, healChar,
   performGeneratedUpgrade, promoteToActive, removeStatusFromChar, retreatActive, shuffleDeck, toBench, toDeckTop, toDiscard,
@@ -27,8 +27,19 @@ export function getOp(name: string): OpFn {
   return fn;
 }
 
+/** Todos os ops registrados (para validação estrutural de dados). */
+export function allOps(): string[] {
+  return Object.keys(ops);
+}
+
+export function hasOp(name: string): boolean {
+  return ops[name] !== undefined;
+}
+
 export function* runSteps(g: G, ctx: EffectCtx, steps: EffectStep[] | undefined): Generator<ChoiceYield, void, string[]> {
   if (!steps) return;
+  // Pré-estado é capturado UMA vez, na raiz da cadeia (runSteps mais externo).
+  if (!ctx.pre) ctx.pre = capturePreStatuses(g.state);
   for (const step of steps) {
     if (ctx.depth > 24) return; // recursion guard
     const fn = getOp(step.op);
@@ -355,7 +366,8 @@ ops['increaseDamage'] = function* (g, ctx, p) {
 };
 
 ops['reduceDamage'] = function* (g, ctx, p) {
-  yield* ops['tempMod'](g, ctx, { ...p, mods: { damageTakenFlat: -(p.amount ?? 0) } });
+  // convenção única: damageTakenFlat > 0 = reduz dano (ver StatusDef/Mods)
+  yield* ops['tempMod'](g, ctx, { ...p, mods: { damageTakenFlat: p.amount ?? 0 } });
 };
 
 ops['modifyCost'] = function* (g, ctx, p) {

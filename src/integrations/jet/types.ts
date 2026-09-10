@@ -15,7 +15,7 @@
 
 export interface JetProvenance {
   /** Repository the data was captured from. */
-  sourceRepository: 'RocksXB/jet-tactics';
+  sourceRepository: 'RocksXB/jet-tactics.';
   /** File/section kind inside the source repo. */
   sourceType:
     | 'CARD_SOURCE_OF_TRUTH'

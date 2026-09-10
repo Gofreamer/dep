@@ -312,7 +312,7 @@ function bestResourceTarget(state: MatchState, pIdx: PlayerId, card: CardInstanc
 
 const TYPED_RES: Record<string, string> = { solar: 'res-solar', mare: 'res-mare', flora: 'res-flora', volt: 'res-volt', umbra: 'res-umbra', '*': 'res-neutro' };
 
-/** Id de um RECURSO REGISTRADO compatível (sem hardcode de pack — JET/NEXO/qualquer um). */
+/** Id de um RECURSO REGISTRADO compatível (sem hardcode de pack — JET/qualquer um). */
 function simResourceDefId(type: string, wild: boolean | undefined): string | null {
   const resources = registry.allCards().filter((d) => d.kind === 'RESOURCE');
   const exact = resources.find((d) => (wild ? !!(d as { wild?: boolean }).wild : (d as { resourceType?: string }).resourceType === type));

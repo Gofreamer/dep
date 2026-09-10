@@ -13,6 +13,24 @@ export interface EffectCtx {
   /** The character hosting the source card (equipment/attached contexts). */
   hostUid?: string;
   depth: number;
+  /**
+   * Estado ANTES do início da cadeia de efeitos (snapshot de status por uid).
+   * Capturado uma única vez no início da cadeia (runSteps raiz) e imutável
+   * durante a resolução — permite condições do tipo "se JÁ estava Marcado"
+   * sem sofrer interferência de efeitos anteriores da mesma cadeia.
+   */
+  pre?: { statuses: Record<string, string[]> };
+}
+
+/** Snapshot imutável dos status atuais (para condições de pré-estado). */
+export function capturePreStatuses(state: MatchState): { statuses: Record<string, string[]> } {
+  const statuses: Record<string, string[]> = {};
+  for (const p of state.players) {
+    for (const c of [...(p.active ? [p.active] : []), ...p.bench]) {
+      statuses[c.uid] = c.statuses.map((s) => s.id);
+    }
+  }
+  return { statuses };
 }
 
 export function resolveChar(state: MatchState, ctx: EffectCtx, selector: SelectorId | undefined): CardInstance | null {
@@ -102,6 +120,12 @@ export function evalCondition(state: MatchState, ctx: EffectCtx, cond: Condition
     case 'never': return false;
     case 'coinFlip': return rand(state) < cond.chance;
     case 'hasStatus': { const t = resolveChar(state, ctx, cond.target); return !!t && !!getStatus(t, cond.status); }
+    case 'hadStatus': {
+      // Pré-estado da cadeia: "JÁ estava com o status" antes de qualquer efeito
+      // desta cadeia ter sido aplicado. Sem snapshot, use hasStatus.
+      const t = resolveChar(state, ctx, cond.target);
+      return !!t && !!(ctx.pre?.statuses[t.uid]?.includes(cond.status));
+    }
     case 'damageAtLeast': { const t = resolveChar(state, ctx, cond.target); return !!t && t.damage >= cond.value; }
     case 'counterAtLeast': { const t = resolveChar(state, ctx, cond.target); return !!t && getCounter(t, cond.counter) >= cond.value; }
     case 'discardAtLeast': return sideState(cond.side).discard.length >= cond.count;

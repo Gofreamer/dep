@@ -37,6 +37,10 @@ export const CardView: React.FC<{ def: CardDef; quantity?: number; onClick?: () 
     <div
       className={`card card-full kind-${def.kind.toLowerCase()} r-${def.rarity} ${dim ? 'dim' : ''} ${highlight ? 'glow' : ''} ${selected ? 'selected' : ''} ${def.holo ? 'holo' : ''}`}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? `${def.name} — ver detalhes` : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       style={{ ['--faction' as any]: color }}
     >
       <div className="card-head">
@@ -118,7 +122,16 @@ export const CardMini: React.FC<{ def: CardDef; count?: number; quantity?: numbe
   const color = factionColor(def.faction);
   const hp = def.kind === 'CHARACTER' ? (def as CharacterDef).maxHp : undefined;
   return (
-    <div className={`card-mini kind-${def.kind.toLowerCase()} ${playable ? 'playable' : ''} ${dim ? 'dim' : ''}`} onClick={onClick} onContextMenu={(e) => { e.preventDefault(); onInspect?.(); }} style={{ ['--faction' as any]: color }}>
+    <div
+      className={`card-mini kind-${def.kind.toLowerCase()} ${playable ? 'playable' : ''} ${dim ? 'dim' : ''}`}
+      onClick={onClick}
+      onContextMenu={(e) => { e.preventDefault(); onInspect?.(); }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? `${def.name}${hp ? ` (${hp} HP)` : ''}` : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
+      style={{ ['--faction' as any]: color }}
+    >
       <div className="mini-art"><Artwork seed={def.art.seed} motif={def.art.motif} faction={def.faction} className="art-svg" /></div>
       <div className="mini-info">
         <div className="mini-name">{def.name} {(count ?? quantity) !== undefined && (count ?? quantity)! > 1 && <em>×{count ?? quantity}</em>}</div>

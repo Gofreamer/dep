@@ -16,9 +16,12 @@ export const STATUSES: StatusDef[] = [
     text: 'No fim do turno de quem o possui, recebe 20 de dano.'
   },
   {
+    // REGRA OFICIAL TCG: Atordoado = não ataca NEM recua no próximo turno do
+    // dono. Distinto de exhausted (só ataca) e de root (só recuo manual,
+    // enquanto durar). Ambos os bloqueios testados numericamente.
     id: 'stun', kind: 'debuff', timing: 'turnEndOwner', stacking: 'unique',
-    blocksAttack: true, visual: 'stun',
-    text: 'Não pode atacar até o fim do próximo turno de quem o possui.'
+    blocksAttack: true, blocksRetreat: true, visual: 'stun',
+    text: 'Atordoado: não pode atacar nem recuar até o fim do próximo turno de quem o possui.'
   },
   {
     id: 'sleep', kind: 'debuff', timing: 'turnStartOwner', stacking: 'unique',
@@ -36,12 +39,17 @@ export const STATUSES: StatusDef[] = [
     text: 'Habilidades desativadas enquanto durar.'
   },
   {
+    // +10 de dano recebido de QUALQUER fonte (ataque ou efeito) — veja a
+    // convenção de sinal em StatusDef (damageTakenBonusFlat).
     id: 'marked', kind: 'debuff', timing: 'turnEndOwner', stacking: 'refresh',
-    damageTakenFlat: 10, visual: 'marked',
+    damageTakenBonusFlat: 10, visual: 'marked',
     text: 'Alvo exposto: recebe 10 de dano adicional de qualquer fonte enquanto durar.'
   },
   {
-    id: 'exhausted', kind: 'debuff', timing: 'turnStartOwner', stacking: 'unique',
+    // timing turnEndOwner: aplicado no turno do oponente, bloqueia o turno
+    // INTEIRO seguinte do dono e expira no fim dele. (turnStartOwner expirava
+    // antes de bloquear qualquer ataque — bug corrigido no hardening v1.)
+    id: 'exhausted', kind: 'debuff', timing: 'turnEndOwner', stacking: 'unique',
     blocksAttack: true, visual: 'exhausted',
     text: 'Exausto: não pode atacar no próximo turno.'
   },

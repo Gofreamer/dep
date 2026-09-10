@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências (lockfile exato)
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes (vitest)
+        run: npm test
+
+      # Bateria longa opcional (135 partidas IA×IA): roda no CI para vigiar
+      # travas e jogadas ilegais da IA. Remova se o job ficar lento demais.
+      - name: Bateria longa de partidas
+        run: JET_LONG_TESTS=1 npx vitest run tests/jet-matches.test.ts
+
+      - name: Build de produção
+        run: npm run build
+
+  # NOTA: não há script de lint neste repositório (ESLint não configurado —
+  # decisão do projeto: typecheck estrito + testes cobrem a qualidade estática
+  # necessária). Se um linter for adicionado, inclua `npm run lint` aqui.

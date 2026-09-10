@@ -110,7 +110,6 @@ export const JET_EQUIPMENT: EquipmentDef[] = [
   {
     id: 'jeq-ampulheta', kind: 'EQUIPMENT', name: 'Ampulheta Tática', faction: 'neutro', rarity: 'rare',
     tags: ['equipamento'], art: { motif: 'equipamento', seed: 'jeq-5' },
-    mods: { drawExtra: 0 },
     triggers: [{
       id: 'tr-ampulheta', name: 'Ritmo', trigger: 'turnStart', oncePerTurn: true,
       effects: [{ op: 'coinFlip', chance: 0.5, then: [{ op: 'drawCards', amount: 1 }], label: 'Ritmo' }],

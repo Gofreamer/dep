@@ -511,6 +511,12 @@ body.shake { animation: bodyShake 0.42s ease; }
 }
 
 /* ==========================================================================
+   ACESSIBILIDADE — foco visível em todo componente focável (item 41)
+   ========================================================================== */
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+.btn, .card-mini, .zone-pile, .board-card, .dock-btn, .menu-card { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* ==========================================================================
    RESPONSIVO
    ========================================================================== */
 @media (max-width: 980px) {
@@ -540,6 +546,22 @@ body.shake { animation: bodyShake 0.42s ease; }
   .my-info { display: none; }
   .card-full { width: 236px; }
   .results-card { padding: 30px 22px; width: 92vw; }
+}
+
+/* Telas muito estreitas (360–420px): sem overflow, nada cortado (item 40) */
+@media (max-width: 420px) {
+  .menu-grid { grid-template-columns: 1fr; }
+  .card-full { width: min(206px, 84vw); }
+  .dock-btn { padding: 7px 8px; font-size: 10.5px; }
+  .bench-row .board-card { min-width: 88px; max-width: 102px; }
+  .active-zone { width: 94vw; }
+  .hand { bottom: 74px; }
+  .tutorial-banner { bottom: 168px; font-size: 12px; padding: 8px 10px; }
+  .results-card { width: 96vw; padding: 24px 14px; }
+  .filters { flex-wrap: wrap; }
+}
+@media (min-width: 1024px) {
+  .menu-grid { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
 }
 
 /* ---------- JET TCG: edições, holo e identidade (cosmético) ---------- */

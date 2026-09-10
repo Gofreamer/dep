@@ -1,5 +1,5 @@
 /**
- * NEXO Engine — Core types.
+ * Engine genérico — Tipos centrais (Commands, MatchState, CardDef, configs).
  *
  * The engine is fully generic: it speaks about Characters, Resources,
  * Upgrades, Abilities, Actions, Equipment, Fields, Statuses, Factions and
@@ -48,6 +48,9 @@ export type SelectorId =
   | 'defender'
   | 'lastTarget';
 
+/** Valores válidos de SelectorId em runtime (validação estrutural de dados). */
+export const SELECTOR_IDS: SelectorId[] = ['self', 'activeAlly', 'benchAlly', 'anyAlly', 'enemyActive', 'enemyBench', 'anyEnemy', 'anyCharacter', 'allAllies', 'allEnemies', 'allCharacters', 'attacker', 'defender', 'lastTarget'];
+
 export interface TargetFilterSpec {
   kinds?: CardKind[];
   factions?: string[];
@@ -82,7 +85,7 @@ export type ConditionSpec =
   | { op: 'always' }
   | { op: 'never' }
   | { op: 'coinFlip'; chance: number }
-  | { op: 'hasStatus'; status: string; target?: SelectorId }
+  | { op: 'hasStatus' | 'hadStatus'; status: string; target?: SelectorId }
   | { op: 'damageAtLeast'; value: number; target?: SelectorId }
   | { op: 'counterAtLeast'; counter: string; value: number; target?: SelectorId }
   | { op: 'discardAtLeast'; count: number; side?: 'source' | 'opponent' }
@@ -202,6 +205,12 @@ export interface AbilityDef {
 // ---------------------------------------------------------------------------
 
 export interface AttackDef {
+  /**
+   * Slot canônico do kit na fonte (Jet Tactics): 'skill' ou 'signature'.
+   * Edições especiais substituem EXATAMENTE o slot declarado aqui — nunca
+   * infira o slot pelo custo de energia.
+   */
+  role?: 'skill' | 'signature';
   id: string;
   name: string;
   text?: string;
@@ -353,7 +362,15 @@ export interface StatusDef {
   blocksAbilities?: boolean;
   blocksRetreat?: boolean;
   damagePerTick?: number;
-  healPerTick?: number;
+  healPerTick?: number;/**
+   * Convenção de modificadores de status (única em todo o engine):
+   *  - damageTakenFlat > 0 → REDUZ o dano recebido (buff, ex.: tenacity/shield).
+   *  - damageTakenBonusFlat > 0 → AUMENTA o dano recebido (debuff, ex.: marked).
+   * Ambos se aplicam a dano de QUALQUER fonte (ataque ou efeito) e são
+   * aplicados em applyDamage — nunca duplo-contados.
+   */
+  damageTakenBonusFlat?: number;
+  /** > 0: reduz o dano recebido por stack (buff — ex.: tenacity 20, shield 30). */
   damageTakenFlat?: number;
   /** Wake/shed chance on each timing tick (0..1). */
   shedChance?: number;

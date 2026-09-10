@@ -5,7 +5,7 @@ import type { JetProvenance } from './types';
  * definition can be traced back to the exact source record later.
  */
 
-const REPO = 'RocksXB/jet-tactics' as const;
+const REPO = 'RocksXB/jet-tactics.' as const;
 
 export function prov(
   sourceType: JetProvenance['sourceType'],
