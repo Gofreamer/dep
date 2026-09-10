@@ -1,0 +1,167 @@
+[
+  {
+    "agentId": "agent-jenny",
+    "playerKey": "kof 12_jenny",
+    "edition": "MVP",
+    "replaces": "skill",
+    "tradeoff": "Jenny MVP deixa de ser apenas aceleradora de Influence e passa a proteger a lane que escolheu apoiar.",
+    "action": {
+      "name": "MVP Tempo",
+      "text": "+2 Influence na própria lane e bloqueia Challenge nessa lane nesta rodada. Rear apenas.",
+      "effect": "fortify",
+      "amount": 2,
+      "rows": [
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-alice-westland",
+    "playerKey": "asgard_alice westland",
+    "edition": "FINALS",
+    "replaces": "skill",
+    "tradeoff": "Alice troca alcance de suporte por segurança de final: menos pressão, mais proteção contra Challenge.",
+    "action": {
+      "name": "Final Cover",
+      "text": "+1 Influence na própria lane e bloqueia Challenge nessa lane nesta rodada. Rear apenas.",
+      "effect": "fortify",
+      "amount": 1,
+      "rows": [
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-tarruh",
+    "playerKey": "asgard_tarruh",
+    "edition": "FINALS",
+    "replaces": "skill",
+    "tradeoff": "Tarruh abre mão da proteção da Skill base para buscar uma virada de Influence imediata.",
+    "action": {
+      "name": "All-In de Final",
+      "text": "+3 Influence na própria lane nesta rodada, mas não bloqueia Challenge.",
+      "effect": "boost_lane",
+      "amount": 3,
+      "rows": [
+        "front",
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-tayna-lannister-muller",
+    "playerKey": "asgard_tayna lannister muller",
+    "edition": "FINALS",
+    "replaces": "skill",
+    "tradeoff": "Tayná reduz menos Influence bruto, mas passa a cortar suporte e controlar a estrutura da lane.",
+    "action": {
+      "name": "Fechamento de Final",
+      "text": "-1 Influence inimigo e anula Assist inimigo na própria lane nesta rodada.",
+      "effect": "lockdown",
+      "amount": 1,
+      "rows": [
+        "front",
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-ran-yuki",
+    "playerKey": "kof 12_ran yuki",
+    "edition": "CHAMPION",
+    "replaces": "signature",
+    "tradeoff": "Ran Yuki concentra a Signature em um duelo decisivo e abandona qualquer alcance fora da própria lane.",
+    "action": {
+      "name": "Champion Point",
+      "text": "+4 Influence na própria lane e anula Assist inimigo dessa lane nesta rodada.",
+      "effect": "duel_lane",
+      "amount": 4,
+      "rows": [
+        "front"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-shirakami-niku",
+    "playerKey": "kof 12_shirakami niku",
+    "edition": "CHAMPION",
+    "replaces": "signature",
+    "tradeoff": "Shirakami Niku transforma a Signature em uma fortaleza local; continua sem resolver outras lanes.",
+    "action": {
+      "name": "Trono Inabalável",
+      "text": "+4 Influence na própria lane e todos os Challenges inimigos dessa lane são bloqueados.",
+      "effect": "bastion",
+      "amount": 4,
+      "rows": [
+        "front",
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-wei-wang",
+    "playerKey": "rainbow six_wei wang",
+    "edition": "MVP",
+    "replaces": "signature",
+    "tradeoff": "Wei Wang MVP concentra todo o valor em negar uma lane crítica, em vez de espalhar pressão.",
+    "action": {
+      "name": "MVP Lock",
+      "text": "-3 Influence inimigo e anula Assist inimigo na própria lane nesta rodada.",
+      "effect": "lockdown",
+      "amount": 3,
+      "rows": [
+        "front",
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-mik-kashnov",
+    "playerKey": "morning star_mik kashnov",
+    "edition": "ICON",
+    "replaces": "skill",
+    "tradeoff": "Mik troca reforço direto por leitura e negação; a força premium vem do conjunto ICON + rarity/Holo real da carta.",
+    "action": {
+      "name": "Ícone de Campo",
+      "text": "-1 Influence inimigo e anula Assist inimigo na própria lane nesta rodada. Rear apenas.",
+      "effect": "lockdown",
+      "amount": 1,
+      "rows": [
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-ryan-smith",
+    "playerKey": "morning star_ryan smith",
+    "edition": "CHAMPION",
+    "replaces": "signature",
+    "tradeoff": "Ryan troca controle concentrado por uma Signature de comando global que exige boa formação de Fronts.",
+    "action": {
+      "name": "Comando de Campeão",
+      "text": "+2 Influence em cada lane que possua um aliado na Front.",
+      "effect": "network",
+      "amount": 2,
+      "rows": [
+        "front",
+        "rear"
+      ]
+    }
+  },
+  {
+    "agentId": "agent-saki",
+    "playerKey": "morning star_saki",
+    "edition": "CHAMPION",
+    "replaces": "signature",
+    "tradeoff": "Saki ganha uma janela de Break mais ameaçadora, mas continua dependente de uma Front inimiga sem proteção.",
+    "action": {
+      "name": "Golpe do Título",
+      "text": "-3 Influence inimigo na lane. Se a Front não estiver protegida, ela entra em Recovery na próxima rodada.",
+      "effect": "shatter",
+      "amount": 3,
+      "rows": [
+        "front"
+      ]
+    }
+  }
+]

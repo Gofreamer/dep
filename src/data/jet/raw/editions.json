@@ -1,0 +1,27 @@
+[
+  {
+    "id": "BASE",
+    "name": "Base",
+    "sidegrade": "Kit padrão do agente."
+  },
+  {
+    "id": "MVP",
+    "name": "MVP",
+    "sidegrade": "Troca a Skill (ou Signature) por variante de prêmio individual — sidegrade."
+  },
+  {
+    "id": "CHAMPION",
+    "name": "Champion",
+    "sidegrade": "Troca a Signature por variante de campeonato — sidegrade."
+  },
+  {
+    "id": "FINALS",
+    "name": "Finals",
+    "sidegrade": "Troca a Skill por variante de final — sidegrade."
+  },
+  {
+    "id": "ICON",
+    "name": "Icon",
+    "sidegrade": "Troca a Skill por variante ícone — sidegrade premium."
+  }
+]
