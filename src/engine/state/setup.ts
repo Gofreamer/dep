@@ -88,7 +88,7 @@ function makePlayer(i: PlayerId, ps: PlayerSetup): PlayerState {
 
 function emitInline(state: MatchState, type: any, player: PlayerId | null, payload: Record<string, unknown> = {}): void {
   state.log.push({ seq: state.eventSeq++, turn: state.turn, player, type, payload });
-  if (state.log.length > 800) state.log.splice(0, state.log.length - 800);
+  if (state.log.length > 3000) state.log.splice(0, state.log.length - 3000);
 }
 
 export { emitInline };

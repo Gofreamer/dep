@@ -137,6 +137,8 @@ ops['searchDeck'] = function* (g, ctx, p) {
     if (filter.ids && !filter.ids.includes(def.id)) return false;
     if (filter.tags && !filter.tags.every((t: string) => def.tags.includes(t))) return false;
     if (filter.resourceType && (def as any).resourceType !== filter.resourceType) return false;
+    if (filter.stage !== undefined && !(def.kind === 'CHARACTER' && (def as CharacterDef).stage === filter.stage)) return false;
+    if (filter.stageMin !== undefined && !(def.kind === 'CHARACTER' && (def as CharacterDef).stage >= filter.stageMin)) return false;
     return true;
   });
   if (matches.length === 0) return;
@@ -256,6 +258,20 @@ ops['detachResource'] = function* (g, ctx, p) {
     if (p.resourceType) pool = pool.filter((a) => (defOf(a) as any).resourceType === p.resourceType);
     for (let i = 0; i < amount && pool.length > 0; i++) {
       detachFromChar(g, pool.shift()!, to);
+    }
+  }
+};
+
+ops['detachEquipment'] = function* (g, ctx, p) {
+  const spec: TargetSpec = { selector: (p.target ?? 'enemyActive') as SelectorId, filter: p.filter };
+  const cands = targetCandidates(g.state, ctx, spec);
+  if (cands.length === 0) return;
+  const targets = cands.length === 1 ? cands : yield* pickCards(g, ctx, cands, 1, false, 'Escolha o personagem');
+  const amount = (p.amount ?? 1) as number;
+  for (const t of targets) {
+    const pool = t.attached.filter((a) => a.kind === 'EQUIPMENT');
+    for (let i = 0; i < amount && pool.length > 0; i++) {
+      detachFromChar(g, pool.shift()!, 'discard');
     }
   }
 };
@@ -549,9 +565,10 @@ export function scalingDamageFor(g: G, attacker: CardInstance, attack: { damage?
 export function resolveAttackTargetGen(g: G, ctx: EffectCtx, attack: { target?: TargetSpec }): Generator<ChoiceYield, CardInstance | null, string[]> {
   const spec: TargetSpec = attack.target ?? { selector: 'enemyActive' };
   const cands = targetCandidates(g.state, ctx, spec).filter((c) => c.kind === 'CHARACTER');
-  if (cands.length === 0) return function* () { return null; } as any;
-  if (spec.selector === 'enemyActive' || spec.selector === 'activeAlly') return function* () { return cands[0]; } as any;
-  if (cands.length === 1) return function* () { return cands[0]; } as any;
+  const fixed = (v: CardInstance | null) => (function* () { return v; })();
+  if (cands.length === 0) return fixed(null);
+  if (spec.selector === 'enemyActive' || spec.selector === 'activeAlly') return fixed(cands[0]);
+  if (cands.length === 1) return fixed(cands[0]);
   return pickCards(g, ctx, cands, 1, spec.optional ?? false, 'Escolha o alvo do ataque') as any;
 }
 

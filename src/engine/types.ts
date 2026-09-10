@@ -269,6 +269,8 @@ export interface ResourceDef extends CardBase {
   resourceType: string;
   amount: number;
   wild?: boolean;
+  /** Temporary resources are discarded when used to pay costs. */
+  temporary?: boolean;
   onAttach?: EffectStep[];
   mods?: Mods;
 }
@@ -565,6 +567,8 @@ export interface DeckRulesConfig {
   maxCopies: number;
   uniqueMax: number;
   allowMultipleFactions: boolean;
+  /** Card kinds exempt from the per-card copy limit (e.g. resources). */
+  copyLimitExempt?: CardKind[];
 }
 
 export interface ProgressionConfig {
@@ -600,7 +604,7 @@ export const DEFAULT_CONFIG: GameConfig = {
   setup: { handSize: 7, requireBasic: true, mulligan: 'auto', mulliganBonusDraw: true, benchAtSetup: true },
   victory: { targetPoints: 4, deckOutLoses: true, noActiveLoses: true },
   damage: { weaknessMultiplier: 2, resistanceDefaultReduce: 30 },
-  deckRules: { min: 40, max: 60, maxCopies: 4, uniqueMax: 1, allowMultipleFactions: true },
+  deckRules: { min: 40, max: 60, maxCopies: 4, uniqueMax: 1, allowMultipleFactions: true, copyLimitExempt: ['RESOURCE'] },
   progression: { stages: ['Base', 'Estágio 1', 'Estágio 2'], canSkipStages: true, damageCarriesOver: true, keepAttachedOnUpgrade: true }
 };
 

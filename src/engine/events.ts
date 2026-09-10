@@ -7,7 +7,7 @@ import type { GameEvent, GameEventType, MatchState, PlayerId } from './types';
 export function emit(state: MatchState, type: GameEventType, player: PlayerId | null, payload: Record<string, unknown> = {}): GameEvent {
   const ev: GameEvent = { seq: state.eventSeq++, turn: state.turn, player, type, payload };
   state.log.push(ev);
-  if (state.log.length > 800) state.log.splice(0, state.log.length - 800);
+  if (state.log.length > 3000) state.log.splice(0, state.log.length - 3000);
   return ev;
 }
 

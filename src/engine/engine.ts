@@ -55,7 +55,7 @@ export class MatchEngine {
   /** Sends a command; returns ok/error plus the events emitted by it. */
   dispatch(cmd: Command): CommandResult {
     const seqBefore = this.state.eventSeq;
-    this.pending = null;
+    if (cmd.type !== 'RESOLVE_CHOICE') this.pending = null;
     let result: CommandResult;
     try {
       const gen = this.execute(cmd);
@@ -156,7 +156,10 @@ export class MatchEngine {
     p.attachedThisTurn = 0;
     p.retreatedThisTurn = 0;
     p.actionsPlayedTurn = [];
-    for (const c of charactersInPlay(this.state, p.index)) c.usedTurn = [];
+    for (const c of charactersInPlay(this.state, p.index)) {
+      c.usedTurn = [];
+      for (const a of c.attached) a.usedTurn = [];
+    }
 
     if (steps.includes('start')) {
       queueGlobalTriggers(g, 'turnStart');
@@ -422,11 +425,16 @@ export class MatchEngine {
     const target = findCard(this.state, targetUid);
     if (!target || (target.location !== 'active' && target.location !== 'bench')) throw new EngineError('no_valid_target');
     if (target.card.owner !== pIdx) throw new EngineError('not_your_character');
+    const baseDefId = target.card.defId;
     try {
       performUpgrade(this.g(), target.card, card.defId, { cause: 'card' });
     } catch (e) {
       throw new EngineError((e as Error).message);
     }
+    // consome a carta de evolução da mão e registra a carta base no descarte
+    p.hand = p.hand.filter((c) => c.uid !== uid);
+    const baseGhost = newCardInstance(this.g(), registry.card(baseDefId), pIdx);
+    toDiscard(this.g(), baseGhost, pIdx);
     toDiscard(this.g(), card, pIdx);
   }
 
@@ -622,6 +630,16 @@ export class MatchEngine {
     queueHostTriggers(g, active, 'beforeAttack');
     yield* this.drainTriggers();
     if (st.winner !== null) return;
+
+    // Confusion: chance to hurt yourself and end the confusion
+    if (active.statuses.some((s) => s.id === 'confusion') && rand(st) < 0.3) {
+      applyDamage(g, active, 20, { label: 'confusão', attackerUid: active.uid });
+      active.statuses = active.statuses.filter((s) => s.id !== 'confusion');
+      emit(st, 'STATUS_REMOVED', pIdx, { uid: active.uid, status: 'confusion' });
+      yield* resolveDefeats(g);
+      if (st.config.turn.attackEndsTurn && st.winner === null && st.phase === 'main') yield* this.endTurnGen();
+      return;
+    }
 
     // copyAttack support
     let effAttack: any = attack;

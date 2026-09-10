@@ -201,14 +201,31 @@ export function applyDamage(g: G, target: CardInstance, amount: number, opts: Da
 // ---------------------------------------------------------------------------
 
 export function healChar(g: G, target: CardInstance, amount: number): number {
+  let total = amount + healFlatBonus(g, target);
   const cap = maxHp(g.state, target);
-  const healed = Math.min(amount, target.damage);
+  const healed = Math.min(total, target.damage);
   if (healed <= 0) return 0;
   target.damage -= healed;
   g.state.stats.healed[target.owner] += healed;
   g.emit('HEALED', target.owner, { uid: target.uid, amount: healed, hpAfter: cap - target.damage });
   queueHostTriggers(g, target, 'onHealed', { amount: healed });
   return healed;
+}
+
+function healFlatBonus(g: G, target: CardInstance): number {
+  let bonus = 0;
+  for (const f of g.state.fields) {
+    const fd = defOf(f) as any;
+    if (fd.scope === 'owner' && f.owner !== target.owner) continue;
+    bonus += fd.mods?.healFlat ?? 0;
+  }
+  for (const eq of target.attached) {
+    if (eq.kind === 'EQUIPMENT') bonus += (defOf(eq) as any).mods?.healFlat ?? 0;
+  }
+  for (const tm of g.state.tempMods) {
+    if (tm.targetUid === target.uid) bonus += tm.mods.healFlat ?? 0;
+  }
+  return bonus;
 }
 
 export function statusDef(id: string): StatusDef | undefined {
@@ -283,14 +300,8 @@ export function queueHostTriggers(g: G, host: CardInstance, event: string, paylo
 }
 
 export function queueGlobalTriggers(g: G, event: string, payload?: Record<string, unknown>): void {
-  for (const p of g.state.players) {
-    for (const c of charactersInPlay(g.state, p.index)) {
-      g.state.triggerQueue.push({ event, sourceUid: c.uid, player: p.index, payload });
-    }
-    for (const f of g.state.fields) {
-      g.state.triggerQueue.push({ event, sourceUid: f.uid, player: f.owner, payload });
-    }
-  }
+  // A single task per broadcast event — the drain scans every in-play source.
+  g.state.triggerQueue.push({ event, sourceUid: '__global__', player: g.state.activePlayer, payload });
 }
 
 // ---------------------------------------------------------------------------
