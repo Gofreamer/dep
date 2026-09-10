@@ -24,6 +24,9 @@ export const DeckBuilderScreen: React.FC = () => {
   const [rarity, setRarity] = React.useState('all');
   const [stage, setStage] = React.useState('all');
   const [tag, setTag] = React.useState('');
+  const [edition, setEdition] = React.useState('all');
+  const [agent, setAgent] = React.useState('all');
+  const [onlyHolo, setOnlyHolo] = React.useState(false);
   const [inspect, setInspect] = React.useState<CardDef | null>(null);
   const [, force] = React.useState(0);
 
@@ -47,12 +50,31 @@ export const DeckBuilderScreen: React.FC = () => {
   const validation = validateDeck(cards, DEFAULT_CONFIG.deckRules);
   const stats = deckStats(cards);
 
+  const identityVersions = (def: CardDef): CardDef[] => {
+    if (def.kind !== 'CHARACTER') return [def];
+    const key = def.identityId ?? def.id;
+    return allCardsSorted().filter((d) => d.kind === 'CHARACTER' && (d.identityId ?? d.id) === key);
+  };
+
+  const identityCopies = (def: CardDef): number => {
+    const key = def.kind === 'CHARACTER' ? (def.identityId ?? def.id) : def.id;
+    return Object.entries(cards).reduce((sum, [id, n]) => {
+      const d = registry.tryCard(id);
+      if (!d || d.kind !== 'CHARACTER') return sum;
+      return (d.identityId ?? d.id) === key ? sum + n : sum;
+    }, 0);
+  };
+
   const add = (def: CardDef) => {
     const cur = cards[def.id] ?? 0;
     const limit = def.unique ? DEFAULT_CONFIG.deckRules.uniqueMax : DEFAULT_CONFIG.deckRules.maxCopies;
     const exempt = DEFAULT_CONFIG.deckRules.copyLimitExempt?.includes(def.kind);
     const max = exempt ? 12 : limit;
     if (cur >= max) { showToast(def.unique ? 'Carta Única: só 1 cópia.' : `Máximo ${max} cópias.`); return; }
+    const perIdentity = DEFAULT_CONFIG.deckRules.maxCopiesPerIdentity;
+    if (def.kind === 'CHARACTER' && perIdentity !== undefined && identityCopies(def) >= perIdentity) {
+      showToast(`Máximo ${perIdentity} cópias do agente (somando edições/variantes).`); return;
+    }
     if (stats.total >= DEFAULT_CONFIG.deckRules.max) { showToast(`Máximo de ${DEFAULT_CONFIG.deckRules.max} cartas.`); return; }
     setCards((c) => ({ ...c, [def.id]: (c[def.id] ?? 0) + 1 }));
   };
@@ -71,6 +93,9 @@ export const DeckBuilderScreen: React.FC = () => {
     if (faction !== 'all' && def.faction !== faction) return false;
     if (rarity !== 'all' && def.rarity !== rarity) return false;
     if (stage !== 'all' && !(def.kind === 'CHARACTER' && String((def as any).stage) === stage)) return false;
+    if (edition !== 'all' && (def.edition ?? 'BASE') !== edition) return false;
+    if (agent !== 'all' && (def.kind === 'CHARACTER' ? (def.identityId ?? def.id) : def.id) !== agent) return false;
+    if (onlyHolo && !def.holo) return false;
     if (tag && !def.tags.includes(tag)) return false;
     if (search && !def.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -114,6 +139,15 @@ export const DeckBuilderScreen: React.FC = () => {
               <option value="all">Estágios</option>
               {T.stageLabels.map((l, i) => <option key={i} value={i}>{l}</option>)}
             </select>
+            <select value={agent} onChange={(e) => setAgent(e.target.value)}>
+              <option value="all">Todos os agentes</option>
+              {[...new Map(allCardsSorted().filter((d) => d.kind === 'CHARACTER').map((d) => [d.identityId ?? d.id, d.name])).entries()].map(([id, nm]) => <option key={id} value={id}>{nm}</option>)}
+            </select>
+            <select value={edition} onChange={(e) => setEdition(e.target.value)}>
+              <option value="all">Todas as edições</option>
+              {[...new Set(allCardsSorted().map((d) => d.edition ?? 'BASE'))].map((ed) => <option key={ed} value={ed}>{ed}</option>)}
+            </select>
+            <label className="fav-toggle"><input type="checkbox" checked={onlyHolo} onChange={(e) => setOnlyHolo(e.target.checked)} /> ✧ Holo</label>
             <select value={tag} onChange={(e) => setTag(e.target.value)}>
               <option value="">Todas as tags</option>
               <option value="supremo">Supremo</option>
@@ -190,6 +224,16 @@ export const DeckBuilderScreen: React.FC = () => {
           </div>
         </aside>
       </div>
+      {inspect && identityVersions(inspect).length > 1 && (
+        <div className="variants-strip">
+          <span className="hint">Versões do agente:</span>
+          {identityVersions(inspect).map((v) => (
+            <button key={v.id} className={`btn ${v.id === inspect.id ? 'primary' : ''}`} onClick={() => setInspect(v)}>
+              {v.edition ?? 'BASE'}{v.holo ? ' ✧' : ''}
+            </button>
+          ))}
+        </div>
+      )}
       <DefInspectModal def={inspect} onClose={() => setInspect(null)} />
     </div>
   );

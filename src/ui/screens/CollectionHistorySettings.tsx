@@ -13,7 +13,10 @@ export const CollectionScreen: React.FC = () => {
   const [kind, setKind] = React.useState<CardKind | 'ALL'>('ALL');
   const [faction, setFaction] = React.useState('all');
   const [rarity, setRarity] = React.useState('all');
+  const [edition, setEdition] = React.useState('all');
+  const [onlyHolo, setOnlyHolo] = React.useState(false);
   const [onlyFav, setOnlyFav] = React.useState(false);
+  const [groupByIdentity, setGroupByIdentity] = React.useState(true);
   const [inspect, setInspect] = React.useState<CardDef | null>(null);
   const [, force] = React.useState(0);
   const collection = metaStore.state.collection;
@@ -38,10 +41,24 @@ export const CollectionScreen: React.FC = () => {
     if (kind !== 'ALL' && def.kind !== kind) return false;
     if (faction !== 'all' && def.faction !== faction) return false;
     if (rarity !== 'all' && def.rarity !== rarity) return false;
+    if (edition !== 'all' && (def.edition ?? 'BASE') !== edition) return false;
+    if (onlyHolo && !def.holo) return false;
     if (onlyFav && !favorites.includes(def.id)) return false;
     if (search && !def.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  // agrupamento por identidade: Jenny BASE + Jenny MVP aparecem juntas (Parte 23)
+  const identityGroups = React.useMemo(() => {
+    const groups = new Map<string, CardDef[]>();
+    for (const def of cards) {
+      const key = def.kind === 'CHARACTER' ? (def.identityId ?? def.id) : `__${def.kind}:${def.id}`;
+      const list = groups.get(key) ?? [];
+      list.push(def);
+      groups.set(key, list);
+    }
+    return [...groups.entries()];
+  }, [cards]);
 
   return (
     <div className="screen collection-screen">
@@ -68,10 +85,16 @@ export const CollectionScreen: React.FC = () => {
           <option value="epic">Épica</option>
           <option value="legendary">Lendária</option>
         </select>
+        <select value={edition} onChange={(e) => setEdition(e.target.value)}>
+          <option value="all">Todas as edições</option>
+          {[...new Set(allCardsSorted().map((d) => d.edition ?? 'BASE'))].map((ed) => <option key={ed} value={ed}>{ed}</option>)}
+        </select>
+        <label className="fav-toggle"><input type="checkbox" checked={onlyHolo} onChange={(e) => setOnlyHolo(e.target.checked)} /> ✧ Holo</label>
         <label className="fav-toggle"><input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> ★ Favoritas</label>
+        <label className="fav-toggle"><input type="checkbox" checked={groupByIdentity} onChange={(e) => setGroupByIdentity(e.target.checked)} /> Agrupar por agente</label>
       </div>
       <div className="lib-grid collection">
-        {cards.map((def) => (
+        {(groupByIdentity ? identityGroups.flatMap(([, defs]) => defs) : cards).map((def) => (
           <div key={def.id} className={`lib-cell ${favorites.includes(def.id) ? 'fav' : ''}`}>
             <CardMini def={def} quantity={collection[def.id]} onClick={() => setInspect(def)} />
             <button className={`fav-btn ${favorites.includes(def.id) ? 'on' : ''}`} title="Favoritar" onClick={() => toggleFav(def.id)}>★</button>
@@ -164,7 +187,7 @@ export const ResultsScreen: React.FC = () => {
     <div className={`screen results-screen ${win ? 'win' : 'loss'}`}>
       <div className="results-card">
         <h1>{win ? 'Vitória!' : 'Derrota…'}</h1>
-        <p>{win ? 'Você alcançou o alvo de Pontos de Vitória. O Nexo reconhece sua força!' : 'O oponente levou a melhor. Ajuste o baralho e tente de novo!'}</p>
+        <p>{win ? 'Você alcançou o alvo de Pontos de Vitória. A liga reconhece sua força!' : 'O oponente levou a melhor. Ajuste o baralho e tente de novo!'}</p>
         <div className="results-actions">
           <button className="btn big primary" onClick={() => cfg && startMatch({ ...cfg, seed: Math.floor(Math.random() * 1e9) })}>Revanche imediata</button>
           <button className="btn" onClick={() => go('deckSelect')}>Trocar baralho</button>

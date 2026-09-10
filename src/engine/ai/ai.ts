@@ -157,6 +157,18 @@ export function aiNextCommand(engine: { state: MatchState; canAttackNow(i: CardI
     }
   }
 
+  // --- 8b. Supremas (uma vez por partida, condicionais — sempre alto valor) ----
+  for (const ult of legal.ultimates ?? []) {
+    if (!ult.playable) continue;
+    const host = charactersInPlay(state, pIdx).find((c) => c.uid === ult.charUid);
+    if (!host) continue;
+    const udef = charDef(host).ultimate;
+    if (!udef) continue;
+    // valor alto: use quando legal, priorizando quando o jogo está fechado
+    const urgency = player(state, pIdx === 0 ? 1 : 0).victoryPoints >= state.config.victory.targetPoints - 1 ? 6 : 3;
+    options.push({ cmd: { type: 'USE_ULTIMATE', player: pIdx, charUid: ult.charUid, ultimateId: ult.ultimateId }, score: 5 + urgency + nz() });
+  }
+
   // --- 9. attack ---------------------------------------------------------------
   const active = p.active;
   if (active) {

@@ -35,7 +35,7 @@ export const CardView: React.FC<{ def: CardDef; quantity?: number; onClick?: () 
   const color = factionColor(def.faction);
   return (
     <div
-      className={`card card-full kind-${def.kind.toLowerCase()} r-${def.rarity} ${dim ? 'dim' : ''} ${highlight ? 'glow' : ''} ${selected ? 'selected' : ''}`}
+      className={`card card-full kind-${def.kind.toLowerCase()} r-${def.rarity} ${dim ? 'dim' : ''} ${highlight ? 'glow' : ''} ${selected ? 'selected' : ''} ${def.holo ? 'holo' : ''}`}
       onClick={onClick}
       style={{ ['--faction' as any]: color }}
     >
@@ -46,6 +46,9 @@ export const CardView: React.FC<{ def: CardDef; quantity?: number; onClick?: () 
       <div className="card-stage">
         <span className="chip kind-chip">{kindLabel(def)}</span>
         {def.kind === 'CHARACTER' && <span className="chip">{stageLabel((def as CharacterDef).stage)}</span>}
+        {def.edition && <span className={`chip edition-chip ed-${def.edition.toLowerCase()}`}>{def.edition}</span>}
+        {def.identityId && def.edition && def.edition !== 'BASE' && <span className="chip identity-chip" title={`Identidade: ${def.identityId}`}>{identityNameOf(def.identityId)}</span>}
+        {def.holo && <span className="chip holo-chip" title="Holo — apenas cosmético">✧ HOLo</span>}
         {def.unique && <span className="chip unique-chip">Única</span>}
         {quantity !== undefined && <span className="chip qty">×{quantity}</span>}
       </div>
@@ -85,7 +88,7 @@ export const CardView: React.FC<{ def: CardDef; quantity?: number; onClick?: () 
           <div className="res-amount">Fornece <b>1</b> {def.id === 'res-prisma' ? 'recurso curinga' : `recurso ${def.affinity !== 'neutro' ? def.affinity : 'de qualquer tipo'}`}</div>
         </div>
       )}
-      <div className="card-number">NEXO · {String(def.number ?? 0).padStart(3, '0')}</div>
+      <div className="card-number">JET · {String(def.number ?? 0).padStart(3, '0')}</div>
     </div>
   );
 };
@@ -121,6 +124,7 @@ export const CardMini: React.FC<{ def: CardDef; count?: number; quantity?: numbe
         <div className="mini-name">{def.name} {(count ?? quantity) !== undefined && (count ?? quantity)! > 1 && <em>×{count ?? quantity}</em>}</div>
         <div className="mini-sub">
           <span className="chip kind-chip">{kindLabel(def)}</span>
+          {def.edition && <span className={`chip edition-chip ed-${def.edition.toLowerCase()}`}>{def.edition}</span>}
           {def.kind === 'CHARACTER' && <span className="chip">{stageLabel((def as CharacterDef).stage)}</span>}
           {hp !== undefined && <span className="mini-hp">{hp}HP</span>}
         </div>
@@ -129,6 +133,14 @@ export const CardMini: React.FC<{ def: CardDef; count?: number; quantity?: numbe
     </div>
   );
 };
+
+/** Nome da identidade a partir do identityId (agent-jenny → Jenny). */
+export function identityNameOf(identityId: string): string {
+  const anyDef = registry.allCards().find((c) => c.identityId === identityId);
+  if (!anyDef) return identityId;
+  const base = registry.tryCard(`${identityId}-base`);
+  return (base ?? anyDef).name.replace(/ (MVP|CHAMPION|FINALS|ICON)$/i, '');
+}
 
 export function allCardsSorted(): CardDef[] {
   return registry.allCards().sort((a, b) => (a.number ?? 0) - (b.number ?? 0));

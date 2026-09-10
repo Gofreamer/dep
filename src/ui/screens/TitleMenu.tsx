@@ -12,8 +12,8 @@ export const TitleScreen: React.FC = () => {
       <div className="title-center">
         <h1 className="game-logo">{T.title}</h1>
         <p className="game-sub">{T.subtitle}</p>
-        <button className="btn big primary" onClick={() => go('menu')}>Entrar no Nexo</button>
-        <p className="title-note">Protótipo — universo original · pronto para reskin</p>
+        <button className="btn big primary" onClick={() => go('menu')}>Entrar na Liga</button>
+        <p className="title-note">Agente contra agente · batalha competitiva de cartas</p>
       </div>
     </div>
   );

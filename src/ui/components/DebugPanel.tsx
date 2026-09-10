@@ -3,8 +3,15 @@ import type { MatchController } from '../../game/controller';
 import { useMatch } from '../matchStore';
 import { registry } from '../../engine/registry';
 import { allCardsSorted } from './CardView';
-import { charactersInPlay, player } from '../../engine/queries';
+import { charDef, charactersInPlay, countAllInstances, player } from '../../engine/queries';
 import { STATUSES } from '../../data/statuses';
+
+function holoNote(def: { holo?: boolean; edition?: string }): string {
+  const bits: string[] = [];
+  if (def.edition) bits.push(`edição: ${def.edition}`);
+  if (def.holo) bits.push('holo (cosmético)');
+  return bits.length ? `\n${bits.join(' · ')}` : '';
+}
 
 /** Painel de debug — disponível apenas em modo desenvolvedor. */
 export const DebugPanel: React.FC<{ controller: MatchController }> = ({ controller }) => {
@@ -14,9 +21,11 @@ export const DebugPanel: React.FC<{ controller: MatchController }> = ({ controll
   const [tab, setTab] = React.useState<'cards' | 'chars' | 'state'>('cards');
   const [amount, setAmount] = React.useState(1);
   const [statusId, setStatusId] = React.useState('poison');
+  const [cardSearch, setCardSearch] = React.useState('');
 
   if (!show) return null;
   const me = player(st, 0);
+  const censusTotal = () => countAllInstances(st).total;
   const dbg = (op: string, payload: Record<string, unknown> = {}) => {
     controller.engine.debugCommand(op, { player: 0, ...payload });
     useMatch.getState().sync(controller.engine.version, controller.engine.state, controller.engine.legalActions(0), controller.engine.getPending());
@@ -37,10 +46,13 @@ export const DebugPanel: React.FC<{ controller: MatchController }> = ({ controll
         <div className="debug-body">
           <label>Qtd <input type="number" min={1} max={5} value={amount} onChange={(e) => setAmount(Number(e.target.value))} /></label>
           <button onClick={() => dbg('draw', { amount })}>Comprar {amount}</button>
+          <label>Buscar agente/carta
+            <input placeholder="filtrar…" value={cardSearch} onChange={(e) => setCardSearch(e.target.value)} />
+          </label>
           <div className="debug-grid">
-            {allCardsSorted().map((def) => (
-              <button key={def.id} title={def.name} onClick={() => { for (let i = 0; i < amount; i++) dbg('addCardToHand', { defId: def.id }); }}>
-                {def.name}
+            {allCardsSorted().filter((d) => !cardSearch || d.name.toLowerCase().includes(cardSearch.toLowerCase()) || (d.identityId ?? '').includes(cardSearch.toLowerCase())).map((def) => (
+              <button key={def.id} title={`${def.id}${def.edition ? ` · ${def.edition}` : ''}${def.identityId ? `\nidentidade: ${def.identityId}` : ''}${holoNote(def)}`} onClick={() => { for (let i = 0; i < amount; i++) dbg('addCardToHand', { defId: def.id }); }}>
+                {def.name}{def.edition && def.edition !== 'BASE' ? ` (${def.edition})` : ''}
               </button>
             ))}
           </div>
@@ -55,7 +67,14 @@ export const DebugPanel: React.FC<{ controller: MatchController }> = ({ controll
           </label>
           {[...charactersInPlay(st, 0), ...charactersInPlay(st, 1)].map((c) => (
             <div key={c.uid} className="debug-char">
-              <b>{c.defId}</b> <span>({c.owner === 0 ? 'você' : 'IA'}) dano {c.damage}</span>
+              <b>{charDef(c).name}</b> <span>({c.owner === 0 ? 'você' : 'IA'}) dano {c.damage}</span>
+              {(c.progression?.length ?? 0) > 0 && (
+                <span className="hint" title="Pilha de evolução real">pilha: {c.progression.map((u) => u.defId).join(' → ')}</span>
+              )}
+              {(charDef(c) as any).identityId && <span className="hint">id: {(charDef(c) as any).identityId}</span>}
+              {c.owner === 0 && st.players[0].active && c.uid !== st.players[0].active.uid && (
+                <button title="Trocar ativo (debug)" onClick={() => dbg('swapActive', { targetUid: c.uid })}>⇄ ativo</button>
+              )}
               <div className="debug-actions">
                 <button onClick={() => dbg('damage', { targetUid: c.uid, amount: 20 })}>−20</button>
                 <button onClick={() => dbg('heal', { targetUid: c.uid, amount: 20 })}>+20</button>
@@ -67,6 +86,10 @@ export const DebugPanel: React.FC<{ controller: MatchController }> = ({ controll
           ))}
         </div>
       )}
+      {tab === 'state' && (
+        <div className="debug-body">
+          <span className="hint">seed: {st.seed} · turno {st.turn} · censo: {JSON.stringify(censusTotal())}</span>
+        </div>)}
       {tab === 'state' && (
         <div className="debug-body">
           <label>PV jogador <input type="number" defaultValue={me.victoryPoints} onKeyDown={(e) => { if (e.key === 'Enter') dbg('setVp', { value: Number((e.target as HTMLInputElement).value) }); }} /></label>

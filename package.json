@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "NEXO — protótipo de TCG digital orientado a dados, com engine genérica pronta para reskin (JET-ready).",
+  "description": "JET TCG — jogo de cartas competitivo (agente vs IA) com engine genérica data-driven.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
