@@ -93,6 +93,18 @@ export interface JetTeamDef {
   provenance: JetProvenance;
 }
 
+/** Official edition sidegrade: replaces the skill or signature of one agent. */
+export interface JetEditionVariant {
+  agentId: string;
+  playerKey: string;
+  edition: string;
+  /** Which kit slot this edition replaces. */
+  replaces: 'skill' | 'signature';
+  tradeoff: string;
+  /** Slot replacement exactly as documented upstream (name + text/description). */
+  action: { name: string; description?: string; text?: string; effect?: string; amount?: number; rows?: string[] };
+}
+
 /**
  * The complete normalized capture. Lives checked-in at
  * `src/data/jet/snapshot.ts` — runtime NEVER reads the upstream repository.
@@ -106,6 +118,7 @@ export interface JetSnapshot {
   editions: JetEditionDef[];
   agents: JetAgentIdentity[];
   kits: JetAgentKit[];
+  editionVariants: JetEditionVariant[];
 }
 
 /** Adaptation status of an edition → TCG card. */

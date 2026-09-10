@@ -36,6 +36,26 @@ export const STATUSES: StatusDef[] = [
     text: 'Habilidades desativadas enquanto durar.'
   },
   {
+    id: 'marked', kind: 'debuff', timing: 'turnEndOwner', stacking: 'refresh',
+    damageTakenFlat: 10, visual: 'marked',
+    text: 'Alvo exposto: recebe 10 de dano adicional de qualquer fonte enquanto durar.'
+  },
+  {
+    id: 'exhausted', kind: 'debuff', timing: 'turnStartOwner', stacking: 'unique',
+    blocksAttack: true, visual: 'exhausted',
+    text: 'Exausto: não pode atacar no próximo turno.'
+  },
+  {
+    id: 'root', kind: 'debuff', timing: 'turnEndOwner', stacking: 'unique',
+    blocksRetreat: true, visual: 'root',
+    text: 'Imobilizado: não pode recuar enquanto durar.'
+  },
+  {
+    id: 'tenacity', kind: 'buff', timing: 'turnEndOwner', stacking: 'unique',
+    damageTakenFlat: 20, visual: 'tenacity',
+    text: 'Tenaz: reduz 20 do dano recebido enquanto durar.'
+  },
+  {
     id: 'shield', kind: 'buff', timing: 'turnEndOwner', stacking: 'unique',
     damageTakenFlat: 30, visual: 'shield',
     text: 'Reduz em 30 o dano recebido enquanto durar.'

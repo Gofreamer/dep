@@ -130,6 +130,7 @@ export function buildSnapshot(
     teams: (input.teams ?? []).map((t) => normalizeTeam(t, input.capturedAt, input.sourceCommit)),
     editions: (input.editions ?? []).map((e) => normalizeEdition(e, input.capturedAt, input.sourceCommit)),
     agents: (input.agents ?? []).map((a) => normalizeAgent(a, input.capturedAt, input.sourceCommit)),
-    kits: (input.kits ?? []).map((k) => normalizeKit(k, input.capturedAt, input.sourceCommit))
+    kits: (input.kits ?? []).map((k) => normalizeKit(k, input.capturedAt, input.sourceCommit)),
+    editionVariants: []
   };
 }

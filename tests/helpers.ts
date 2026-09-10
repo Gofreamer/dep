@@ -3,16 +3,20 @@ import { MatchEngine } from '../src/engine/engine';
 import type { AiLevel, Command, GameConfig } from '../src/engine/types';
 import { DEFAULT_CONFIG } from '../src/engine/types';
 import { registerDataPack } from '../src/data/fixtures/nexo/cards';
+import { registerJetDataPack } from '../src/data/jet/pack';
+import { JET_STARTER_DECKS } from '../src/data/jet/starterDecks';
 import { mergeConfig } from '../src/engine/state/setup';
 import { STARTER_DECKS, expandDeck } from '../src/data/fixtures/nexo/decks';
 import { registry } from '../src/engine/registry';
 import { aiNextCommand, aiSmartChoice } from '../src/engine/ai/ai';
 
 export function setup() {
-  beforeAll(() => { registerDataPack(); });
+  beforeAll(() => { registerJetDataPack(); registerDataPack(); });
 }
 
 export function deckOf(starterId: string): string[] {
+  const jet = JET_STARTER_DECKS.find((d) => d.id === starterId);
+  if (jet) return expandDeck(jet);
   const def = STARTER_DECKS.find((d) => d.id === starterId) ?? STARTER_DECKS[0];
   return expandDeck(def);
 }

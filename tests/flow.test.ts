@@ -104,7 +104,7 @@ describe('Fluxo completo do jogador (controller)', () => {
 
   it('tutorial bloqueia comandos fora do passo atual', () => {
     registerDataPack();
-    const ctl = new MatchController({ playerDeckId: 'deck-tutorial-aluno', opponentDeckId: 'deck-tutorial-instrutor', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
+    const ctl = new MatchController({ playerDeckId: 'deck-jet-kof-12', opponentDeckId: 'deck-jet-asgard', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
     ctl.start(() => {});
     const me = player(ctl.engine.state, 0);
     // passo 0: apenas SETUP_SET_ACTIVE
@@ -130,13 +130,14 @@ describe('Fluxo completo do jogador (controller)', () => {
 
   it('mão do tutorial vem preparada (rigged)', () => {
     registerDataPack();
-    const ctl = new MatchController({ playerDeckId: 'deck-tutorial-aluno', opponentDeckId: 'deck-tutorial-instrutor', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
+    const ctl = new MatchController({ playerDeckId: 'deck-jet-kof-12', opponentDeckId: 'deck-jet-asgard', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
     const me = player(ctl.engine.state, 0);
     const defIds = me.hand.map((c) => c.defId);
-    expect(defIds).toContain('char-cindro');
-    expect(defIds).toContain('char-ignarok');
-    expect(defIds).toContain('res-solar');
-    expect(defIds).toContain('act-golpe');
+    expect(defIds).toContain('agent-jenny-base');
+    expect(defIds).toContain('agent-xixim-base');
+    expect(defIds).toContain('jres-energia');
+    expect(defIds).toContain('jact-leitura');
+    expect(defIds).toContain('jeq-manopla');
   });
 
   it('baralhos starter não alterados por partidas', () => {

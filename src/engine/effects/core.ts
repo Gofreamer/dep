@@ -105,6 +105,8 @@ export function evalCondition(state: MatchState, ctx: EffectCtx, cond: Condition
     case 'damageAtLeast': { const t = resolveChar(state, ctx, cond.target); return !!t && t.damage >= cond.value; }
     case 'counterAtLeast': { const t = resolveChar(state, ctx, cond.target); return !!t && getCounter(t, cond.counter) >= cond.value; }
     case 'discardAtLeast': return sideState(cond.side).discard.length >= cond.count;
+    case 'benchAtLeast': return sideState(cond.side).bench.length >= cond.value;
+    case 'benchAtMost': return sideState(cond.side).bench.length <= cond.value;
     case 'deckAtLeast': return sideState(cond.side).deck.length >= cond.count;
     case 'turnAtLeast': return state.turn >= cond.turn;
     case 'vpCompare': {

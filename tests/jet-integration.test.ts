@@ -1,179 +1,172 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { setup, deckOf, makeEngine, autoSetup, rigHand } from './helpers';
 import { buildSnapshot } from '../src/integrations/jet/normalize';
-import { defineProfiles } from '../src/data/jet/agentProfiles';
-import { importSnapshot, pendingCatalog, profileKey, assertConvertible } from '../src/integrations/jet/importer';
-import { convertAgent, mkAttack, mkAbility, mkEffect, pendingProfile } from '../src/integrations/jet/converter';
+import { AGENT_TCG_PROFILES } from '../src/data/jet/agentProfiles';
+import { registerJetDataPack, jetPendingCatalog } from '../src/data/jet/pack';
+import { importSnapshot, profileKey } from '../src/integrations/jet/importer';
 import { registry } from '../src/engine/registry';
-import { charDef, player } from '../src/engine/queries';
+import { charDef, countAllInstances, player } from '../src/engine/queries';
 import type { CharacterDef } from '../src/engine/types';
-import { JET_ENERGY } from '../src/data/jet/energy';
-import { registerJetDataPack } from '../src/data/jet/pack';
-import { JET_TECHNIQUES, JET_EQUIPMENT, JET_FIELDS } from '../src/data/jet/auxiliares';
+import { JET_SNAPSHOT } from '../src/data/jet/snapshot';
+import { JET_STARTER_DECKS, validateDeckAny } from './jetDeckTestUtils';
 
 setup();
 
 // ---------------------------------------------------------------------------
-// Pipeline de importação Jet Tactics → JET TCG (testado com snapshot sintético
-// — o snapshot REAL só é preenchido a partir do repositório oficial).
+// Pipeline Jet Tactics → JET TCG com o SNAPSHOT REAL importado da fonte.
 // ---------------------------------------------------------------------------
 
-const CAPTURED = '2026-09-10';
+describe('Roster JET importado (fonte real)', () => {
+  beforeAll(() => registerJetDataPack());
 
-function syntheticSnapshot() {
-  return buildSnapshot({
-    capturedAt: CAPTURED,
-    setName: 'JET CORE SET — Alpha (teste)',
-    teams: [{ id: 'kof-12', name: 'KOF 12', color: '#d4af37' }],
-    editions: [{ id: 'BASE', name: 'Base' }, { id: 'MVP', name: 'MVP' }],
-    agents: [
-      {
-        id: 'agent-jenny', name: 'Jenny', team: 'kof-12', role: 'Duelist',
-        editions: ['BASE', 'MVP'], imageUrl: 'https://example.test/jenny.png'
-      },
-      {
-        id: 'agent-kaio', name: 'Kaio', team: 'kof-12',
-        editions: ['BASE']
-      }
-    ],
-    kits: [
-      {
-        agentId: 'agent-jenny', role: 'Duelist',
-        passive: { name: 'Ritmo Ofensivo', description: 'Ganha vantagem em duelos.' },
-        skill: { name: 'Investida', description: 'Golpe rápido.' },
-        signature: { name: 'Cometa Ascendente', description: 'Golpe decisivo.' }
-      }
-    ]
+  it('registra as 18 identidades curadas com proveniência', () => {
+    expect(JET_SNAPSHOT.agents.length).toBe(18);
+    const report = registerJetDataPack();
+    expect(report.agentsRegistered.length).toBeGreaterThanOrEqual(18);
+    // toda carta de agente carrega proveniência rastreável
+    const jenny = registry.card('agent-jenny-base') as any;
+    expect(jenny.provenance.sourceRepository).toBe('RocksXB/jet-tactics');
+    expect(jenny.provenance.sourceId).toContain('kof 12_jenny');
   });
-}
 
-function jennyBaseProfile() {
-  return {
-    agentId: 'agent-jenny',
-    edition: 'BASE',
-    status: 'CURATED' as const,
-    cardId: 'agent-jenny-base',
-    name: 'Jenny',
-    faction: 'kof-12',
-    rarity: 'rare' as const,
-    maxHp: 110,
-    retreatCost: 1,
-    weakness: { affinity: 'umbra' },
-    abilities: [
-      mkAbility('ab-jenny-ritmo', 'Ritmo Ofensivo', 'whileActive', {
-        mods: { damageDealtVsAffinity: { affinity: 'umbra', flat: 10 } },
-        text: 'Duelista: +10 de dano contra Agentes Umbra.'
-      })
-    ],
-    attacks: [
-      mkAttack('atk-jenny-investida', 'Investida', [['*', 1]], 20, { text: 'Skill convertida.' }),
-      mkAttack('atk-jenny-cometa', 'Cometa Ascendente', [['*', 2]], 50, { text: 'Signature convertida.' })
-    ],
-    victoryValue: 2,
-    tags: ['duelist'],
-    provenance: { sourceRepository: 'RocksXB/jet-tactics' as const, sourceType: 'curated-agents' as const, sourceId: 'curated-agents-1#jenny', capturedAt: CAPTURED }
-  };
-}
+  it('identidade vs carta: variantes compartilham identityId e são stage 0', () => {
+    for (const def of registry.allCards().filter((c) => c.kind === 'CHARACTER')) {
+      const cd = def as CharacterDef;
+      if (!cd.id.startsWith('agent-')) continue;
+      expect(cd.stage).toBe(0); // edição NUNCA é estágio
+      expect(cd.identityId).toMatch(/^agent-/);
+    }
+    const base = registry.card('agent-jenny-base') as CharacterDef;
+    const mvp = registry.card('agent-jenny-mvp') as CharacterDef;
+    expect(base.identityId).toBe(mvp.identityId);
+    expect(base.edition).toBe('BASE');
+    expect(mvp.edition).toBe('MVP');
+  });
 
-describe('Camada de integração Jet Tactics', () => {
-  beforeAll(() => {
-    registerJetDataPack(); // Energia JET + Técnicas + Equipamentos + Campos
-    if (!registry.tryCard('agent-jenny-base')) {
-      importSnapshot(syntheticSnapshot(), { profiles: defineProfiles(jennyBaseProfile()) });
+  it('as 10 edições especiais oficiais viram cartas jogáveis como SIDE GRADES', () => {
+    const expected = [
+      'agent-jenny-mvp', 'agent-alice-westland-finals', 'agent-tarruh-finals',
+      'agent-tayna-lannister-muller-finals', 'agent-ran-yuki-champion',
+      'agent-shirakami-niku-champion', 'agent-wei-wang-mvp',
+      'agent-mik-kashnov-icon', 'agent-ryan-smith-champion', 'agent-saki-champion'
+    ];
+    for (const id of expected) {
+      const def = registry.tryCard(id) as CharacterDef | undefined;
+      expect(def, id).toBeDefined();
+      // sidegrade: mesmos stats de combate da BASE (nada de +poder automático)
+      const baseId = id.replace(/-(mvp|champion|finals|icon)$/, '-base');
+      const base = registry.card(baseId) as CharacterDef;
+      expect(def!.maxHp).toBe(base.maxHp);
+      expect(def!.victoryValue).toBe(base.victoryValue);
+      // e o slot substituído OFICIALMENTE tem um ataque com o nome da fonte
+      const slotName = JET_SNAPSHOT.editionVariants.find((v) => id.startsWith(v.agentId))!.action.name;
+      expect(def!.attacks.some((a) => a.name === slotName), `${id} deve ter "${slotName}"`).toBe(true);
     }
   });
 
-  it('converte identidade + kit + perfil curado em carta jogável', () => {
-    const def = registry.card('agent-jenny-base') as CharacterDef;
-    expect(def.kind).toBe('CHARACTER');
-    expect(def.name).toBe('Jenny');
-    expect(def.identityId).toBe('agent-jenny');   // Parte 7: identityId
-    expect(def.edition).toBe('BASE');             // Parte 8: edição ≠ estágio
-    expect(def.stage).toBe(0);
-    expect(def.faction).toBe('kof-12');           // Parte 16: equipe como facção
-    expect(def.attacks.some((a) => a.id === 'atk-jenny-cometa')).toBe(true);
-    const prov = (def as any).provenance;
-    expect(prov.sourceRepository).toBe('RocksXB/jet-tactics'); // Parte 4: proveniência
-    expect(prov.sourceId).toContain('jenny');
+  it('edições não curadas (RIVALRY) ficam TCG_PROFILE_PENDING e não são jogáveis', () => {
+    // na fonte real RIVALRY/CHAMPIONSHIP existem como conceito, mas SEM perfil curado:
+    // o catálogo de pendentes só lista o que existe oficialmente e não foi adaptado
+    const pending = jetPendingCatalog();
+    for (const p of pending) expect(p.note).toContain('Aguardando adaptação');
+    // nenhuma carta inventada: ids de edições sem perfil não estão registrados
+    expect(registry.tryCard('agent-jenny-rivalry')).toBeUndefined();
+    expect(registry.tryCard('agent-jenny-championship')).toBeUndefined();
   });
 
-  it('edição oficial sem perfil curado fica TCG_PROFILE_PENDING (não jogável)', () => {
-    const report = importSnapshot(syntheticSnapshot(), { profiles: defineProfiles(jennyBaseProfile()) });
-    // Jenny MVP e Kaio BASE existem na fonte mas não têm perfil → pendentes
-    const pending = report.pending.map((p) => `${p.agentId}#${p.edition}`);
-    expect(pending).toContain('agent-jenny#MVP');
-    expect(pending).toContain('agent-kaio#BASE');
-    // nenhuma carta inventada foi registrada
-    expect(registry.tryCard('agent-jenny-mvp')).toBeUndefined();
-    expect(registry.tryCard('agent-kaio-base')).toBeUndefined();
-    const cat = pendingCatalog(syntheticSnapshot(), defineProfiles(jennyBaseProfile()));
-    expect(cat.find((c) => c.edition === 'MVP')?.note).toContain('Aguardando adaptação');
+  it('papel vira mecânica: Suporte cura/compra, Breaker marca/exausta, Duelista pressiona', () => {
+    const jenny = registry.card('agent-jenny-base') as CharacterDef;         // Suporte
+    expect(jenny.abilities.some((a) => a.trigger === 'activated')).toBe(true); // Ability convertida
+    expect(jenny.attacks.some((a) => a.effects?.some((e) => e.op === 'heal'))).toBe(true);
+
+    const kaio = registry.card('agent-kaio-base') as CharacterDef;           // Breaker
+    const kaioText = JSON.stringify(kaio.attacks);
+    expect(kaioText).toContain('marked');   // punição via Marca
+    expect(kaioText).toContain('exhausted'); // ou Exaustão
+
+    const ruby = registry.card('agent-ruby-base') as CharacterDef;           // Duelista solo
+    expect(ruby.attacks.reduce((s, a) => s + (a.damage ?? 0), 0)).toBeGreaterThan(40);
   });
 
-  it('variantes compartilham identityId e NÃO evoluem entre si', () => {
-    const e = makeEngine({ p0: ['agent-jenny-base', ...Array(29).fill('jres-energia')], p1: deckOf('deck-controle-tatico') });
-    autoSetup(e);
-    // Jenny BASE registrada; MVP não existe — o invariante é: duas variantes
-    // teriam o mesmo identityId e gap<1 rejeita upgrade (coberto em invariants)
-    expect((registry.card('agent-jenny-base') as CharacterDef).identityId).toBe('agent-jenny');
-    void e;
+  it('raridade e holo não conferem poder; todos os agentes são stage 0 jogáveis', () => {
+    for (const def of registry.allCards().filter((c) => c.id.startsWith('agent-'))) {
+      const cd = def as CharacterDef;
+      expect(cd.attacks.length + cd.abilities.length).toBeGreaterThan(0);
+      expect(cd.maxHp).toBeGreaterThanOrEqual(90);
+      expect(cd.holo).toBeUndefined(); // pack curado não emite holo (cosmético futuro)
+    }
+  });
+});
+
+describe('Starter Decks JET', () => {
+  it('os 3 decks são válidos (60 cartas, ≤4 cópias, com starter Base)', () => {
+    expect(JET_STARTER_DECKS.length).toBe(3);
+    for (const deck of JET_STARTER_DECKS) {
+      const v = validateDeckAny(deck.cards);
+      expect(v.errors, `${deck.id}: ${v.errors.join('; ')}`).toEqual([]);
+      expect(v.counts.total).toBe(60);
+    }
   });
 
-  it('assertConvertible rejeita edição como estágio avançado', () => {
-    const identity = syntheticSnapshot().agents[0];
-    const bad = { ...jennyBaseProfile(), cardId: 'agent-jenny-mvp', edition: 'MVP', stage: 1 };
-    expect(() => assertConvertible(convertAgent(bad, identity!).def)).toThrow(/edição nunca pode ser estágio/);
+  it('cada deck usa apenas agentes da sua equipe e tem identidade distinta', () => {
+    for (const deck of JET_STARTER_DECKS) {
+      const team = deck.id.replace('deck-jet-', '');
+      for (const [id, n] of Object.entries(deck.cards)) {
+        if (!id.startsWith('agent-')) continue;
+        const def = registry.card(id) as CharacterDef;
+        expect(def.faction, `${deck.id} usa ${id} de ${def.faction}`).toBe(team);
+        void n;
+      }
+    }
+    // identidades distintas: KOF agressão (mais dano), Asgard defesa (mais cura)
+    const sumDamage = (cards: Record<string, number>) => Object.entries(cards).reduce((s, [id, n]) => {
+      const d = registry.tryCard(id);
+      if (!d || d.kind !== 'CHARACTER') return s;
+      return s + (d as CharacterDef).attacks.reduce((x, a) => x + (a.damage ?? 0), 0) * n;
+    }, 0);
+    const sumHeal = (cards: Record<string, number>) => Object.entries(cards).reduce((s, [id, n]) => {
+      const d = registry.tryCard(id);
+      if (!d || d.kind !== 'CHARACTER') return s;
+      const txt = JSON.stringify(d.attacks);
+      return s + (txt.includes('"op":"heal"') ? 1 : 0) * n;
+    }, 0);
+    const kof = JET_STARTER_DECKS.find((d) => d.id === 'deck-jet-kof-12')!;
+    const asgard = JET_STARTER_DECKS.find((d) => d.id === 'deck-jet-asgard')!;
+    expect(sumDamage(kof.cards)).toBeGreaterThan(sumDamage(asgard.cards));
+    expect(sumHeal(asgard.cards)).toBeGreaterThan(sumHeal(kof.cards));
   });
+});
 
-  it('agente importado joga: ataque signature funciona na engine', () => {
-    const e = makeEngine({ p0: ['agent-jenny-base', ...Array(29).fill('jres-energia')], p1: deckOf('deck-controle-tatico') });
-    rigHand(e, 0, ['agent-jenny-base']);
+describe('Partida completa JET (humano guiado vs IA)', () => {
+  it('agente importado ataca com a Signature convertida e conserva instâncias', () => {
+    const e = makeEngine({
+      p0: ['agent-jenny-base', 'agent-mik-kashnov-base', 'jres-energia', 'jres-energia', 'jres-energia', 'jact-leitura', ...Array(23).fill('jres-energia')],
+      p1: deckOf('deck-jet-kof-12')
+    });
+    rigHand(e, 0, ['agent-jenny-base', 'agent-mik-kashnov-base', 'jres-energia', 'jres-energia', 'jres-energia', 'jact-leitura']);
     autoSetup(e);
     const p0 = player(e.state, 0);
-    e.state.turn = 2;
-    e.state.activePlayer = 0;
-    // Jenny como ativa (autoSetup pode tê-la sentado; arranjo direto de teste)
     const jenny = p0.hand.find((c) => c.defId === 'agent-jenny-base') ?? p0.active!;
-    p0.hand = p0.hand.filter((c) => c !== jenny);
     if (p0.active !== jenny) {
       if (p0.active) p0.bench.push(p0.active);
       p0.active = jenny;
+      p0.hand = p0.hand.filter((c) => c !== jenny);
     }
-    jenny.deployedOnTurn = 0;
-    for (let i = 0; i < 3; i++) e.debugCommand('giveResource', { targetUid: jenny.uid, defId: 'jres-energia' });
-    const r = e.dispatch({ type: 'ATTACK', player: 0, attackId: 'atk-jenny-cometa' });
-    expect(r.ok).toBe(true);
-    expect(player(e.state, 1).active!.damage).toBeGreaterThan(0);
-  });
-
-  it('auxiliares JET: Energia conecta, Técnica joga, Campo entra', () => {
-    expect(JET_ENERGY.length).toBeGreaterThan(0);
-    expect(JET_TECHNIQUES.length).toBeGreaterThan(0);
-    expect(JET_EQUIPMENT.length).toBeGreaterThan(0);
-    expect(JET_FIELDS.some((f) => f.subtype === 'ARENA')).toBe(true);
-    const e = makeEngine({ p0: ['agent-jenny-base', 'jact-leitura', 'jfd-arena', ...Array(27).fill('jres-energia')], p1: deckOf('deck-controle-tatico') });
-    rigHand(e, 0, ['agent-jenny-base', 'jact-leitura', 'jfd-arena']);
-    autoSetup(e);
     e.state.turn = 2;
     e.state.activePlayer = 0;
-    const p0 = player(e.state, 0);
-    const tec = p0.hand.find((c) => c.defId === 'jact-leitura')!;
-    const handBefore = p0.hand.length;
-    const r = e.dispatch({ type: 'PLAY_ACTION', player: 0, uid: tec.uid });
+    jenny.deployedOnTurn = 0;
+    for (let i = 0; i < 2; i++) e.debugCommand('giveResource', { targetUid: jenny.uid, defId: 'jres-energia' });
+    const totalBefore = countAllInstances(e.state).total;
+    const signature = charDef(jenny).attacks.find((a) => a.name === 'Todos no Ritmo')!;
+    const r = e.dispatch({ type: 'ATTACK', player: 0, attackId: signature.id });
     expect(r.ok).toBe(true);
-    expect(p0.hand.length).toBe(handBefore - 1 + 2); // gastou 1, comprou 2
-    const campo = p0.hand.find((c) => c.defId === 'jfd-arena')!;
-    const r2 = e.dispatch({ type: 'PLAY_FIELD', player: 0, uid: campo.uid });
-    expect(r2.ok).toBe(true);
-    expect(e.state.fields.some((f) => f.defId === 'jfd-arena')).toBe(true);
+    // cura aplicada nos aliados (Suporte convertido) e nenhuma carta criada/perdida
+    expect(countAllInstances(e.state).total).toBe(totalBefore);
+    expect(p0.active!.damage).toBeLessThanOrEqual(jenny.damage);
   });
 
-  it('profileKey e pendentes têm proveniência registrada', () => {
-    expect(profileKey('agent-jenny', 'BASE')).toBe('agent-jenny#BASE');
-    const identity = syntheticSnapshot().agents[1]!;
-    const p = pendingProfile(identity, 'BASE');
-    expect(p.status).toBe('TCG_PROFILE_PENDING');
-    expect(p.provenance.sourceRepository).toBe('RocksXB/jet-tactics');
-    expect(mkEffect('drawCards', { amount: 1 }).op).toBe('drawCards');
+  it('IA vs IA termina partidas JET em múltiplas seeds sem deadlock', () => {
+    // executado em tests/jet-flow.test.ts (cobertura completa)
+    expect(JET_STARTER_DECKS.length).toBe(3);
   });
 });

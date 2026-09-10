@@ -38,6 +38,8 @@ export interface AgentTcgProfile {
   victoryValue: number;
   tags?: string[];
   flavor?: string;
+  /** Regra de caixa (kit summary/texto oficial adaptado). */
+  text?: string;
   provenance: JetProvenance;
 }
 

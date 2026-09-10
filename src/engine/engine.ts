@@ -262,6 +262,8 @@ export class MatchEngine {
     }
     if (steps.includes('draw')) {
       drawCards(g, p.index, this.state.config.turn.drawAmount + this.drawExtraFor(p.index));
+      // recompra que esbarra em baralho vazio pode encerrar a partida (deck_out)
+      if (this.state.winner !== null) return;
     }
     if (steps.includes('main')) {
       this.state.phase = 'main';

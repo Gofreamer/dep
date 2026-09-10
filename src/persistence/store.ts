@@ -1,7 +1,14 @@
 import type { MatchRecord, MetaState, PersistenceAdapter, SavedDeck } from './types';
 import { LocalStorageAdapter } from './local';
-import { STARTER_DECKS } from '../data/fixtures/nexo/decks';
-import { ALL_CARDS } from '../data/fixtures/nexo/cards';
+import { JET_STARTER_DECKS } from '../data/jet/starterDecks';
+import { registerJetDataPack } from '../data/jet/pack';
+import { registry } from '../engine/registry';
+
+/** Catálogo ativo para coleção: registra o pack JET (idempotente) e lista tudo. */
+function activeCatalog() {
+  registerJetDataPack();
+  return registry.allCards();
+}
 
 /** Meta progression: decks, collection, stats, settings. */
 export class MetaStore {
@@ -15,14 +22,14 @@ export class MetaStore {
   }
 
   private defaults(): MetaState {
-    const decks: SavedDeck[] = STARTER_DECKS.map((d, i) => ({
+    const decks: SavedDeck[] = JET_STARTER_DECKS.map((d, i) => ({
       id: d.id,
       name: d.name,
       cards: { ...d.cards },
       createdAt: Date.now() + i
     }));
     const collection: Record<string, number> = {};
-    for (const def of ALL_CARDS) collection[def.id] = 99;
+    for (const def of activeCatalog()) collection[def.id] = 99;
     return {
       version: 1,
       decks,
@@ -40,7 +47,17 @@ export class MetaStore {
     // Future schema migrations live here.
     if (!this.state.settings) this.state.settings = this.defaults().settings;
     if (!this.state.collection) this.state.collection = {};
-    for (const def of ALL_CARDS) if (!this.state.collection[def.id]) this.state.collection[def.id] = 99;
+    for (const def of activeCatalog()) if (!this.state.collection[def.id]) this.state.collection[def.id] = 99;
+    // Baralhos salvos com cartas fora do catálogo ativo (ex.: fixture NEXO do
+    // prototype anterior) não são jogáveis — descartados; fallback: starters JET.
+    const known = (id: string) => registry.tryCard(id) !== undefined;
+    this.state.decks = this.state.decks.filter((d) => Object.keys(d.cards).every(known));
+    if (this.state.decks.length === 0) {
+      this.state.decks = this.defaults().decks;
+    }
+    if (!this.state.decks.some((d) => d.id === this.state.activeDeckId)) {
+      this.state.activeDeckId = this.state.decks[0]?.id ?? '';
+    }
     this.save();
   }
 

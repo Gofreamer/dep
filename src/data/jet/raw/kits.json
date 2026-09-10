@@ -1,0 +1,344 @@
+[
+  {
+    "agentId": "agent-hashika-gloves",
+    "role": "Duelista",
+    "archetype": "duelist",
+    "summary": "Hashika abre uma caçada com Marca e precisa decidir entre manter a presa exposta ou consumi-la para fechar a zona.",
+    "passive": {
+      "name": "Predador à Vista",
+      "description": "Disputa gera +1 Influência contra uma Vanguarda Marcada."
+    },
+    "skill": {
+      "name": "Rastro de Corte",
+      "description": "+1 Influência e Marca a Vanguarda rival por 2 rodadas."
+    },
+    "signature": {
+      "name": "Quarto Fechado",
+      "description": "+3 Influência e corta Apoio. Silencia a Vanguarda rival; se ela estiver Marcada, também a Imobiliza e consome a Marca."
+    },
+    "__sourceId": "curated-agents-6#salvatore_hashika gloves"
+  },
+  {
+    "agentId": "agent-henry",
+    "role": "Guardião",
+    "archetype": "guardian",
+    "summary": "Henry abre um corredor de retirada: segura a zona atual e restaura aliados posicionados ao redor dela.",
+    "passive": {
+      "name": "Interceptação de Escolta",
+      "description": "Proteção de Henry na Retaguarda também protege o aliado da Vanguarda da mesma zona contra Confronto."
+    },
+    "skill": {
+      "name": "Corredor Seguro",
+      "description": "+2 Influência, bloqueia Confronto e concede Tenacidade ao aliado da Vanguarda."
+    },
+    "signature": {
+      "name": "Extração em Cadeia",
+      "description": "+2 Influência e bloqueia todos os Confrontos. Purifica a Vanguarda local e as Vanguardas adjacentes, além de reduzir em 1 a recarga local."
+    },
+    "__sourceId": "curated-agents-6#morning star_henry"
+  },
+  {
+    "agentId": "agent-kaio",
+    "role": "Breaker",
+    "archetype": "breaker",
+    "summary": "Kaio prepara uma fratura visível e recompensa o Confronto contra a presa antes de consumir a Marca no colapso.",
+    "passive": {
+      "name": "Cobrança da Fratura",
+      "description": "Confronto reduz 2 Influência quando a Vanguarda rival está Marcada; sem Marca, reduz 1."
+    },
+    "skill": {
+      "name": "Ruptura Violeta",
+      "description": "-1 Influência, tenta causar Ruptura e Marca a Vanguarda rival por 2 rodadas."
+    },
+    "signature": {
+      "name": "Colapso em Cadeia",
+      "description": "-2 Influência e tenta causar Ruptura. Aplica Exaustão; contra alvo Marcado, rouba 1 Ímpeto e consome a Marca."
+    },
+    "__sourceId": "curated-agents-6#bastard gran tubaroes xyz_kaio"
+  },
+  {
+    "agentId": "agent-baek-seo-jin",
+    "role": "Controlador",
+    "archetype": "controller",
+    "summary": "Baek instala uma janela de interferência e transforma recarga sabotada em ameaça telegráfica de Atordoamento.",
+    "passive": {
+      "name": "Eco de Interferência",
+      "description": "Ao Proteger contra uma Vanguarda Silenciada, aumenta em 1 a recarga da Habilidade dela."
+    },
+    "skill": {
+      "name": "Interferência Fantasma",
+      "description": "-1 Influência, Silencia a Vanguarda rival e aumenta em 1 a recarga da Habilidade dela."
+    },
+    "signature": {
+      "name": "Lockdown Neural",
+      "description": "-2 Influência, corta Apoio e Atordoa a Vanguarda rival. Se a Habilidade dela estiver em recarga, também a Imobiliza."
+    },
+    "__sourceId": "curated-agents-6#platinum_baek seo-jin"
+  },
+  {
+    "agentId": "agent-jenny",
+    "role": "Suporte",
+    "archetype": "support",
+    "summary": "Jenny transforma Apoio em economia e reserva sua Suprema para recuperar exatamente as linhas que já estão sob pressão.",
+    "passive": {
+      "name": "Batida que se Paga",
+      "description": "Ao Apoiar, recupera 1 Ímpeto; o Apoio mantém sua Influência normal."
+    },
+    "skill": {
+      "name": "Impulso de Equipe",
+      "description": "+2 Influência, recupera 1 Ímpeto e Purifica o aliado da Vanguarda."
+    },
+    "signature": {
+      "name": "Todos no Ritmo",
+      "description": "+1 Influência em cada zona com Vanguarda aliada. Vanguardas sob estado negativo recebem Tenacidade antes de serem Purificadas."
+    },
+    "__sourceId": "curated-agents-6#kof 12_jenny"
+  },
+  {
+    "agentId": "agent-olivia-mih",
+    "role": "Âncora",
+    "archetype": "guardian",
+    "summary": "Olivia converte defesa em estabilização: cada Proteção limpa a linha local e a Suprema recompensa frentes comprometidas.",
+    "passive": {
+      "name": "Âncora Restauradora",
+      "description": "Proteção na Retaguarda também intercepta Confronto; ao Proteger, Purifica a Vanguarda aliada da zona."
+    },
+    "skill": {
+      "name": "Ponto de Retorno",
+      "description": "+1 Influência, bloqueia Confronto, Purifica e concede Tenacidade ao aliado da Vanguarda."
+    },
+    "signature": {
+      "name": "Campo de Estabilidade",
+      "description": "+2 Influência e bloqueia todos os Confrontos. Cada Vanguarda aliada sob estado negativo recebe +1 Influência antes de ser Purificada."
+    },
+    "__sourceId": "curated-agents-6#weigon_olivia mih"
+  },
+  {
+    "agentId": "agent-wei-fang",
+    "role": "Interdictor",
+    "archetype": "controller",
+    "summary": "Wei Fang transforma recarga inimiga em território e usa essa mesma janela para financiar o Blackout.",
+    "passive": {
+      "name": "Janela de Contra-Sinal",
+      "description": "Proteção gera +1 Influência quando a Habilidade da Vanguarda rival está em recarga."
+    },
+    "skill": {
+      "name": "Corte de Canal",
+      "description": "-1 Influência, corta Apoio, aplica Exaustão e aumenta em 1 a recarga da Vanguarda rival."
+    },
+    "signature": {
+      "name": "Blackout Tático",
+      "description": "-2 Influência e Silencia a Vanguarda rival. Se a Habilidade dela estiver em recarga, rouba 1 Ímpeto."
+    },
+    "__sourceId": "curated-agents-6#rainbow six_wei fang"
+  },
+  {
+    "agentId": "agent-ruby",
+    "role": "Duelista",
+    "archetype": "duelist",
+    "summary": "Ruby domina o espaço vazio, prepara uma Marca curta e a converte em aprisionamento e perda de presença.",
+    "passive": {
+      "name": "Palco sem Testemunhas",
+      "description": "Disputa gera +1 Influência quando Ruby não possui aliado na Retaguarda da mesma zona."
+    },
+    "skill": {
+      "name": "Finta Rubra",
+      "description": "+1 Influência, corta Apoio e Marca a Vanguarda rival por 2 rodadas."
+    },
+    "signature": {
+      "name": "Tudo no Vermelho",
+      "description": "+3 Influência e Imobiliza a Vanguarda rival. Se ela estiver Marcada, perde mais 1 Influência e a Marca é consumida."
+    },
+    "__sourceId": "curated-agents-6#bastard gran tubaroes xyz_ruby"
+  },
+  {
+    "agentId": "agent-xixim",
+    "role": "Breaker",
+    "archetype": "breaker",
+    "summary": "Xixim pune zonas sem cobertura e espalha o custo de sua Ruptura para as duas frentes vizinhas.",
+    "passive": {
+      "name": "Alvo sem Amortecimento",
+      "description": "Confronto reduz 2 Influência quando o rival não possui agente na Retaguarda da zona."
+    },
+    "skill": {
+      "name": "Tranco Seco",
+      "description": "-1 Influência e aplica Exaustão. Se o rival tiver ao menos 4 Ímpeto, também drena 1."
+    },
+    "signature": {
+      "name": "Queda de Ritmo",
+      "description": "-2 Influência, tenta causar Ruptura e drena 1 Ímpeto. As Vanguardas inimigas adjacentes ficam Exaustas."
+    },
+    "__sourceId": "curated-agents-6#kof 12_xixim"
+  },
+  {
+    "agentId": "agent-alice-westland",
+    "role": "Suporte",
+    "archetype": "support",
+    "summary": "Alice usa cada Apoio para acelerar a linha local e transforma a Suprema numa rotação de Habilidades em toda a formação.",
+    "passive": {
+      "name": "Passe de Revezamento",
+      "description": "Ao Apoiar, reduz em 1 a recarga da Habilidade do aliado da Vanguarda."
+    },
+    "skill": {
+      "name": "Reforço Lateral",
+      "description": "+1 Influência. Se o aliado da Vanguarda estiver sob estado negativo, recebe Tenacidade antes de ser Purificado."
+    },
+    "signature": {
+      "name": "Rotação Asgard",
+      "description": "+1 Influência em cada zona com Vanguarda aliada e reduz em 1 a recarga de todas essas Vanguardas."
+    },
+    "__sourceId": "curated-agents-6#asgard_alice westland"
+  },
+  {
+    "agentId": "agent-tarruh",
+    "role": "Guardião",
+    "archetype": "guardian",
+    "summary": "Tarruh protege em profundidade e projeta resistência para as zonas vizinhas sem transformar a arena inteira num escudo.",
+    "passive": {
+      "name": "Segunda Linha",
+      "description": "Proteção na Retaguarda também intercepta Confronto e concede Tenacidade à Vanguarda aliada da zona."
+    },
+    "skill": {
+      "name": "Linha de Aço",
+      "description": "+2 Influência, bloqueia Confronto e concede Tenacidade ao aliado da Vanguarda."
+    },
+    "signature": {
+      "name": "Parede de Asgard",
+      "description": "+3 Influência e bloqueia todos os Confrontos da zona. Purifica e concede Tenacidade às Vanguardas aliadas adjacentes."
+    },
+    "__sourceId": "curated-agents-6#asgard_tarruh"
+  },
+  {
+    "agentId": "agent-tayna-lannister-muller",
+    "role": "Controladora",
+    "archetype": "controller",
+    "summary": "Tayná transforma vantagem em contenção: taxa uma linha e faz a Suprema alcançar somente inimigos cuja janela especial já foi comprometida.",
+    "passive": {
+      "name": "Decreto de Vantagem",
+      "description": "Proteção gera +1 Influência enquanto Tayná estiver à frente em Domínio."
+    },
+    "skill": {
+      "name": "Corte de Ritmo",
+      "description": "-1 Influência, aplica Exaustão e aumenta em 1 a recarga da Vanguarda rival."
+    },
+    "signature": {
+      "name": "Fecho Real",
+      "description": "-2 Influência, corta Apoio e drena 1 Ímpeto na zona. Toda Vanguarda inimiga com Habilidade em recarga fica Silenciada."
+    },
+    "__sourceId": "curated-agents-6#asgard_tayna lannister muller"
+  },
+  {
+    "agentId": "agent-ran-yuki",
+    "role": "Duelista",
+    "archetype": "duelist",
+    "summary": "Ran acelera quando o Ímpeto acaba e usa sua Suprema como ferramenta de recuperação quando o placar pede risco.",
+    "passive": {
+      "name": "Segundo Fôlego",
+      "description": "Disputa gera +1 Influência quando Ran começa a resolução com até 2 Ímpeto."
+    },
+    "skill": {
+      "name": "Ponto de Entrada",
+      "description": "+2 Influência e recupera 1 Ímpeto durante a resolução."
+    },
+    "signature": {
+      "name": "Duelo de Set",
+      "description": "+3 Influência, corta Apoio e Marca a Vanguarda rival por 2 rodadas. Se estiver atrás em Domínio, recupera 1 Ímpeto."
+    },
+    "__sourceId": "curated-agents-6#kof 12_ran yuki"
+  },
+  {
+    "agentId": "agent-shirakami-niku",
+    "role": "Bastião",
+    "archetype": "guardian",
+    "summary": "Shirakami concentra o maior reset defensivo do elenco numa Suprema única, mantendo a Habilidade estritamente local.",
+    "passive": {
+      "name": "Trono Inabalável",
+      "description": "Proteção na Retaguarda também protege o aliado da Vanguarda da mesma zona contra Confronto."
+    },
+    "skill": {
+      "name": "Fortaleza Móvel",
+      "description": "+2 Influência, bloqueia todos os Confrontos e concede Tenacidade ao aliado da Vanguarda."
+    },
+    "signature": {
+      "name": "Trono Absoluto",
+      "description": "+3 Influência, bloqueia todos os Confrontos, Purifica e concede Tenacidade a todas as Vanguardas aliadas."
+    },
+    "__sourceId": "curated-agents-6#kof 12_shirakami niku"
+  },
+  {
+    "agentId": "agent-wei-wang",
+    "role": "Controlador",
+    "archetype": "controller",
+    "summary": "Wei Wang mostra a ameaça antes de executá-la: a Marca fortalece sua defesa e é o requisito do Atordoamento da Suprema.",
+    "passive": {
+      "name": "Disciplina sobre a Presa",
+      "description": "Proteção gera +1 Influência contra uma Vanguarda Marcada."
+    },
+    "skill": {
+      "name": "Interdição",
+      "description": "-1 Influência, Marca a Vanguarda rival por 2 rodadas e aumenta em 1 sua recarga."
+    },
+    "signature": {
+      "name": "Zona Morta",
+      "description": "-2 Influência, corta Apoio e Atordoa a Vanguarda rival. Se estiver Marcada, também a Imobiliza e consome a Marca."
+    },
+    "__sourceId": "curated-agents-6#rainbow six_wei wang"
+  },
+  {
+    "agentId": "agent-mik-kashnov",
+    "role": "Conector",
+    "archetype": "support",
+    "summary": "Mik é mais eficiente no Centro e usa a malha lateral para acelerar agentes fora da própria zona.",
+    "passive": {
+      "name": "Nó Central",
+      "description": "Apoio gera +2 Influência no Centro e +1 nas demais zonas."
+    },
+    "skill": {
+      "name": "Pulso de Retorno",
+      "description": "+1 Influência, reduz em 1 a recarga da Vanguarda aliada e recupera 1 Ímpeto."
+    },
+    "signature": {
+      "name": "Malha Morning Star",
+      "description": "+1 Influência em cada zona com Vanguarda aliada, reduz a recarga das Vanguardas adjacentes e recupera 1 Ímpeto se estiver atrás em Domínio."
+    },
+    "__sourceId": "curated-agents-6#morning star_mik kashnov"
+  },
+  {
+    "agentId": "agent-ryan-smith",
+    "role": "Comandante",
+    "archetype": "support",
+    "summary": "Ryan ganha eficiência quando precisa buscar o placar e converte esse estado em proteção e resistência coletiva.",
+    "passive": {
+      "name": "Ordem de Recuperação",
+      "description": "Apoio gera +2 Influência enquanto Ryan estiver atrás em Domínio; empatado ou à frente, gera +1."
+    },
+    "skill": {
+      "name": "Linha de Comando",
+      "description": "+1 Influência, bloqueia Confronto e Purifica a Vanguarda aliada. Se estiver atrás em Domínio, recebe +1 Influência adicional."
+    },
+    "signature": {
+      "name": "Todos de Pé",
+      "description": "+1 Influência em cada zona com Vanguarda aliada e concede Tenacidade a todas elas. Se estiver atrás em Domínio, recupera 1 Ímpeto."
+    },
+    "__sourceId": "curated-agents-6#morning star_ryan smith"
+  },
+  {
+    "agentId": "agent-saki",
+    "role": "Breaker",
+    "archetype": "breaker",
+    "summary": "Saki planta a Marca com Confronto e escolhe entre cobrá-la por recurso ou espalhar o abalo para as zonas vizinhas.",
+    "passive": {
+      "name": "Marca de Impacto",
+      "description": "Após um Confronto não bloqueado, Marca a Vanguarda atingida por 2 rodadas."
+    },
+    "skill": {
+      "name": "Fissura de Cobrança",
+      "description": "-1 Influência e tenta causar Ruptura. Contra alvo Marcado, rouba 1 Ímpeto e consome a Marca."
+    },
+    "signature": {
+      "name": "Abalo Final",
+      "description": "-2 Influência, tenta causar Ruptura e Silencia a Vanguarda atingida. Vanguardas inimigas adjacentes ficam Exaustas."
+    },
+    "__sourceId": "curated-agents-6#morning star_saki"
+  }
+]

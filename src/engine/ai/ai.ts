@@ -5,6 +5,7 @@ import {
 } from '../queries';
 import { canUpgradeTo } from '../rules';
 import { computeLegalActions } from '../validation';
+import { registry } from '../registry';
 import { evalCondition, rand } from '../effects/core';
 
 /**
@@ -311,8 +312,16 @@ function bestResourceTarget(state: MatchState, pIdx: PlayerId, card: CardInstanc
 
 const TYPED_RES: Record<string, string> = { solar: 'res-solar', mare: 'res-mare', flora: 'res-flora', volt: 'res-volt', umbra: 'res-umbra', '*': 'res-neutro' };
 
+/** Id de um RECURSO REGISTRADO compatível (sem hardcode de pack — JET/NEXO/qualquer um). */
+function simResourceDefId(type: string, wild: boolean | undefined): string | null {
+  const resources = registry.allCards().filter((d) => d.kind === 'RESOURCE');
+  const exact = resources.find((d) => (wild ? !!(d as { wild?: boolean }).wild : (d as { resourceType?: string }).resourceType === type));
+  return exact?.id ?? resources[0]?.id ?? null;
+}
+
 function simulateAttach(host: CardInstance, type: string, wild: boolean | undefined): CardInstance {
-  const fakeDefId = wild ? 'res-prisma' : (TYPED_RES[type] ?? 'res-neutro');
+  const fakeDefId = simResourceDefId(type, wild);
+  if (!fakeDefId) return host; // nenhum recurso registrado: sem simulação
   return {
     ...host,
     attached: [...host.attached, { uid: 'sim', defId: fakeDefId, owner: host.owner, kind: 'RESOURCE', damage: 0, stageLevel: 0, statuses: [], counters: {}, attached: [], progression: [], usedTurn: [], usedMatch: [], deployedOnTurn: 0 }]

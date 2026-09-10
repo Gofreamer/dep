@@ -182,8 +182,10 @@ export function aggregateMods(state: MatchState, mc: ModContext): AggregatedResu
     push(edef.mods, mc.side);
   }
 
-  // Passive aura abilities of all characters in play
+  // Passive aura abilities — ONLY auras owned by the affected side count
+  // (an enemy aura must never buff this side's damage or protection).
   for (const p of state.players) {
+    if (p.index !== mc.owner) continue;
     for (const c of charactersInPlay(state, p.index)) {
       const cdef = charDef(c);
       for (const ab of cdef.abilities) {

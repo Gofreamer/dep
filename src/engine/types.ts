@@ -86,6 +86,8 @@ export type ConditionSpec =
   | { op: 'damageAtLeast'; value: number; target?: SelectorId }
   | { op: 'counterAtLeast'; counter: string; value: number; target?: SelectorId }
   | { op: 'discardAtLeast'; count: number; side?: 'source' | 'opponent' }
+  | { op: 'benchAtLeast'; value: number; side?: 'source' | 'opponent' }
+  | { op: 'benchAtMost'; value: number; side?: 'source' | 'opponent' }
   | { op: 'deckAtLeast'; count: number; side?: 'source' | 'opponent' }
   | { op: 'turnAtLeast'; turn: number }
   | { op: 'vpCompare'; side?: 'source' | 'opponent'; compare: 'more' | 'less' | 'equal' }

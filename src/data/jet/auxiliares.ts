@@ -8,6 +8,34 @@ import type { EquipmentDef, FieldDef, ActionDef } from '../../engine/types';
  */
 export const JET_TECHNIQUES: ActionDef[] = [
   {
+    id: 'jact-purificacao', kind: 'ACTION', name: 'Purificação', faction: 'neutro', rarity: 'common',
+    tags: ['suporte'], art: { motif: 'tecnica', seed: 'jact-7' },
+    effects: [{ op: 'removeStatus', target: 'activeAlly', status: 'all' }],
+    text: 'Remova todos os efeitos do seu Agente Ativo.',
+    restrictions: [{ type: 'oncePerTurn' }]
+  },
+  {
+    id: 'jact-marcacao', kind: 'ACTION', name: 'Marca Tática', faction: 'neutro', rarity: 'uncommon',
+    tags: ['ofensiva'], art: { motif: 'tecnica', seed: 'jact-8' },
+    effects: [{ op: 'applyStatus', target: 'enemyActive', status: 'marked', tokens: 2 }],
+    text: 'O Agente Ativo inimigo fica Marcado por 2 turnos (recebe +10 de dano).',
+    restrictions: [{ type: 'oncePerTurn' }]
+  },
+  {
+    id: 'jact-recarga', kind: 'ACTION', name: 'Recarga Rápida', faction: 'neutro', rarity: 'uncommon',
+    tags: ['energia'], art: { motif: 'tecnica', seed: 'jact-9' },
+    effects: [{ op: 'attachResource', target: 'activeAlly', amount: 1, from: 'hand' }, { op: 'drawCards', amount: 1 }],
+    text: 'Conecte 1 Energia da sua mão ao seu Agente Ativo e compre 1 carta.',
+    restrictions: [{ type: 'oncePerTurn' }]
+  },
+  {
+    id: 'jact-retomada', kind: 'ACTION', name: 'Retomada', faction: 'neutro', rarity: 'rare',
+    tags: ['suporte'], art: { motif: 'tecnica', seed: 'jact-10' },
+    effects: [{ op: 'retrieveFromDiscard', amount: 1, pick: 'you', reveal: true }],
+    text: 'Recupere 1 carta do seu descarte para a mão.',
+    restrictions: [{ type: 'oncePerTurn' }]
+  },
+  {
     id: 'jact-abre-espaco', kind: 'ACTION', name: 'Abre-Espaço', faction: 'neutro', rarity: 'common',
     tags: ['manobra'], art: { motif: 'tecnica', seed: 'jact-1' },
     effects: [{ op: 'switchActive' }],

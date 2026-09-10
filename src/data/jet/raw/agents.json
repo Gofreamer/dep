@@ -1,0 +1,228 @@
+[
+  {
+    "id": "agent-hashika-gloves",
+    "playerKey": "salvatore_hashika gloves",
+    "name": "Hashika Gloves",
+    "team": "salvatore",
+    "role": "Duelista",
+    "summary": "Hashika abre uma caçada com Marca e precisa decidir entre manter a presa exposta ou consumi-la para fechar a zona.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#salvatore_hashika gloves"
+  },
+  {
+    "id": "agent-henry",
+    "playerKey": "morning star_henry",
+    "name": "Henry",
+    "team": "morning star",
+    "role": "Guardião",
+    "summary": "Henry abre um corredor de retirada: segura a zona atual e restaura aliados posicionados ao redor dela.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#morning star_henry"
+  },
+  {
+    "id": "agent-kaio",
+    "playerKey": "bastard gran tubaroes xyz_kaio",
+    "name": "Kaio",
+    "team": "bastard gran tubaroes xyz",
+    "role": "Breaker",
+    "summary": "Kaio prepara uma fratura visível e recompensa o Confronto contra a presa antes de consumir a Marca no colapso.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#bastard gran tubaroes xyz_kaio"
+  },
+  {
+    "id": "agent-baek-seo-jin",
+    "playerKey": "platinum_baek seo-jin",
+    "name": "Baek Seo-jin",
+    "team": "platinum",
+    "role": "Controlador",
+    "summary": "Baek instala uma janela de interferência e transforma recarga sabotada em ameaça telegráfica de Atordoamento.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#platinum_baek seo-jin"
+  },
+  {
+    "id": "agent-jenny",
+    "playerKey": "kof 12_jenny",
+    "name": "Jenny",
+    "team": "kof 12",
+    "role": "Suporte",
+    "summary": "Jenny transforma Apoio em economia e reserva sua Suprema para recuperar exatamente as linhas que já estão sob pressão.",
+    "editions": [
+      "BASE",
+      "MVP"
+    ],
+    "__sourceId": "curated-agents-6#kof 12_jenny"
+  },
+  {
+    "id": "agent-olivia-mih",
+    "playerKey": "weigon_olivia mih",
+    "name": "Olivia Mih",
+    "team": "weigon",
+    "role": "Âncora",
+    "summary": "Olivia converte defesa em estabilização: cada Proteção limpa a linha local e a Suprema recompensa frentes comprometidas.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#weigon_olivia mih"
+  },
+  {
+    "id": "agent-wei-fang",
+    "playerKey": "rainbow six_wei fang",
+    "name": "Wei Fang",
+    "team": "rainbow six",
+    "role": "Interdictor",
+    "summary": "Wei Fang transforma recarga inimiga em território e usa essa mesma janela para financiar o Blackout.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#rainbow six_wei fang"
+  },
+  {
+    "id": "agent-ruby",
+    "playerKey": "bastard gran tubaroes xyz_ruby",
+    "name": "Ruby",
+    "team": "bastard gran tubaroes xyz",
+    "role": "Duelista",
+    "summary": "Ruby domina o espaço vazio, prepara uma Marca curta e a converte em aprisionamento e perda de presença.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#bastard gran tubaroes xyz_ruby"
+  },
+  {
+    "id": "agent-xixim",
+    "playerKey": "kof 12_xixim",
+    "name": "Xixim",
+    "team": "kof 12",
+    "role": "Breaker",
+    "summary": "Xixim pune zonas sem cobertura e espalha o custo de sua Ruptura para as duas frentes vizinhas.",
+    "editions": [
+      "BASE"
+    ],
+    "__sourceId": "curated-agents-6#kof 12_xixim"
+  },
+  {
+    "id": "agent-alice-westland",
+    "playerKey": "asgard_alice westland",
+    "name": "Alice Westland",
+    "team": "asgard",
+    "role": "Suporte",
+    "summary": "Alice usa cada Apoio para acelerar a linha local e transforma a Suprema numa rotação de Habilidades em toda a formação.",
+    "editions": [
+      "BASE",
+      "FINALS"
+    ],
+    "__sourceId": "curated-agents-6#asgard_alice westland"
+  },
+  {
+    "id": "agent-tarruh",
+    "playerKey": "asgard_tarruh",
+    "name": "Tarruh",
+    "team": "asgard",
+    "role": "Guardião",
+    "summary": "Tarruh protege em profundidade e projeta resistência para as zonas vizinhas sem transformar a arena inteira num escudo.",
+    "editions": [
+      "BASE",
+      "FINALS"
+    ],
+    "__sourceId": "curated-agents-6#asgard_tarruh"
+  },
+  {
+    "id": "agent-tayna-lannister-muller",
+    "playerKey": "asgard_tayna lannister muller",
+    "name": "Tayná Lannister Müller",
+    "team": "asgard",
+    "role": "Controladora",
+    "summary": "Tayná transforma vantagem em contenção: taxa uma linha e faz a Suprema alcançar somente inimigos cuja janela especial já foi comprometida.",
+    "editions": [
+      "BASE",
+      "FINALS"
+    ],
+    "__sourceId": "curated-agents-6#asgard_tayna lannister muller"
+  },
+  {
+    "id": "agent-ran-yuki",
+    "playerKey": "kof 12_ran yuki",
+    "name": "Ran Yuki",
+    "team": "kof 12",
+    "role": "Duelista",
+    "summary": "Ran acelera quando o Ímpeto acaba e usa sua Suprema como ferramenta de recuperação quando o placar pede risco.",
+    "editions": [
+      "BASE",
+      "CHAMPION"
+    ],
+    "__sourceId": "curated-agents-6#kof 12_ran yuki"
+  },
+  {
+    "id": "agent-shirakami-niku",
+    "playerKey": "kof 12_shirakami niku",
+    "name": "Shirakami Niku",
+    "team": "kof 12",
+    "role": "Bastião",
+    "summary": "Shirakami concentra o maior reset defensivo do elenco numa Suprema única, mantendo a Habilidade estritamente local.",
+    "editions": [
+      "BASE",
+      "CHAMPION"
+    ],
+    "__sourceId": "curated-agents-6#kof 12_shirakami niku"
+  },
+  {
+    "id": "agent-wei-wang",
+    "playerKey": "rainbow six_wei wang",
+    "name": "Wei Wang",
+    "team": "rainbow six",
+    "role": "Controlador",
+    "summary": "Wei Wang mostra a ameaça antes de executá-la: a Marca fortalece sua defesa e é o requisito do Atordoamento da Suprema.",
+    "editions": [
+      "BASE",
+      "MVP"
+    ],
+    "__sourceId": "curated-agents-6#rainbow six_wei wang"
+  },
+  {
+    "id": "agent-mik-kashnov",
+    "playerKey": "morning star_mik kashnov",
+    "name": "Mik Kashnov",
+    "team": "morning star",
+    "role": "Conector",
+    "summary": "Mik é mais eficiente no Centro e usa a malha lateral para acelerar agentes fora da própria zona.",
+    "editions": [
+      "BASE",
+      "ICON"
+    ],
+    "__sourceId": "curated-agents-6#morning star_mik kashnov"
+  },
+  {
+    "id": "agent-ryan-smith",
+    "playerKey": "morning star_ryan smith",
+    "name": "Ryan Smith",
+    "team": "morning star",
+    "role": "Comandante",
+    "summary": "Ryan ganha eficiência quando precisa buscar o placar e converte esse estado em proteção e resistência coletiva.",
+    "editions": [
+      "BASE",
+      "CHAMPION"
+    ],
+    "__sourceId": "curated-agents-6#morning star_ryan smith"
+  },
+  {
+    "id": "agent-saki",
+    "playerKey": "morning star_saki",
+    "name": "Saki",
+    "team": "morning star",
+    "role": "Breaker",
+    "summary": "Saki planta a Marca com Confronto e escolhe entre cobrá-la por recurso ou espalhar o abalo para as zonas vizinhas.",
+    "editions": [
+      "BASE",
+      "CHAMPION"
+    ],
+    "__sourceId": "curated-agents-6#morning star_saki"
+  }
+]

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp, metaStore } from '../appStore';
-import { validateDeck, deckStats, STARTER_DECKS } from '../../data/fixtures/nexo/decks';
+import { validateDeck, deckStats } from '../../data/deckUtils';
+import { JET_STARTER_DECKS } from '../../data/jet/starterDecks';
 import { DEFAULT_CONFIG } from '../../engine/types';
 import { TERMINOLOGY as T } from '../../data/terminology';
 import { registry } from '../../engine/registry';
@@ -41,7 +42,7 @@ export const DeckSelectScreen: React.FC = () => {
           return (
             <button key={d.id} className={`deck-option ${selected === d.id ? 'selected' : ''}`} onClick={() => setSelected(d.id)}>
               <b className="do-name">{d.name}</b>
-              <small className="do-desc">{STARTER_DECKS.find((s0) => s0.id === d.id)?.description ?? `Baralho personalizado — ${Object.keys(d.cards).length} tipos de carta`}</small>
+              <small className="do-desc">{JET_STARTER_DECKS.find((s0) => s0.id === d.id)?.description ?? `Baralho personalizado — ${Object.keys(d.cards).length} tipos de carta`}</small>
               <div className="do-stats">
                 <span>{stats.total} cartas</span>
                 <span>{stats.byKind.CHARACTER ?? 0} {T.characterPlural.toLowerCase()}</span>

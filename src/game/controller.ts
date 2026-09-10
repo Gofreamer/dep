@@ -7,6 +7,7 @@ import type { MatchRecord } from '../persistence/types';
 import { registry } from '../engine/registry';
 import { charDef, charactersInPlay, player } from '../engine/queries';
 import { expandDeck, STARTER_DECKS, TUTORIAL_DECKS } from '../data/fixtures/nexo/decks';
+import { JET_STARTER_DECKS } from '../data/jet/starterDecks';
 
 // ---------------------------------------------------------------------------
 // FX cues — visual representations of already-resolved game events
@@ -80,9 +81,9 @@ export class MatchController {
       for (const [id, n] of Object.entries(saved.cards)) for (let i = 0; i < n; i++) cards.push(id);
       return cards.map((id) => registry.card(id));
     }
-    const starter = [...STARTER_DECKS, ...TUTORIAL_DECKS].find((d) => d.id === deckId);
+    const starter = [...JET_STARTER_DECKS, ...STARTER_DECKS, ...TUTORIAL_DECKS].find((d) => d.id === deckId);
     if (starter) return expandDeck(starter).map((id) => registry.card(id));
-    return expandDeck(STARTER_DECKS[0]).map((id) => registry.card(id));
+    return expandDeck(JET_STARTER_DECKS[0]).map((id) => registry.card(id));
   }
 
   /** Tutorial: deterministic opening hand so steps are teachable. */
@@ -91,7 +92,7 @@ export class MatchController {
     const me = player(st, 0);
     me.hand = [];
     me.deck = me.deck.filter((c) => true);
-    const want = ['char-cindro', 'char-chispito', 'char-ignarok', 'res-solar', 'res-solar', 'res-volt', 'act-golpe'];
+    const want = ['agent-jenny-base', 'agent-xixim-base', 'agent-ran-yuki-base', 'jres-energia', 'jres-energia', 'jact-leitura', 'jeq-manopla'];
     for (const defId of want) {
       const inDeck = me.deck.find((c) => c.defId === defId);
       if (inDeck) me.hand.push(inDeck);
@@ -281,21 +282,21 @@ export interface TutorialStep {
   blocked?: string;
 }
 
-/** Roteiro do tutorial — curto, guiado por ações reais. */
+/** Roteiro do tutorial — curto, guiado por ações reais (roster JET). */
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     title: 'Escolha seu Ativo',
-    text: 'Toque em Cindro e confirme como seu personagem ativo.',
+    text: 'Toque em Jenny e confirme como sua Agente ativa.',
     allow: ['SETUP_SET_ACTIVE'],
     trigger: (c) => c.type === 'SETUP_SET_ACTIVE',
-    blocked: 'Primeiro escolha seu personagem ativo.'
+    blocked: 'Primeiro escolha sua Agente ativa.'
   },
   {
     title: 'Monte a Reserva',
-    text: 'Toque em Chispito para colocá-lo na Reserva (banco).',
+    text: 'Toque em Xixim para colocá-lo na Reserva (banco).',
     allow: ['SETUP_BENCH'],
     trigger: (c) => c.type === 'SETUP_BENCH',
-    blocked: 'Coloque Chispito na Reserva.'
+    blocked: 'Coloque Xixim na Reserva.'
   },
   {
     title: 'Pronto!',
@@ -305,44 +306,44 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     blocked: 'Toque em Pronto para iniciar.'
   },
   {
-    title: 'Conecte um Recurso',
-    text: 'Recursos pagam ataques. Toque na Essência Solar e depois no Cindro.',
+    title: 'Conecte uma Energia',
+    text: 'Energias pagam ataques e habilidades. Toque na Energia JET e depois na Jenny.',
     allow: ['ATTACH_RESOURCE'],
     trigger: (c) => c.type === 'ATTACH_RESOURCE',
-    blocked: 'Conecte a Essência Solar ao Cindro.'
+    blocked: 'Conecte a Energia JET à Jenny.'
   },
   {
-    title: 'Jogue uma Ação',
-    text: 'Toque em Golpe Tático: 30 de dano no ativo inimigo.',
+    title: 'Jogue uma Técnica',
+    text: 'Toque em Leitura de Combate: compre 2 cartas.',
     allow: ['PLAY_ACTION'],
     trigger: (c) => c.type === 'PLAY_ACTION',
-    blocked: 'Use a carta de ação Golpe Tático.'
+    blocked: 'Use a Técnica Leitura de Combate.'
   },
   {
-    title: 'Evolua!',
-    text: 'Toque em Ignarok e depois no Cindro para evoluí-lo.',
-    allow: ['UPGRADE', 'ATTACH_RESOURCE', 'PLAY_ACTION'],
-    trigger: (c) => c.type === 'UPGRADE',
-    blocked: 'Evolua o Cindro com a carta Ignarok.'
+    title: 'Equipe um Equipamento',
+    text: 'Toque na Manopla Reforçada para equipar sua Agente ativa (+10 de dano).',
+    allow: ['PLAY_EQUIPMENT', 'ATTACH_RESOURCE', 'PLAY_ACTION'],
+    trigger: (c) => c.type === 'PLAY_EQUIPMENT',
+    blocked: 'Equipe a Manopla Reforçada na sua Agente ativa.'
   },
   {
     title: 'Encerre o Turno',
     text: 'Sem mais ações? Toque em Encerrar Turno.',
-    allow: ['END_TURN', 'ATTACH_RESOURCE', 'PLAY_ACTION', 'UPGRADE'],
+    allow: ['END_TURN', 'ATTACH_RESOURCE', 'PLAY_ACTION', 'PLAY_EQUIPMENT'],
     trigger: (c) => c.type === 'END_TURN',
     blocked: 'Toque em Encerrar Turno.'
   },
   {
     title: 'Ataque!',
-    text: 'No seu turno, toque no ataque do seu ativo. Derrote o inimigo para ganhar PV!',
-    allow: ['ATTACK', 'ATTACH_RESOURCE', 'PLAY_ACTION', 'END_TURN'],
+    text: 'No seu turno, toque no ataque da sua Agente ativa. Derrote o inimigo para ganhar Pontos de Vitória!',
+    allow: ['ATTACK', 'ATTACH_RESOURCE', 'PLAY_ACTION', 'PLAY_EQUIPMENT', 'END_TURN'],
     trigger: (c) => c.type === 'ATTACK',
-    blocked: 'Ataque com o seu personagem ativo!'
+    blocked: 'Ataque com a sua Agente ativa!'
   },
   {
     title: 'Vitória!',
     text: 'Você derrotou o inimigo e ganhou Pontos de Vitória. Alcance o alvo para vencer!',
-    allow: ['ATTACK', 'ATTACH_RESOURCE', 'PLAY_ACTION', 'END_TURN'],
+    allow: ['ATTACK', 'ATTACH_RESOURCE', 'PLAY_ACTION', 'PLAY_EQUIPMENT', 'END_TURN'],
     trigger: () => false
   }
 ];
