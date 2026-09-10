@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/engine/rng';
 import { registry } from '../src/engine/registry';
-import { charDef, findCard, player, charactersInPlay, costSatisfied } from '../src/engine/queries';
+import { charDef, findCard, player, charactersInPlay, costSatisfied, countAllInstances } from '../src/engine/queries';
 import { validateDeck, STARTER_DECKS } from '../src/data/decks';
 import { DEFAULT_CONFIG } from '../src/engine/types';
 import { autoSetup, deckOf, makeEngine, playUntilEnd, setup } from './helpers';
@@ -256,14 +256,30 @@ describe('Ataques e dano', () => {
     expect(e.state.endReason).toBe('no_active');
   });
 
-  it('personagem não ataca no turno em que entra', () => {
-    const { e } = setupFight();
+  it('personagem não ataca no turno em que entrou — motivo exato just_deployed', () => {
+    const { e, p0 } = setupFight();
     e.debugCommand('spawnCharacter', { defId: 'char-cindro', owner: 0 });
-    const cindro = player(e.state, 0).bench.find((c) => c.defId === 'char-cindro')!;
+    const cindro = p0.bench.find((c) => c.defId === 'char-cindro')!;
+    cindro.deployedOnTurn = e.state.turn; // entrou NESTE turno
+    p0.active = cindro;
+    p0.bench = p0.bench.filter((c) => c !== cindro);
+    for (let i = 0; i < 3; i++) e.debugCommand('giveResource', { targetUid: cindro.uid, defId: 'res-solar' });
     const r = e.dispatch({ type: 'ATTACK', player: 0, attackId: 'atk-cindro-faisca' });
-    // the ACTIVE char is not cindro; test via legal actions instead
-    void cindro;
-    expect(['no_active', 'unknown_attack'].includes(r.error ?? '') || r.ok).toBe(true);
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe('just_deployed');
+    // legalActions concorda com a engine no mesmo estado
+    const legal = e.legalActions(0);
+    expect(legal.attacks.find((a) => a.attackId === 'atk-cindro-faisca')?.playable).toBe(false);
+    expect(legal.attacks.find((a) => a.attackId === 'atk-cindro-faisca')?.reason).toBe('just_deployed');
+  });
+
+  it('ataque bem-sucedido encerra o turno (attackEndsTurn)', () => {
+    const { e, p0 } = setupFight();
+    const atk = charDef(p0.active!).attacks.find((a) => (a.damage ?? 0) > 0)!;
+    for (let i = 0; i < 5; i++) e.debugCommand('giveResource', { targetUid: p0.active!.uid, defId: 'res-prisma' });
+    const r = e.dispatch({ type: 'ATTACK', player: 0, attackId: atk.id });
+    expect(r.ok).toBe(true);
+    expect(e.state.activePlayer).toBe(1); // turno passou
   });
 });
 
@@ -272,7 +288,7 @@ describe('Ataques e dano', () => {
 // ---------------------------------------------------------------------------
 
 describe('Evoluções', () => {
-  it('evolui mantendo dano e recursos, trocando ataques', () => {
+  it('evolui com conservação real: a carta vai para a pilha, sem carta fantasma', () => {
     const e = makeEngine();
     autoSetup(e);
     e.state.turn = 2;
@@ -284,14 +300,23 @@ describe('Evoluções', () => {
     e.debugCommand('giveResource', { targetUid: cindro.uid, defId: 'res-solar' });
     e.debugCommand('addCardToHand', { defId: 'char-ignarok' });
     const ign = p0.hand.find((c) => c.defId === 'char-ignarok')!;
+    const totalBefore = countAllInstances(e.state).total;
     const r = e.dispatch({ type: 'UPGRADE', player: 0, uid: ign.uid, targetUid: cindro.uid });
     expect(r.ok).toBe(true);
-    const ignarok = p0.bench.find((c) => c.defId === 'char-ignarok')!;
-    expect(ignarok).toBeDefined();
-    expect(ignarok.damage).toBe(20); // dano permanece
-    expect(ignarok.attached.length).toBe(1); // recursos permanecem
-    expect(p0.discard.some((c) => c.defId === 'char-cindro')).toBe(true); // carta base consumida
-    expect(charDef(ignarok).attacks.some((a) => a.id === 'atk-ignarok-jato')).toBe(true);
+    // a MESMA instância permanece em campo — nada foi criado nem clonado
+    expect(p0.bench.some((c) => c.uid === cindro.uid)).toBe(true);
+    expect(cindro.defId).toBe('char-cindro'); // a base continua sendo a própria carta
+    expect(cindro.progression.map((c) => c.defId)).toEqual(['char-ignarok']); // carta REAL empilhada
+    expect(cindro.progression[0].uid).toBe(ign.uid);
+    expect(cindro.damage).toBe(20); // dano permanece (config)
+    expect(cindro.attached.length).toBe(1); // recursos permanecem
+    expect(p0.hand.some((c) => c.uid === ign.uid)).toBe(false); // saiu da mão
+    expect(p0.discard.some((c) => c.uid === ign.uid)).toBe(false); // NÃO foi ao descarte
+    expect(p0.discard.some((c) => c.defId === 'char-cindro')).toBe(false); // base NÃO foi ao descarte
+    // definição ativa = topo da pilha
+    expect(charDef(cindro).attacks.some((a) => a.id === 'atk-ignarok-jato')).toBe(true);
+    // número de cartas existentes na partida permanece conservado
+    expect(countAllInstances(e.state).total).toBe(totalBefore);
   });
 
   it('rejeita evolução inválida (família errada)', () => {
@@ -323,7 +348,11 @@ describe('Evoluções', () => {
     const act = p0.hand.find((c) => c.defId === 'act-estimulo')!;
     const r = e.dispatch({ type: 'PLAY_ACTION', player: 0, uid: act.uid });
     expect(r.ok).toBe(true);
-    expect(p0.active!.defId).toBe('char-ignarok');
+    // transformação por efeito: a definição ATIVA passa a ser o topo da pilha…
+    expect(charDef(p0.active!).id).toBe('char-ignarok');
+    // …mas a carta real continua sendo a base, e o novo topo é um token GERADO explícito
+    expect(p0.active!.defId).toBe('char-cindro');
+    expect(p0.active!.progression[0].generated).toBe(true);
   });
 });
 
@@ -337,15 +366,21 @@ describe('Statuses', () => {
     autoSetup(e);
     const p = player(e.state, e.state.activePlayer);
     e.debugCommand('applyStatus', { targetUid: p.active!.uid, statusId: 'poison', tokens: 2 });
-    p.active!.damage = charDef(p.active!).maxHp - 5;
-    const owner = e.state.activePlayer;
-    e.dispatch({ type: 'END_TURN', player: owner });
-    // 10 de dano do veneno → derrotado; substituição automática (IA)
-    void p;
-    const pl = player(e.state, owner);
-    const dead = pl.active === null || pl.active.damage < charDef(pl.active!).maxHp;
-    expect(dead || pl.bench.length >= 0).toBe(true);
-    expect(pl.discard.length).toBeGreaterThanOrEqual(0);
+    // envenena o ATIVO INIMIGO (IA) quase morto e roda até o fim do turno dele
+    e.state.turn = 2;
+    e.state.activePlayer = 0;
+    const vitima = player(e.state, 1).active!;
+    if (player(e.state, 1).bench.length === 0) e.debugCommand('spawnCharacter', { defId: 'char-musgo', owner: 1 });
+    vitima.damage = charDef(vitima).maxHp - 5;
+    e.debugCommand('applyStatus', { targetUid: vitima.uid, statusId: 'poison', tokens: 1 });
+    const vpBefore = player(e.state, 0).victoryPoints;
+    e.dispatch({ type: 'END_TURN', player: 0 });
+    if (e.state.phase !== 'gameOver') e.dispatch({ type: 'END_TURN', player: 1 }); // fim do turno da vítima: veneno tiquetaqueia
+    // 10 de veneno ≥ 5 de HP restante → derrotada e substituída
+    expect(player(e.state, 1).active).not.toBeNull();
+    expect(player(e.state, 1).active!.uid).not.toBe(vitima.uid);
+    expect(player(e.state, 1).discard.some((c) => c.uid === vitima.uid)).toBe(true);
+    expect(player(e.state, 0).victoryPoints).toBe(vpBefore + charDef(vitima).victoryValue);
   });
 
   it('escudo reduz o dano recebido', () => {

@@ -3,15 +3,20 @@ import type {
 } from './types';
 import { registry } from './registry';
 import {
-  abilitiesBlocked, cannotRetreat, charDef, charactersInPlay, costSatisfied, defOf, equipmentSlots, findCard,
+  abilitiesBlocked, charDef, charactersInPlay, costSatisfied, defOf, equipmentSlots, findCard,
   grantedAttacks, maxHp, opponentOf, player, retreatCostOf
 } from './queries';
+import {
+  abilityCheck, attackCostReduce as sharedAttackCostReduce, attachLimit as sharedAttachLimit,
+  canAttack as sharedCanAttack, canDeployCharacter, canPayRetreat, canSeatAtSetup, canUpgradeTo,
+  checkRestrictions, retreatCheck, ultimateCheck, isDirectlyDeployable
+} from './rules';
 import { emit } from './events';
 import type { G } from './effects/shared';
 import {
-  applyDamage, applyStatusToChar, attachToChar, checkMatchEnd, drawCards, healChar, newCardInstance, performUpgrade,
-  queueGlobalTriggers, queueHostTriggers, resolveDefeats, retreatActive, shuffleDeck, tickStatuses, toBench, toDiscard,
-  toHand
+  applyDamage, applyStatusToChar, attachToChar, checkMatchEnd, drawCards, healChar, newCardInstance, performGeneratedUpgrade,
+  performUpgrade, promoteToActive, queueGlobalTriggers, queueHostTriggers, resolveDefeats, retreatActive, shuffleDeck,
+  tickStatuses, toBench, toDiscard, toHand
 } from './effects/shared';
 import { detachFromChar } from './effects/shared';
 import { evalCondition, rand, targetCandidates } from './effects/core';
@@ -46,6 +51,7 @@ export class MatchEngine {
     const custom = opts.aiChooser;
     this.aiChooser = (req) => (custom ? custom(this.state, req) : defaultAiChoice(this.state, req));
     for (const p of this.state.players) this.dealOpeningHand(p.index);
+    this.beginInteractiveMulligan(0);
   }
 
   // -------------------------------------------------------------------------
@@ -116,13 +122,19 @@ export class MatchEngine {
   // Setup
   // -------------------------------------------------------------------------
 
+  /**
+   * Opening hand. With requireBasic the engine shuffles back and redraws until
+   * an eligible starter (Base character) appears — `mulligan: 'auto'`. Bonus
+   * draw (`mulliganBonusDraw`) gives the OPPONENT one extra card per redraw
+   * past the first, compensating the mulliganing player's advantage.
+   */
   private dealOpeningHand(pIdx: PlayerId): void {
     const cfg = this.state.config.setup;
     const g = this.g();
     const p = player(this.state, pIdx);
-    const hasBasic = () => p.hand.some((c) => c.kind === 'CHARACTER' && charDef(c).stage === 0);
+    const hasStarter = () => p.hand.some((c) => canSeatAtSetupStarter(c));
     let attempts = 0;
-    while (!hasBasic() && attempts < 8) {
+    while (!hasStarter() && cfg.requireBasic && attempts < 8) {
       p.deck.push(...p.hand);
       p.hand = [];
       shuffleDeck(g, pIdx);
@@ -138,6 +150,72 @@ export class MatchEngine {
         }
       }
     }
+    this.mulliganRedraws[pIdx] = attempts;
+  }
+
+  private mulliganRedraws: [number, number] = [0, 0];
+
+  /**
+   * Interactive mulligan: after the mandatory securing loop, each player may
+   * VOLUNTARILY redraw once (`mulligan: 'interactive'`). Voluntary redraws give
+   * the opponent a bonus draw when mulliganBonusDraw is on. AI players answer
+   * automatically; humans get a pending choice resolved via RESOLVE_CHOICE.
+   */
+  private beginInteractiveMulligan(pIdx: PlayerId): void {
+    const cfg = this.state.config.setup;
+    if (this.state.phase !== 'setup') return;
+    if (pIdx > 1) return;
+    if (cfg.mulligan !== 'interactive') { this.beginInteractiveMulligan((pIdx + 1) as PlayerId); return; }
+    const p = player(this.state, pIdx);
+    if (p.isAI) { this.beginInteractiveMulligan((pIdx + 1) as PlayerId); return; }
+    const gen = this.mulliganChoiceGen(pIdx);
+    const r = gen.next();
+    if (!r.done && r.value) {
+      this.pending = { gen, request: r.value };
+      emit(this.state, 'CHOICE_REQUESTED', r.value.player, { prompt: r.value.prompt, kind: r.value.kind, candidates: r.value.candidates });
+    } else {
+      this.beginInteractiveMulligan((pIdx + 1) as PlayerId);
+    }
+  }
+
+  private *mulliganChoiceGen(pIdx: PlayerId): Generator<ChoiceRequest, void, string[]> {
+    const cfg = this.state.config.setup;
+    const p = player(this.state, pIdx);
+    const answer = yield {
+      kind: 'option', player: pIdx,
+      prompt: cfg.requireBasic
+        ? 'Deseja recomprar a mão inicial? (o oponente compra 1 carta bônus)'
+        : 'Deseja recomprar a mão inicial?',
+      candidates: ['recomprar', 'manter'],
+      min: 1, max: 1, optional: false,
+      labels: { recomprar: 'Recomprar mão', manter: 'Manter mão' }
+    };
+    if (answer?.[0] === 'recomprar') {
+      const g = this.g();
+      p.deck.push(...p.hand);
+      p.hand = [];
+      shuffleDeck(g, pIdx);
+      for (let i = 0; i < cfg.handSize; i++) {
+        if (p.deck.length > 0) p.hand.push(p.deck.pop()!);
+      }
+      this.mulliganRedraws[pIdx] += 1;
+      if (cfg.mulliganBonusDraw) {
+        const opp = opponentOf(this.state, pIdx);
+        if (opp.deck.length > 0) opp.hand.push(opp.deck.pop()!);
+      }
+      // Re-secure a starter if required
+      let guard = 0;
+      while (cfg.requireBasic && !p.hand.some((c) => canSeatAtSetupStarter(c)) && guard++ < 8) {
+        p.deck.push(...p.hand);
+        p.hand = [];
+        shuffleDeck(g, pIdx);
+        for (let i = 0; i < cfg.handSize; i++) {
+          if (p.deck.length > 0) p.hand.push(p.deck.pop()!);
+        }
+        this.mulliganRedraws[pIdx] += 1;
+      }
+    }
+    this.beginInteractiveMulligan((pIdx + 1) as PlayerId);
   }
 
   // -------------------------------------------------------------------------
@@ -162,6 +240,19 @@ export class MatchEngine {
     }
 
     if (steps.includes('start')) {
+      // Player with no active (requireBasic=false start): promote from bench or lose.
+      if (!p.active) {
+        if (p.bench.length > 0) {
+          promoteToActive(g, p.bench[0]);
+        } else if (this.state.config.victory.noActiveLoses) {
+          const enemy = (p.index === 0 ? 1 : 0) as PlayerId;
+          this.state.winner = enemy;
+          this.state.endReason = 'no_active';
+          this.state.phase = 'gameOver';
+          emit(this.state, 'MATCH_ENDED', enemy, { reason: 'no_active' });
+          return;
+        }
+      }
       queueGlobalTriggers(g, 'turnStart');
       yield* this.drainTriggers();
       if (this.state.winner !== null) return;
@@ -319,6 +410,7 @@ export class MatchEngine {
       case 'PLAY_EQUIPMENT': yield* this.playEquipment(cmd.player, cmd.uid, cmd.targetUid); break;
       case 'PLAY_FIELD': yield* this.playField(cmd.player, cmd.uid); break;
       case 'USE_ABILITY': yield* this.useAbility(cmd.player, cmd.charUid, cmd.abilityId); break;
+      case 'USE_ULTIMATE': yield* this.useUltimate(cmd.player, cmd.charUid, cmd.ultimateId); break;
       case 'ATTACK': yield* this.attack(cmd.player, cmd.attackId); break;
       case 'RETREAT': yield* this.retreat(cmd.player, cmd.benchUid); break;
       case 'END_TURN': yield* this.endTurn(cmd.player); break;
@@ -341,7 +433,7 @@ export class MatchEngine {
     const p = player(this.state, pIdx);
     const card = p.hand.find((c) => c.uid === uid);
     if (!card || card.kind !== 'CHARACTER') throw new EngineError('not_a_character');
-    if (charDef(card).stage !== 0) throw new EngineError('must_start_with_base');
+    if (!isDirectlyDeployable(card)) throw new EngineError('must_start_with_base');
     if (p.active) toHand(this.g(), p.active, pIdx);
     p.active = card;
     p.hand = p.hand.filter((c) => c.uid !== uid);
@@ -351,10 +443,10 @@ export class MatchEngine {
   private *setupBench(pIdx: PlayerId, uid: string): Generator<ChoiceRequest, void, string[]> {
     if (this.state.phase !== 'setup') throw new EngineError('not_setup');
     const p = player(this.state, pIdx);
-    if (p.bench.length >= this.state.config.board.benchSize) throw new EngineError('bench_full');
     const card = p.hand.find((c) => c.uid === uid);
     if (!card || card.kind !== 'CHARACTER') throw new EngineError('not_a_character');
-    if (charDef(card).stage !== 0) throw new EngineError('must_start_with_base');
+    const check = canSeatAtSetup(this.state, pIdx, card);
+    if (!check.ok) throw new EngineError(check.reason ?? 'setup_bench_disabled');
     toBench(this.g(), card, pIdx);
     emit(this.state, 'CHARACTER_DEPLOYED', pIdx, { uid, setup: true });
   }
@@ -362,7 +454,7 @@ export class MatchEngine {
   private *setupDone(pIdx: PlayerId): Generator<ChoiceRequest, void, string[]> {
     if (this.state.phase !== 'setup') throw new EngineError('not_setup');
     const p = player(this.state, pIdx);
-    if (!p.active) throw new EngineError('no_active');
+    if (!p.active && this.state.config.setup.requireBasic) throw new EngineError('no_active');
     p.setupDone = true;
     if (this.state.players[0].setupDone && this.state.players[1].setupDone) {
       this.state.startingPlayer = rand(this.state) < 0.5 ? 0 : 1;
@@ -379,7 +471,10 @@ export class MatchEngine {
     const p = player(this.state, pIdx);
     const card = p.hand.find((c) => c.uid === uid);
     if (!card || card.kind !== 'CHARACTER') throw new EngineError('not_a_character');
-    if (p.bench.length >= this.state.config.board.benchSize) throw new EngineError('bench_full');
+    // Only Base (stage 0) characters can be deployed directly; higher stages
+    // REQUIRE an Upgrade card. (Effect-driven deploys are the explicit bypass.)
+    const check = canDeployCharacter(this.state, pIdx, card);
+    if (!check.ok) throw new EngineError(check.reason ?? 'must_upgrade_not_deploy');
     toBench(this.g(), card, pIdx);
     emit(this.state, 'CHARACTER_DEPLOYED', pIdx, { uid });
     this.state.triggerQueue.push({ event: 'onPlay', sourceUid: uid, player: pIdx });
@@ -387,17 +482,7 @@ export class MatchEngine {
   }
 
   private attachLimitFor(pIdx: PlayerId): number {
-    let limit = this.state.config.turn.attachPerTurn;
-    for (const f of this.state.fields) {
-      const fd = defOf(f) as any;
-      if (fd.scope === 'owner' && f.owner !== pIdx) continue;
-      limit += fd.mods?.attachExtra ?? 0;
-    }
-    for (const ov of this.state.fieldOverrides) limit += ov.attachExtra ?? 0;
-    for (const tm of this.state.tempMods) {
-      if (!tm.targetUid && tm.owner === pIdx) limit += tm.mods.attachExtra ?? 0;
-    }
-    return limit;
+    return sharedAttachLimit(this.state, pIdx);
   }
 
   private *attachResource(pIdx: PlayerId, uid: string, targetUid: string): Generator<ChoiceRequest, void, string[]> {
@@ -416,6 +501,11 @@ export class MatchEngine {
     this.state.triggerQueue.push({ event: '__runOnAttach', sourceUid: uid, hostUid: targetUid, player: pIdx });
   }
 
+  /**
+   * Upgrade with REAL instance conservation: the upgrade card leaves the hand
+   * and is pushed onto the host's progression stack. No new instance is
+   * created, nothing is cloned and nothing is discarded here.
+   */
   private *upgrade(pIdx: PlayerId, uid: string, targetUid: string): Generator<ChoiceRequest, void, string[]> {
     this.assertTurn(pIdx);
     if (this.state.phase !== 'main') throw new EngineError('not_main');
@@ -425,46 +515,14 @@ export class MatchEngine {
     const target = findCard(this.state, targetUid);
     if (!target || (target.location !== 'active' && target.location !== 'bench')) throw new EngineError('no_valid_target');
     if (target.card.owner !== pIdx) throw new EngineError('not_your_character');
-    const baseDefId = target.card.defId;
-    try {
-      performUpgrade(this.g(), target.card, card.defId, { cause: 'card' });
-    } catch (e) {
-      throw new EngineError((e as Error).message);
-    }
-    // consome a carta de evolução da mão e registra a carta base no descarte
-    p.hand = p.hand.filter((c) => c.uid !== uid);
-    const baseGhost = newCardInstance(this.g(), registry.card(baseDefId), pIdx);
-    toDiscard(this.g(), baseGhost, pIdx);
-    toDiscard(this.g(), card, pIdx);
+    const check = canUpgradeTo(this.state, target.card, card);
+    if (!check.ok) throw new EngineError(check.reason ?? 'invalid_upgrade');
+    performUpgrade(this.g(), target.card, card, { cause: 'card' });
   }
 
   private checkActionRestrictions(pIdx: PlayerId, def: any): void {
-    const p = player(this.state, pIdx);
-    const opp = opponentOf(this.state, pIdx);
-    for (const r of def.restrictions ?? []) {
-      switch (r.type) {
-        case 'oncePerTurn':
-          if (p.actionsPlayedTurn.includes(def.id)) throw new EngineError('restriction_once_per_turn');
-          break;
-        case 'whileLosing':
-          if (p.victoryPoints >= opp.victoryPoints) throw new EngineError('restriction_losing');
-          break;
-        case 'factionInPlay': {
-          const mine = charactersInPlay(this.state, pIdx).some((c) => charDef(c).faction === r.faction);
-          if (!mine) throw new EngineError('restriction_faction');
-          break;
-        }
-        case 'turnAtLeast':
-          if (this.state.turn < (r.turn ?? 1)) throw new EngineError('restriction_turn');
-          break;
-        case 'characterCondition': {
-          const anyOk = charactersInPlay(this.state, pIdx).some((c) =>
-            evalCondition(this.state, { sourceUid: c.uid, sourcePlayer: pIdx, bound: {}, depth: 0 }, r.condition));
-          if (!anyOk) throw new EngineError('restriction_condition');
-          break;
-        }
-      }
-    }
+    const check = checkRestrictions(this.state, pIdx, def);
+    if (!check.ok) throw new EngineError(check.reason ?? 'restriction_condition');
   }
 
   private *playAction(pIdx: PlayerId, uid: string): Generator<ChoiceRequest, void, string[]> {
@@ -553,14 +611,9 @@ export class MatchEngine {
     const ability = cd.abilities.find((a) => a.id === abilityId);
     if (!ability) throw new EngineError('unknown_ability');
     if (ability.trigger !== 'activated') throw new EngineError('not_activated');
-    const isActive = this.state.players[pIdx].active?.uid === inst.uid;
-    if (ability.zone === 'active' && !isActive) throw new EngineError('ability_zone');
-    if (ability.zone === 'bench' && isActive) throw new EngineError('ability_zone');
-    if (abilitiesBlocked(this.state, inst)) throw new EngineError('abilities_blocked');
-    if (ability.oncePerTurn && inst.usedTurn.includes(`ability:${ability.id}`)) throw new EngineError('already_used_turn');
-    if (ability.oncePerMatch && inst.usedMatch.includes(`ability:${ability.id}`)) throw new EngineError('already_used_match');
+    const check = abilityCheck(this.state, pIdx, inst, ability);
+    if (!check.ok) throw new EngineError(check.reason ?? 'condition_not_met');
     const ctx = { sourceUid: inst.uid, sourcePlayer: pIdx, bound: {}, depth: 0 };
-    if (!evalCondition(this.state, ctx, ability.condition)) throw new EngineError('condition_not_met');
     if (ability.cost && ability.cost.some((c) => c.amount > 0)) {
       const reduce = Math.max(0, this.attackCostReduceFor(inst));
       if (!costSatisfied(inst, ability.cost, reduce)) throw new EngineError('not_enough_resources');
@@ -572,42 +625,35 @@ export class MatchEngine {
     yield* runSteps(this.g(), ctx, ability.effects);
   }
 
+  /** Suprema: poder único por partida, condicionado e com custo — 100% data-driven. */
+  private *useUltimate(pIdx: PlayerId, charUid: string, ultimateId: string): Generator<ChoiceRequest, void, string[]> {
+    this.assertTurn(pIdx);
+    if (this.state.phase !== 'main') throw new EngineError('not_main');
+    const target = findCard(this.state, charUid);
+    if (!target || (target.location !== 'active' && target.location !== 'bench')) throw new EngineError('no_valid_target');
+    const inst = target.card;
+    if (inst.owner !== pIdx) throw new EngineError('not_your_character');
+    const ult = charDef(inst).ultimate;
+    if (!ult || ult.id !== ultimateId) throw new EngineError('unknown_ability');
+    const check = ultimateCheck(this.state, pIdx, inst, ult);
+    if (!check.ok) throw new EngineError(check.reason ?? 'condition_not_met');
+    const ctx = { sourceUid: inst.uid, sourcePlayer: pIdx, bound: {}, depth: 0 };
+    if (ult.cost && ult.cost.some((c) => c.amount > 0)) {
+      const reduce = Math.max(0, this.attackCostReduceFor(inst));
+      if (!costSatisfied(inst, ult.cost, reduce)) throw new EngineError('not_enough_resources');
+      payAttackCost(this.g(), inst, ult.cost, reduce);
+    }
+    inst.usedMatch.push(`ultimate:${ult.id}`);
+    emit(this.state, 'ABILITY_ACTIVATED', pIdx, { uid: inst.uid, abilityId: ult.id, ultimate: true });
+    yield* runSteps(this.g(), ctx, ult.effects);
+  }
+
   private attackCostReduceFor(inst: CardInstance): number {
-    let reduce = 0;
-    for (const eq of inst.attached) {
-      if (eq.kind === 'EQUIPMENT') reduce += (defOf(eq) as any).mods?.attackCostReduce ?? 0;
-    }
-    for (const f of this.state.fields) {
-      const fd = defOf(f) as any;
-      if (fd.scope === 'owner' && f.owner !== inst.owner) continue;
-      reduce += fd.mods?.attackCostReduce ?? 0;
-    }
-    for (const tm of this.state.tempMods) {
-      if (tm.targetUid === inst.uid) reduce += tm.mods.attackCostReduce ?? 0;
-    }
-    for (const ov of this.state.fieldOverrides) reduce += ov.attackCostMod ?? 0;
-    return reduce;
+    return sharedAttackCostReduce(this.state, inst);
   }
 
   canAttackNow(inst: CardInstance): { ok: boolean; reason?: string } {
-    const st = this.state;
-    if (st.phase !== 'main' || st.activePlayer !== inst.owner) return { ok: false, reason: 'not_your_turn' };
-    if (st.players[inst.owner].active?.uid !== inst.uid) return { ok: false, reason: 'not_active' };
-    for (const s of inst.statuses) {
-      const sd = registry.status(s.id);
-      if (sd?.blocksAttack) return { ok: false, reason: 'status_blocks_attack' };
-    }
-    for (const eq of inst.attached) {
-      if (eq.kind === 'EQUIPMENT' && (defOf(eq) as any).mods?.cannotAttack) return { ok: false, reason: 'cannot_attack' };
-    }
-    for (const tm of st.tempMods) {
-      if (tm.targetUid === inst.uid && tm.mods.cannotAttack) return { ok: false, reason: 'cannot_attack' };
-    }
-    if (inst.deployedOnTurn === st.turn) return { ok: false, reason: 'just_deployed' };
-    if (st.turn === 1 && st.activePlayer === st.startingPlayer && st.config.turn.startingPlayerSkipsAttack) {
-      return { ok: false, reason: 'first_turn_no_attack' };
-    }
-    return { ok: true };
+    return sharedCanAttack(this.state, inst);
   }
 
   private *attack(pIdx: PlayerId, attackId: string): Generator<ChoiceRequest, void, string[]> {
@@ -691,15 +737,14 @@ export class MatchEngine {
     const st = this.state;
     this.assertTurn(pIdx);
     const p = player(st, pIdx);
-    if (!p.active) throw new EngineError('no_active');
-    if (p.retreatedThisTurn >= st.config.turn.retreatsPerTurn) throw new EngineError('retreat_limit');
-    if (cannotRetreat(st, p.active)) throw new EngineError('cannot_retreat');
-    if (st.fieldOverrides.some((o) => o.blockSwitching || o.blockRetreat)) throw new EngineError('switching_blocked');
+    const check = retreatCheck(st, pIdx);
+    if (!check.ok) throw new EngineError(check.reason ?? 'cannot_retreat');
     const benchChar = p.bench.find((c) => c.uid === benchUid);
     if (!benchChar) throw new EngineError('no_valid_target');
-    const cost = retreatCostOf(st, p.active);
+    const activeChar = p.active!;
+    const cost = retreatCostOf(st, activeChar);
     if (cost > 0) {
-      const pool = p.active.attached.filter((a) => a.kind === 'RESOURCE');
+      const pool = activeChar.attached.filter((a) => a.kind === 'RESOURCE');
       const order = (a: CardInstance) => {
         const rd = defOf(a) as any;
         return (rd.temporary ? 0 : 2) + (rd.wild ? 0 : 1);
@@ -763,6 +808,11 @@ export function defaultAiChoice(state: MatchState, req: ChoiceRequest): string[]
 // Debug ops (dev builds only — reachable through the debug panel)
 // ---------------------------------------------------------------------------
 
+/** Opening-hand starter eligibility (Base character, seatable at setup). */
+function canSeatAtSetupStarter(card: CardInstance): boolean {
+  return card.kind === 'CHARACTER' && charDef(card).stage === 0;
+}
+
 function runDebugOp(g: G, op: string, p: Record<string, unknown>): void {
   const state = g.state;
   const me = player(state, (p.player as PlayerId) ?? 0);
@@ -816,7 +866,15 @@ function runDebugOp(g: G, op: string, p: Record<string, unknown>): void {
       if (t?.card.kind === 'CHARACTER') {
         const cd = charDef(t.card);
         const next = (cd.upgradesTo ?? [])[0];
-        if (next) performUpgrade(g, t.card, next, { cause: 'debug' });
+        if (next) performGeneratedUpgrade(g, t.card, next, { cause: 'debug' });
+      }
+      break;
+    }
+    case 'swapActive': {
+      const uid = p.targetUid as string;
+      const cand = me.bench.find((c) => c.uid === uid);
+      if (cand && me.active && !state.fieldOverrides.some((o) => o.blockSwitching || o.blockRetreat)) {
+        retreatActive(g, cand);
       }
       break;
     }

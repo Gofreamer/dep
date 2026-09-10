@@ -7,7 +7,7 @@ import type { EffectCtx } from './core';
 import { evalCondition, randInt, rand, resolveChar, shuffleWithState, targetCandidates } from './core';
 import {
   applyDamage, applyStatusToChar, attachToChar, computeAttackDamage, detachFromChar, drawCards, G, healChar,
-  performUpgrade, promoteToActive, removeStatusFromChar, retreatActive, shuffleDeck, toBench, toDeckTop, toDiscard,
+  performGeneratedUpgrade, promoteToActive, removeStatusFromChar, retreatActive, shuffleDeck, toBench, toDeckTop, toDiscard,
   toHand, victoryValueOf
 } from './shared';
 
@@ -399,6 +399,7 @@ ops['deployCharacter'] = function* (g, ctx, p) {
   const ps = player(g.state, who);
   const cfg = g.state.config;
   if (ps.bench.length >= cfg.board.benchSize) return;
+  // Explicit effect: allowed to deploy higher stages (the one sanctioned bypass).
   let pool = ps.hand.filter((c) => c.kind === 'CHARACTER');
   if (p.filter?.families) pool = pool.filter((c) => p.filter.families.includes((defOf(c) as CharacterDef).family ?? ''));
   if (p.filter?.factions) pool = pool.filter((c) => p.filter.factions.includes(defOf(c).faction));
@@ -511,7 +512,10 @@ ops['upgradeCharacter'] = function* (g, ctx, p) {
     toDefId = options[0].id;
   }
   try {
-    performUpgrade(g, t, toDefId, { bonusHp: p.bonusHp as number | undefined, cause: 'effect' });
+    // Effect-driven transformation: no real hand card is consumed, so the new
+    // stack entry is an explicit generated token (tracked separately from
+    // real cards by the conservation census).
+    performGeneratedUpgrade(g, t, toDefId, { bonusHp: p.bonusHp as number | undefined, cause: 'effect' });
   } catch { /* invalid upgrade — no-op */ }
 };
 

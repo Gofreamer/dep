@@ -11,15 +11,38 @@ export interface PlayerSetup {
   deck: CardDef[];
 }
 
+/** Section-level partial config — merged via mergeConfig (never wipes siblings). */
+export type ConfigPartial = { [K in keyof typeof DEFAULT_CONFIG]?: Partial<(typeof DEFAULT_CONFIG)[K]> };
+
 export interface MatchOptions {
   seed: number;
-  config?: Partial<typeof DEFAULT_CONFIG>;
+  config?: ConfigPartial;
   players: [PlayerSetup, PlayerSetup];
+}
+
+/**
+ * Typed deep merge of a partial config over the defaults. Section objects are
+ * merged key-by-key so a partial like `{ victory: { targetPoints: 5 } }` never
+ * wipes sibling flags (`deckOutLoses`, `noActiveLoses`).
+ */
+export function mergeConfig(base: typeof DEFAULT_CONFIG, partial: ConfigPartial | undefined): typeof DEFAULT_CONFIG {
+  const out: any = { ...base };
+  if (!partial) return out;
+  for (const [section, value] of Object.entries(partial)) {
+    if (value === undefined) continue;
+    const cur = (out as any)[section];
+    if (cur && typeof cur === 'object' && !Array.isArray(cur) && typeof value === 'object' && !Array.isArray(value)) {
+      out[section] = { ...cur, ...(value as unknown as Record<string, unknown>) };
+    } else {
+      out[section] = value;
+    }
+  }
+  return out as typeof DEFAULT_CONFIG;
 }
 
 /** Builds a fresh, shuffled, fully dealt-in match state (setup phase). */
 export function createMatchState(opts: MatchOptions): MatchState {
-  const config = { ...DEFAULT_CONFIG, ...(opts.config ?? {}) };
+  const config = mergeConfig(DEFAULT_CONFIG, opts.config);
   const state: MatchState = {
     id: `match-${opts.seed}`,
     seed: opts.seed,

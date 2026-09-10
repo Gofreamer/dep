@@ -243,6 +243,15 @@ export interface CardBase {
   flavor?: string;
   number?: number;
   unique?: boolean;
+  /**
+   * Character identity across editions/variants (e.g. agent-jenny for
+   * Jenny BASE and Jenny MVP). Deck identity limits key off this.
+   */
+  identityId?: string;
+  /** Collectible variant/edition label (BASE, MVP, CHAMPION…). NOT a stage. */
+  edition?: string;
+  /** Foil/holo print — purely cosmetic, never affects stats. */
+  holo?: boolean;
 }
 
 export interface CharacterDef extends CardBase {
@@ -261,6 +270,24 @@ export interface CharacterDef extends CardBase {
   /** Victory points awarded when this character is defeated. */
   victoryValue: number;
   equipmentSlots?: number;
+  /**
+   * Optional Suprema — a once-per-match power the engine can activate when its
+   * condition and cost are satisfied. Purely data-driven; most agents have none.
+   */
+  ultimate?: UltimateDef;
+}
+
+/** Optional, generic Suprema structure (future-proof; not required on agents). */
+export interface UltimateDef {
+  id: string;
+  name: string;
+  text?: string;
+  /** Must evaluate true before activation (energy, counters, discard size…). */
+  activationCondition?: ConditionSpec;
+  cost?: ResourceCost;
+  effects: EffectStep[];
+  /** Always enforced by the engine, kept explicit for readability. */
+  oncePerMatch?: true;
 }
 
 export interface ResourceDef extends CardBase {
@@ -298,6 +325,8 @@ export interface EquipmentDef extends CardBase {
 
 export interface FieldDef extends CardBase {
   kind: 'FIELD';
+  /** ARENA = standard field; EVENT = one-shot-ish; DOMAIN = Expansão de Domínio (battlefield override). */
+  subtype?: 'ARENA' | 'EVENT' | 'DOMAIN';
   mods?: Mods;
   triggers?: AbilityDef[];
   onPlay?: EffectStep[];
@@ -348,18 +377,30 @@ export interface CardInstance {
   kind: CardKind;
   /** Character runtime — damage persists until healed. */
   damage: number;
-  /** Current progression index (mirrors the card def stage after upgrades). */
+  /** Current progression index (mirrors the top of `progression` after upgrades). */
   stageLevel: number;
   statuses: StatusInstance[];
   counters: Record<string, number>;
   /** Attached Resource and Equipment instances. */
   attached: CardInstance[];
+  /**
+   * Real progression stack (Base → Upgrade 1 → …). Entries are the ACTUAL card
+   * instances that left the hand — never copies. `defId` of the instance stays
+   * the Base card; the effective definition is the top of this stack.
+   */
+  progression: CardInstance[];
   /** Once-per-turn keys already used this turn (reset each turn). */
   usedTurn: string[];
   /** Once-per-match keys already used. */
   usedMatch: string[];
   deployedOnTurn: number;
   faceDown?: boolean;
+  /**
+   * True for temporary tokens/materializations created by effects (never from a
+   * real card). Generated instances are not conserved: they vanish instead of
+   * going to the discard pile.
+   */
+  generated?: boolean;
 }
 
 export type Zone = 'deck' | 'hand' | 'active' | 'bench' | 'discard';
@@ -510,6 +551,7 @@ export type Command =
   | { type: 'PLAY_EQUIPMENT'; player: PlayerId; uid: string; targetUid: string }
   | { type: 'PLAY_FIELD'; player: PlayerId; uid: string }
   | { type: 'USE_ABILITY'; player: PlayerId; charUid: string; abilityId: string; targetUids?: string[] }
+  | { type: 'USE_ULTIMATE'; player: PlayerId; charUid: string; ultimateId: string; targetUids?: string[] }
   | { type: 'ATTACK'; player: PlayerId; attackId: string }
   | { type: 'RETREAT'; player: PlayerId; benchUid: string }
   | { type: 'END_TURN'; player: PlayerId }
@@ -564,7 +606,13 @@ export interface DamageConfig {
 export interface DeckRulesConfig {
   min: number;
   max: number;
+  /** Max copies per card definition (maxCopiesPerCard). */
   maxCopies: number;
+  /**
+   * Max copies counted across ALL variants/editions of the same identityId
+   * (e.g. Jenny BASE + Jenny MVP together). Undefined = unlimited.
+   */
+  maxCopiesPerIdentity?: number;
   uniqueMax: number;
   allowMultipleFactions: boolean;
   /** Card kinds exempt from the per-card copy limit (e.g. resources). */
@@ -605,7 +653,7 @@ export const DEFAULT_CONFIG: GameConfig = {
   victory: { targetPoints: 4, deckOutLoses: true, noActiveLoses: true },
   damage: { weaknessMultiplier: 2, resistanceDefaultReduce: 30 },
   deckRules: { min: 40, max: 60, maxCopies: 4, uniqueMax: 1, allowMultipleFactions: true, copyLimitExempt: ['RESOURCE'] },
-  progression: { stages: ['Base', 'Estágio 1', 'Estágio 2'], canSkipStages: true, damageCarriesOver: true, keepAttachedOnUpgrade: true }
+  progression: { stages: ['Base', 'Estágio 1', 'Estágio 2'], canSkipStages: false, damageCarriesOver: true, keepAttachedOnUpgrade: true }
 };
 
 // ---------------------------------------------------------------------------
@@ -643,4 +691,8 @@ export interface LegalActions {
   setupActive: string[];
   setupBench: string[];
   setupDone: boolean;
+  /** Supremas do ativo/reserva com disponibilidade e motivo. */
+  ultimates: { charUid: string; ultimateId: string; playable: boolean; reason?: string }[];
+  /** Pode responder à recompra voluntária de mão (mulligan interativo). */
+  mulliganChoice: { prompt: string; options: { id: string; label: string }[] } | null;
 }

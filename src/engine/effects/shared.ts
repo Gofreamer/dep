@@ -6,6 +6,7 @@ import {
   aggregateMods, charDef, charactersInPlay, defOf, findCard, isDefeated, maxHp, player
 } from '../queries';
 import { emit } from '../events';
+import { canUpgradeTo } from '../rules';
 import type { EffectCtx } from './core';
 import { evalCondition, randInt, rand, shuffleWithState } from './core';
 
@@ -33,6 +34,7 @@ export function newCardInstance(g: G, def: CardDef, owner: PlayerId): CardInstan
     statuses: [],
     counters: {},
     attached: [],
+    progression: [],
     usedTurn: [],
     usedMatch: [],
     deployedOnTurn: g.state.turn
@@ -55,6 +57,13 @@ function removeFromOwnerZones(g: G, inst: CardInstance): void {
 
 /** Enter-play reset for characters. */
 function resetForPlay(g: G, inst: CardInstance): void {
+  // Safety: a card entering play never carries a progression stack. Real
+  // stacked cards are conserved (to the discard), generated ones vanish.
+  for (const up of inst.progression ?? []) {
+    if (up.generated) continue;
+    toDiscard(g, up, inst.owner);
+  }
+  inst.progression = [];
   inst.damage = 0;
   inst.statuses = [];
   inst.usedTurn = [];
@@ -305,41 +314,54 @@ export function queueGlobalTriggers(g: G, event: string, payload?: Record<string
 }
 
 // ---------------------------------------------------------------------------
-// Upgrades
+// Upgrades — REAL instance conservation
 // ---------------------------------------------------------------------------
+// The upgrade card instance itself is pushed onto the host's `progression`
+// stack. No new card is created, nothing is cloned, nothing is discarded.
+// The effective definition becomes the top of the stack; damage/attachments
+// live on the Base instance and follow the progression config.
 
 export interface UpgradeOpts { keepDamage?: boolean; keepAttached?: boolean; bonusHp?: number; cause?: string }
 
-/** Validates and performs a character upgrade. Throws Error with reason on failure. */
-export function performUpgrade(g: G, inst: CardInstance, toDefId: string, opts: UpgradeOpts = {}): void {
-  const fromDef = charDef(inst);
-  const toDef = registry.tryCard(toDefId) as CharacterDef | undefined;
-  if (!toDef || toDef.kind !== 'CHARACTER') throw new Error('Destino de evolução inválido');
+/** Validates and performs a character upgrade with the REAL upgrade card. Throws Error with reason on failure. */
+export function performUpgrade(g: G, host: CardInstance, upgradeCard: CardInstance, opts: UpgradeOpts = {}): void {
+  if (upgradeCard.kind !== 'CHARACTER') throw new Error('A carta de evolução deve ser um personagem');
+  const check = canUpgradeTo(g.state, host, upgradeCard);
+  if (!check.ok) throw new Error(check.reason ?? 'invalid_upgrade');
+  const fromDef = charDef(host);
+  const toDef = charDef(upgradeCard);
   const cfg = g.state.config.progression;
-  const sameFamily = toDef.family !== undefined && toDef.family === fromDef.family;
-  const explicitPath = (fromDef.upgradesTo ?? []).includes(toDefId);
-  if (!sameFamily && !explicitPath) throw new Error('Esta carta não evolui para esse personagem');
-  const stageGap = toDef.stage - fromDef.stage;
-  if (stageGap < 1) throw new Error('Estágio de destino inválido');
-  if (stageGap > 1 && !cfg.canSkipStages && !explicitPath) throw new Error('Não é possível pular estágios');
 
   const keepDamage = opts.keepDamage ?? cfg.damageCarriesOver;
   const keepAttached = opts.keepAttached ?? cfg.keepAttachedOnUpgrade;
-  const oldDamage = inst.damage;
-  const oldAttached = keepAttached ? inst.attached : [];
-  const oldCounters = { ...inst.counters };
 
-  inst.defId = toDefId;
-  inst.stageLevel = toDef.stage;
-  inst.statuses = [];
-  if (!keepDamage) inst.damage = 0;
-  if (!keepAttached) inst.attached = [];
-  inst.counters = oldCounters;
-  if (opts.bonusHp) inst.counters['hpBonus'] = (inst.counters['hpBonus'] ?? 0) + opts.bonusHp;
-  void oldAttached; void oldDamage;
+  // The REAL card leaves wherever it is and joins the stack — never cloned.
+  removeFromOwnerZones(g, upgradeCard);
+  upgradeCard.progression = [];
+  host.progression = [...(host.progression ?? []), upgradeCard];
+  host.stageLevel = toDef.stage;
+  host.statuses = [];
+  if (!keepDamage) host.damage = 0;
+  if (!keepAttached) {
+    for (const att of [...host.attached]) toDiscard(g, att, att.owner);
+    host.attached = [];
+  }
+  if (opts.bonusHp) host.counters['hpBonus'] = (host.counters['hpBonus'] ?? 0) + opts.bonusHp;
 
-  g.emit('CHARACTER_UPGRADED', inst.owner, { uid: inst.uid, from: fromDef.id, to: toDefId, keptDamage: keepDamage });
-  g.state.triggerQueue.push({ event: 'onUpgrade', sourceUid: inst.uid, player: inst.owner });
+  g.emit('CHARACTER_UPGRADED', host.owner, {
+    uid: host.uid, from: fromDef.id, to: toDef.id,
+    stack: host.progression.map((c) => c.defId), keptDamage: keepDamage, cause: opts.cause ?? 'card'
+  });
+  g.state.triggerQueue.push({ event: 'onUpgrade', sourceUid: host.uid, player: host.owner });
+}
+
+/** Effect-driven transformation: no real card is consumed, so the new top is an explicit generated token. */
+export function performGeneratedUpgrade(g: G, host: CardInstance, toDefId: string, opts: UpgradeOpts = {}): void {
+  const toDef = registry.tryCard(toDefId) as CharacterDef | undefined;
+  if (!toDef || toDef.kind !== 'CHARACTER') throw new Error('Destino de transformação inválido');
+  const token = newCardInstance(g, toDef, host.owner);
+  token.generated = true;
+  performUpgrade(g, host, token, { ...opts, cause: opts.cause ?? 'effect' });
 }
 
 // ---------------------------------------------------------------------------
@@ -407,9 +429,18 @@ export function* resolveDefeats(g: G): Generator<YieldedChoice, void, string[]> 
 
       awardVictoryPoints(g, enemy, victoryValueOf(g, inst), 'defeat');
 
-      // Move attached cards, then the character
+      // Move attached cards, the REAL progression stack, then the character.
+      // Generated tokens vanish instead of being conserved as cards.
       for (const att of [...inst.attached]) toDiscard(g, att, att.owner);
       inst.attached = [];
+      for (const up of [...(inst.progression ?? [])]) {
+        if (up.generated) {
+          g.emit('CARD_MOVED', owner, { uid: up.uid, to: 'void', generated: true });
+        } else {
+          toDiscard(g, up, owner);
+        }
+      }
+      inst.progression = [];
       toDiscard(g, inst, owner);
 
       // Replacement

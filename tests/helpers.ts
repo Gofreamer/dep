@@ -3,6 +3,7 @@ import { MatchEngine } from '../src/engine/engine';
 import type { AiLevel, Command, GameConfig } from '../src/engine/types';
 import { DEFAULT_CONFIG } from '../src/engine/types';
 import { registerDataPack } from '../src/data/cards';
+import { mergeConfig } from '../src/engine/state/setup';
 import { STARTER_DECKS, expandDeck } from '../src/data/decks';
 import { registry } from '../src/engine/registry';
 import { aiNextCommand, aiSmartChoice } from '../src/engine/ai/ai';
@@ -16,11 +17,25 @@ export function deckOf(starterId: string): string[] {
   return expandDeck(def);
 }
 
+/** Section-level partial (deep merge, never wipes sibling keys). */
+export type ConfigPartial = { [K in keyof GameConfig]?: Partial<GameConfig[K]> };
+
+export function rigHand(e: MatchEngine, pIdx: 0 | 1, defIds: string[]): void {
+  const p = e.state.players[pIdx];
+  p.deck.push(...p.hand);
+  p.hand = [];
+  for (const defId of defIds) {
+    const card = p.deck.find((c) => c.defId === defId);
+    if (card) p.hand.push(card);
+  }
+  p.deck = p.deck.filter((c) => !p.hand.includes(c));
+}
+
 export function makeEngine(opts: {
   seed?: number;
   p0?: string[];
   p1?: string[];
-  config?: Partial<GameConfig>;
+  config?: ConfigPartial;
   levels?: [AiLevel, AiLevel];
   aiChooser?: (state: any, req: any) => string[];
 } = {}): MatchEngine {
@@ -28,7 +43,7 @@ export function makeEngine(opts: {
   const build = (ids: string[]) => ids.map((id) => registry.card(id));
   return new MatchEngine({
     seed: opts.seed ?? 12345,
-    config: { ...DEFAULT_CONFIG, ...(opts.config ?? {}) } as GameConfig,
+    config: mergeConfig(DEFAULT_CONFIG, opts.config),
     aiChooser: opts.aiChooser as any,
     players: [
       { name: 'Aluno', deckId: 'test0', isAI: !!opts.levels, aiLevel: opts.levels?.[0] ?? 'normal', deck: build(opts.p0 ?? deckOf('deck-furia-solar')) },

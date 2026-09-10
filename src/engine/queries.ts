@@ -19,11 +19,65 @@ export function defOf(inst: CardInstance): CardDef {
   return registry.card(inst.defId);
 }
 
-export function charDef(inst: CardInstance): CharacterDef {
+/** Top of the real progression stack — the currently active definition. */
+export function stackTop(inst: CardInstance): CardInstance {
+  const stack = inst.progression ?? [];
+  return stack.length > 0 ? stack[stack.length - 1] : inst;
+}
+
+/** Base definition (bottom of the stack). */
+export function baseCharDef(inst: CardInstance): CharacterDef {
   return registry.card(inst.defId) as CharacterDef;
 }
 
-export function findCard(state: MatchState, uid: string): { card: CardInstance; owner: PlayerState; location: 'deck' | 'hand' | 'active' | 'bench' | 'discard' | 'attached'; hostUid?: string } | null {
+/**
+ * Effective character definition = top of the progression stack.
+ * Every stat/attack/ability read must go through this so upgrades apply
+ * without ever duplicating card instances.
+ */
+export function charDef(inst: CardInstance): CharacterDef {
+  const top = stackTop(inst);
+  return registry.card(top.defId) as CharacterDef;
+}
+
+// ---------------------------------------------------------------------------
+// Card conservation (dev assertion / tests)
+// ---------------------------------------------------------------------------
+
+export interface InstanceCensus {
+  deck: number; hand: number; active: number; bench: number; discard: number;
+  attached: number; progression: number; fields: number; total: number;
+  generated: number;
+}
+
+/**
+ * Counts every real CardInstance in the match. After any normal sequence the
+ * total must be conserved — only `generated: true` tokens may appear/vanish
+ * (they are tracked separately and never enter the discard pile).
+ */
+export function countAllInstances(state: MatchState): InstanceCensus {
+  const c: InstanceCensus = { deck: 0, hand: 0, active: 0, bench: 0, discard: 0, attached: 0, progression: 0, fields: 0, total: 0, generated: 0 };
+  const bump = (inst: CardInstance, where: keyof Omit<InstanceCensus, 'total' | 'generated'>): void => {
+    if (inst.generated) { c.generated++; return; }
+    c[where]++;
+  };
+  for (const p of state.players) {
+    for (const card of p.deck) bump(card, 'deck');
+    for (const card of p.hand) bump(card, 'hand');
+    if (p.active) bump(p.active, 'active');
+    for (const card of p.bench) bump(card, 'bench');
+    for (const card of p.discard) bump(card, 'discard');
+    for (const host of [...(p.active ? [p.active] : []), ...p.bench]) {
+      for (const att of host.attached) bump(att, 'attached');
+      for (const up of host.progression ?? []) bump(up, 'progression');
+    }
+  }
+  for (const f of state.fields) bump(f, 'fields');
+  c.total = c.deck + c.hand + c.active + c.bench + c.discard + c.attached + c.progression + c.fields;
+  return c;
+}
+
+export function findCard(state: MatchState, uid: string): { card: CardInstance; owner: PlayerState; location: 'deck' | 'hand' | 'active' | 'bench' | 'discard' | 'attached' | 'progression'; hostUid?: string } | null {
   for (const p of state.players) {
     if (p.active?.uid === uid) return { card: p.active, owner: p, location: 'active' };
     const inBench = p.bench.find((c) => c.uid === uid);
@@ -37,6 +91,8 @@ export function findCard(state: MatchState, uid: string): { card: CardInstance; 
     for (const c of [...p.bench, ...(p.active ? [p.active] : [])]) {
       const att = c.attached.find((a) => a.uid === uid);
       if (att) return { card: att, owner: p, location: 'attached', hostUid: c.uid };
+      const up = (c.progression ?? []).find((a) => a.uid === uid);
+      if (up) return { card: up, owner: p, location: 'progression', hostUid: c.uid };
     }
   }
   const field = state.fields.find((c) => c.uid === uid);

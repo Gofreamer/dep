@@ -101,9 +101,15 @@ export function expandDeck(def: DeckDef): string[] {
   return out;
 }
 
-export function validateDeck(cards: Record<string, number>, rules: DeckRulesConfig): DeckValidation {
+export function validateDeck(
+  cards: Record<string, number>,
+  rules: DeckRulesConfig,
+  opts: { requireBasic?: boolean } = {}
+): DeckValidation {
   const errors: string[] = [];
   const counts = { total: 0, byKind: {} as Record<string, number> };
+  const perIdentity: Record<string, number> = {};
+  let starters = 0;
   for (const [id, n] of Object.entries(cards)) {
     const def = registry.tryCard(id);
     if (!def) { errors.push(`Carta desconhecida: ${id}`); continue; }
@@ -112,9 +118,25 @@ export function validateDeck(cards: Record<string, number>, rules: DeckRulesConf
     if (def.unique && n > rules.uniqueMax) errors.push(`"${def.name}" é Única (máx. ${rules.uniqueMax}).`);
     const exempt = rules.copyLimitExempt?.includes(def.kind) ?? false;
     if (!def.unique && !exempt && n > rules.maxCopies) errors.push(`"${def.name}" excede o máximo de ${rules.maxCopies} cópias.`);
+    if (def.kind === 'CHARACTER') {
+      if ((def as CharacterDef).stage === 0) starters += n;
+      const identity = def.identityId ?? def.id;
+      perIdentity[identity] = (perIdentity[identity] ?? 0) + n;
+    }
+  }
+  if (rules.maxCopiesPerIdentity !== undefined) {
+    for (const [identity, n] of Object.entries(perIdentity)) {
+      if (n > rules.maxCopiesPerIdentity) {
+        const label = registry.tryCard(identity)?.name ?? identity;
+        errors.push(`"${label}": variantes somam ${n} cópias (máx. ${rules.maxCopiesPerIdentity} por identidade).`);
+      }
+    }
   }
   if (counts.total < rules.min) errors.push(`Mínimo de ${rules.min} cartas (faltam ${rules.min - counts.total}).`);
   if (counts.total > rules.max) errors.push(`Máximo de ${rules.max} cartas (excedem ${counts.total - rules.max}).`);
+  if ((opts.requireBasic ?? true) && starters < 1) {
+    errors.push('O baralho precisa de pelo menos 1 agente inicial (Base) para começar a partida.');
+  }
   return { valid: errors.length === 0, errors, counts };
 }
 

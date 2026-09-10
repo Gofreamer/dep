@@ -3,7 +3,8 @@ import {
   abilitiesBlocked, aggregateMods, cannotRetreat, charDef, charactersInPlay, costSatisfied, currentHp, defOf,
   grantedAttacks, isDefeated, maxHp, opponentOf, player, retreatCostOf
 } from '../queries';
-import { computeLegalActions, canUpgradeTo } from '../validation';
+import { canUpgradeTo } from '../rules';
+import { computeLegalActions } from '../validation';
 import { evalCondition, rand } from '../effects/core';
 
 /**
@@ -30,7 +31,7 @@ export function aiNextCommand(engine: { state: MatchState; canAttackNow(i: CardI
         const d = charDef(c);
         return d.maxHp + d.attacks.reduce((s, a) => s + (a.damage ?? 0), 0) * 2 + d.victoryValue * 5;
       });
-      return { type: 'SETUP_SET_ACTIVE', player: pIdx, uid: best };
+      return { type: 'SETUP_SET_ACTIVE', player: pIdx, uid: best! };
     }
     // bench: deploy one good basic per call
     const candidates = legal.setupBench.filter((uid) => !p.active || uid !== p.active.uid);
@@ -176,7 +177,7 @@ export function aiNextCommand(engine: { state: MatchState; canAttackNow(i: CardI
   }
 
   // nothing worth doing — but if we haven't attacked and can, do it anyway to progress
-  const anyAttack = legal.attacks.find((a) => a.playable);
+  const anyAttack = legal.attacks.find((a: { playable: boolean; attackId: string }) => a.playable);
   if (anyAttack) return { type: 'ATTACK', player: pIdx, attackId: anyAttack.attackId };
   return { type: 'END_TURN', player: pIdx };
 }
@@ -302,7 +303,7 @@ function simulateAttach(host: CardInstance, type: string, wild: boolean | undefi
   const fakeDefId = wild ? 'res-prisma' : (TYPED_RES[type] ?? 'res-neutro');
   return {
     ...host,
-    attached: [...host.attached, { uid: 'sim', defId: fakeDefId, owner: host.owner, kind: 'RESOURCE', damage: 0, stageLevel: 0, statuses: [], counters: {}, attached: [], usedTurn: [], usedMatch: [], deployedOnTurn: 0 }]
+    attached: [...host.attached, { uid: 'sim', defId: fakeDefId, owner: host.owner, kind: 'RESOURCE', damage: 0, stageLevel: 0, statuses: [], counters: {}, attached: [], progression: [], usedTurn: [], usedMatch: [], deployedOnTurn: 0 }]
   };
 }
 
