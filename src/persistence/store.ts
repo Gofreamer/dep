@@ -1,7 +1,7 @@
 import type { MatchRecord, MetaState, PersistenceAdapter, SavedDeck } from './types';
 import { LocalStorageAdapter } from './local';
-import { STARTER_DECKS } from '../data/decks';
-import { ALL_CARDS } from '../data/cards';
+import { STARTER_DECKS } from '../data/fixtures/nexo/decks';
+import { ALL_CARDS } from '../data/fixtures/nexo/cards';
 
 /** Meta progression: decks, collection, stats, settings. */
 export class MetaStore {

@@ -2,9 +2,9 @@ import { beforeAll } from 'vitest';
 import { MatchEngine } from '../src/engine/engine';
 import type { AiLevel, Command, GameConfig } from '../src/engine/types';
 import { DEFAULT_CONFIG } from '../src/engine/types';
-import { registerDataPack } from '../src/data/cards';
+import { registerDataPack } from '../src/data/fixtures/nexo/cards';
 import { mergeConfig } from '../src/engine/state/setup';
-import { STARTER_DECKS, expandDeck } from '../src/data/decks';
+import { STARTER_DECKS, expandDeck } from '../src/data/fixtures/nexo/decks';
 import { registry } from '../src/engine/registry';
 import { aiNextCommand, aiSmartChoice } from '../src/engine/ai/ai';
 

@@ -1,11 +1,11 @@
-import { registry } from '../../engine/registry';
-import type { CardDef } from '../../engine/types';
+import { registry } from '../../../../engine/registry';
+import type { CardDef } from '../../../../engine/types';
 import { CHARACTERS } from './characters';
 import { RESOURCES } from './resources';
 import { ACTIONS } from './actions';
 import { EQUIPMENT } from './equipment';
 import { FIELDS } from './fields';
-import { registerStatuses } from '../statuses';
+import { registerStatuses } from '../../../statuses';
 import { registerCosmetics } from '../factions';
 
 export const ALL_CARDS: CardDef[] = [...CHARACTERS, ...RESOURCES, ...ACTIONS, ...EQUIPMENT, ...FIELDS];

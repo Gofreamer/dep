@@ -6,7 +6,7 @@ import { metaStore } from '../persistence/store';
 import type { MatchRecord } from '../persistence/types';
 import { registry } from '../engine/registry';
 import { charDef, charactersInPlay, player } from '../engine/queries';
-import { expandDeck, STARTER_DECKS, TUTORIAL_DECKS } from '../data/decks';
+import { expandDeck, STARTER_DECKS, TUTORIAL_DECKS } from '../data/fixtures/nexo/decks';
 
 // ---------------------------------------------------------------------------
 // FX cues — visual representations of already-resolved game events

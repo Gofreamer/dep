@@ -1,4 +1,4 @@
-import { registry } from '../engine/registry';
+import { registry } from '../../../engine/registry';
 
 /**
  * Placeholder original universe for the prototype.

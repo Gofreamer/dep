@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp, metaStore } from '../appStore';
-import { validateDeck, deckStats, STARTER_DECKS } from '../../data/decks';
+import { validateDeck, deckStats, STARTER_DECKS } from '../../data/fixtures/nexo/decks';
 import { DEFAULT_CONFIG } from '../../engine/types';
 import { TERMINOLOGY as T } from '../../data/terminology';
 import { registry } from '../../engine/registry';

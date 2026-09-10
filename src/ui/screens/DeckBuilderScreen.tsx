@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp, metaStore } from '../appStore';
-import { validateDeck, deckStats } from '../../data/decks';
+import { validateDeck, deckStats } from '../../data/fixtures/nexo/decks';
 import { allCardsSorted, CardMini } from '../components/CardView';
 import { DefInspectModal } from '../components/Modals';
 import type { CardDef, CardKind } from '../../engine/types';

@@ -1,5 +1,5 @@
-import { registry } from '../engine/registry';
-import type { CharacterDef, DeckRulesConfig } from '../engine/types';
+import { registry } from '../../../engine/registry';
+import type { CharacterDef, DeckRulesConfig } from '../../../engine/types';
 
 export interface DeckDef {
   id: string;

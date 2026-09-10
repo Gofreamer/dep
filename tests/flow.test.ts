@@ -5,7 +5,7 @@ import { registry } from '../src/engine/registry';
 import { MatchController } from '../src/game/controller';
 import type { Command } from '../src/engine/types';
 import { player } from '../src/engine/queries';
-import { registerDataPack } from '../src/data/cards';
+import { registerDataPack } from '../src/data/fixtures/nexo/cards';
 
 setup();
 

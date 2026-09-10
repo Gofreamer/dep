@@ -1,4 +1,4 @@
-import type { CardDef, FieldDef } from '../../engine/types';
+import type { CardDef, FieldDef } from '../../../../engine/types';
 
 const FD = (id: string, name: string, rarity: FieldDef['rarity'], o: { text?: string; mods?: FieldDef['mods']; override?: FieldDef['override']; scope?: FieldDef['scope']; onPlay?: FieldDef['onPlay'] } = {}): FieldDef => ({
   id,

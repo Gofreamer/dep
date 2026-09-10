@@ -1,4 +1,4 @@
-import type { CardDef, ResourceDef } from '../../engine/types';
+import type { CardDef, ResourceDef } from '../../../../engine/types';
 
 const R = (id: string, name: string, resourceType: string, rarity: ResourceDef['rarity'], o: Partial<ResourceDef> = {}, text?: string): ResourceDef => ({
   id,

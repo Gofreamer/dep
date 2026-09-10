@@ -1,4 +1,4 @@
-import type { AbilityDef, AttackDef, CardDef, CharacterDef, EffectStep } from '../../engine/types';
+import type { AbilityDef, AttackDef, CardDef, CharacterDef, EffectStep } from '../../../../engine/types';
 
 // ---------------------------------------------------------------------------
 // Compact builders — characters are pure data.

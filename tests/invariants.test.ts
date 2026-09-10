@@ -8,7 +8,7 @@ import { mergeConfig } from '../src/engine/state/setup';
 import { DEFAULT_CONFIG } from '../src/engine/types';
 import type { AbilityDef, AttackDef, CardDef, CardInstance, CharacterDef, EffectStep } from '../src/engine/types';
 import { aiNextCommand, aiSmartChoice } from '../src/engine/ai/ai';
-import { validateDeck } from '../src/data/decks';
+import { validateDeck } from '../src/data/fixtures/nexo/decks';
 
 setup();
 

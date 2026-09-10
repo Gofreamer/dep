@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/engine/rng';
 import { registry } from '../src/engine/registry';
 import { charDef, findCard, player, charactersInPlay, costSatisfied, countAllInstances } from '../src/engine/queries';
-import { validateDeck, STARTER_DECKS } from '../src/data/decks';
+import { validateDeck, STARTER_DECKS } from '../src/data/fixtures/nexo/decks';
 import { DEFAULT_CONFIG } from '../src/engine/types';
 import { autoSetup, deckOf, makeEngine, playUntilEnd, setup } from './helpers';
 
