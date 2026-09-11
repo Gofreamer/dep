@@ -178,7 +178,11 @@ export const MatchScreen: React.FC = () => {
     if (setupTargets.has(inst.uid)) {
       if (!st.players[0].active) controller.send({ type: 'SETUP_SET_ACTIVE', player: 0, uid: inst.uid });
       else controller.send({ type: 'SETUP_BENCH', player: 0, uid: inst.uid });
+      return;
     }
+    // Carta que não pode ser posicionada agora: inspecionar (antes o clique
+    // simplesmente não fazia nada — a carta parecia "morta").
+    setInspect(inst.uid);
   };
 
   const renderChar = (inst: CardInstance | null, owner: PlayerId, isActive: boolean) => {
@@ -207,15 +211,15 @@ export const MatchScreen: React.FC = () => {
   const retreatReady = legal.canRetreat && legal.retreatTargets.length > 0;
 
   return (
-    <div className="screen match-screen" ref={boardRef}>
+    <div className="screen match-screen" ref={boardRef} data-testid="match-screen">
       {/* painel do oponente */}
-      <div className="opp-bar">
+      <div className="opp-bar" data-testid="opp-bar">
         <ZonePile label={T.deckZoneName} count={opp.deck.length} kind="deck" />
         <div className="opp-info">
           <span className="player-name">{opp.name} <small className="ai-tag">IA</small></span>
           <div className="vp-track">{vpTrack(opp.victoryPoints, vpTarget, 'opp')}</div>
         </div>
-        <div className="opp-hand-backs">
+        <div className="opp-hand-backs" data-testid="opp-hand">
           {Array.from({ length: Math.min(opp.hand.length, 8) }).map((_, i) => <span key={i} className="hand-back" />)}
           <span className="hand-count">×{opp.hand.length}</span>
         </div>
@@ -247,7 +251,7 @@ export const MatchScreen: React.FC = () => {
       </div>
 
       {/* painel do jogador */}
-      <div className="my-bar">
+      <div className="my-bar" data-testid="my-bar">
         <ZonePile label={T.deckZoneName} count={me.deck.length} kind="deck" />
         <div className="my-info">
           <span className="player-name">{me.name}</span>
@@ -262,7 +266,8 @@ export const MatchScreen: React.FC = () => {
                 return (
                   <button key={atk.attackId} className={`dock-btn attack-btn ${atk.playable ? 'playable' : ''}`} disabled={!atk.playable}
                     title={atk.playable ? def.text ?? def.name : T.errorTexts[atk.reason ?? 'cannot_attack']}
-                    onClick={() => attack(atk.attackId)}>
+                    onClick={() => attack(atk.attackId)}
+                    data-testid={`attack-${atk.attackId}`}>
                     ⚔ {def.name} <b>{def.damage ?? ''}</b>
                   </button>
                 );
@@ -290,6 +295,7 @@ export const MatchScreen: React.FC = () => {
               })}
               {retreatReady && (
                 <button className="dock-btn retreat-btn playable"
+                  data-testid="retreat"
                   title="Pague o custo de recuo e troque o ativo"
                   onClick={() => {
                     const target = legal.retreatTargets[0];
@@ -299,20 +305,20 @@ export const MatchScreen: React.FC = () => {
                   ⇄ {T.retreatName}
                 </button>
               )}
-              <button className={`dock-btn endturn-btn ${myTurn ? 'playable' : ''}`} disabled={!myTurn} onClick={endTurn}>
+              <button className={`dock-btn endturn-btn ${myTurn ? 'playable' : ''}`} disabled={!myTurn} onClick={endTurn} data-testid="end-turn">
                 Encerrar Turno
               </button>
             </>
           )}
           {setupMode && st.players[0].active && !st.players[0].setupDone && (
-            <button className="dock-btn endturn-btn playable" onClick={() => controller.send({ type: 'SETUP_DONE', player: 0 })}>Pronto</button>
+            <button className="dock-btn endturn-btn playable" onClick={() => controller.send({ type: 'SETUP_DONE', player: 0 })} data-testid="setup-done">Pronto</button>
           )}
         </div>
         <ZonePile label={T.discardZoneName} count={me.discard.length} kind="discard" onClick={() => setInspect(me.discard[me.discard.length - 1]?.uid ?? null)} />
       </div>
 
       {/* mão */}
-      <div className="hand">
+      <div className="hand" data-testid="hand">
         {me.hand.map((card) => {
           const info = legal.hand[card.uid];
           return (
@@ -340,7 +346,7 @@ export const MatchScreen: React.FC = () => {
 
       {/* tutorial */}
       {tutorial?.active && (
-        <div className="tutorial-banner">
+        <div className="tutorial-banner" data-testid="tutorial-banner" role="status">
           <b>{tutorial.title}</b>
           <span>{tutorial.text}</span>
           <button className="skip-tutorial" onClick={() => { controller.tutorialActive = false; setTutorial(null); }}>Pular tutorial</button>
@@ -349,7 +355,7 @@ export const MatchScreen: React.FC = () => {
 
       {/* HUD */}
       <div className="match-hud">
-        <button className="hud-btn" onClick={() => useMatch.getState().setPaused(true)}>⏸</button>
+        <button className="hud-btn" onClick={() => useMatch.getState().setPaused(true)} data-testid="hud-pause" aria-label="Pausar">⏸</button>
         <button className="hud-btn" onClick={() => useMatch.getState().toggleLog()} title="Registro">📜</button>
         {metaStore.state.settings.devMode && <button className="hud-btn" onClick={() => useMatch.getState().toggleDebug()} title="Debug">🛠</button>}
       </div>
@@ -373,7 +379,7 @@ function vpTrack(vp: number, target: number, side: string): React.ReactNode {
 }
 
 const TurnBanner: React.FC<{ st: MatchState; myTurn: boolean; setup: boolean }> = ({ st, myTurn, setup }) => (
-  <div className="turn-banner">
+  <div className="turn-banner" data-testid="turn-banner">
     {setup ? (
       <span>Preparação — escolha seu {T.activeZoneName.toLowerCase()}</span>
     ) : st.phase === 'gameOver' ? (
@@ -459,11 +465,11 @@ const PauseOverlay: React.FC<{ onResume: () => void; onRestart: () => void; onMe
   if (!paused) return null;
   return (
     <div className="modal-backdrop">
-      <div className="modal pause">
+      <div className="modal pause" role="dialog" aria-modal="true" aria-label="Pausa" data-testid="pause-modal">
         <h2>Pausa</h2>
-        <button className="btn primary" onClick={onResume}>Continuar</button>
-        <button className="btn" onClick={onRestart}>Reiniciar partida</button>
-        <button className="btn" onClick={onMenu}>Menu principal</button>
+        <button className="btn primary" onClick={onResume} data-testid="pause-resume">Continuar</button>
+        <button className="btn" onClick={onRestart} data-testid="pause-restart">Reiniciar partida</button>
+        <button className="btn" onClick={onMenu} data-testid="pause-menu">Menu principal</button>
         <p className="hint">Esc para fechar · dica: toque em uma carta para inspecionar</p>
       </div>
     </div>

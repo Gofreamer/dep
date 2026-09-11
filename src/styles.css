@@ -637,3 +637,127 @@ body.shake { animation: bodyShake 0.42s ease; }
   background: var(--glass); border: 1px solid var(--line); border-radius: 999px;
   padding: 8px 14px; backdrop-filter: blur(8px); box-shadow: var(--shadow);
 }
+
+/* ==========================================================================
+   JET TCG v1 — POLIMENTO FINAL
+   Hierarquia, feedback, legibilidade e responsividade sobre a identidade
+   existente. Nenhuma mudança incompatível: só reforço do que já existe.
+   ========================================================================== */
+
+/* --- movimento opcional: respeita a preferência do usuário --------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  body.shake { animation: none !important; }
+  .fx-layer { display: none; }
+  .spark { display: none; }
+}
+
+/* --- estado "não usável" nunca parece clicável --------------------------- */
+.btn:disabled, .dock-btn:disabled, .menu-card:disabled { cursor: not-allowed; }
+.btn:disabled:hover, .dock-btn:disabled:hover { transform: none; box-shadow: none; border-color: var(--line); }
+.card-mini.dim { cursor: default; }
+
+/* --- menu final (7 entradas) -------------------------------------------- */
+.menu-screen { justify-content: flex-start; padding-top: 4vh; }
+.menu-sub { color: var(--ink-dim); letter-spacing: 0.28em; text-transform: uppercase; font-size: 11.5px; margin-top: -14px; }
+.menu-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 250px)); justify-content: center; width: min(1120px, 100%); }
+.menu-card {
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto;
+  column-gap: 12px; align-items: center; text-align: left; min-height: 88px;
+}
+.menu-card .mc-icon { grid-row: 1 / span 2; font-size: 28px; opacity: 0.9; }
+.menu-card b { grid-column: 2; }
+.menu-card small { grid-column: 2; line-height: 1.35; }
+.menu-card.online { border-color: rgba(34, 211, 238, 0.5); }
+.menu-card.online:hover { box-shadow: 0 0 12px rgba(34, 211, 238, 0.45); }
+.menu-foot { text-align: center; opacity: 0.6; letter-spacing: 0.08em; }
+
+/* --- multiplayer --------------------------------------------------------- */
+.multiplayer-screen { max-width: 980px; margin: 0 auto; width: 100%; }
+.mp-banner {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--glass);
+}
+.mp-banner.warn { border-color: rgba(251, 191, 36, 0.5); }
+.mp-banner.error { border-color: rgba(248, 113, 113, 0.55); }
+.mp-banner code { background: rgba(148, 163, 255, 0.12); padding: 1px 6px; border-radius: 6px; }
+.mp-entry { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.mp-card {
+  display: flex; flex-direction: column; gap: 12px; align-items: stretch;
+  background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px;
+}
+.mp-card h3 { font-size: 18px; letter-spacing: 0.03em; }
+.mp-code-field { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-dim); }
+.mp-code-field input {
+  background: var(--bg1); border: 1px solid var(--line); color: var(--ink);
+  padding: 12px 14px; border-radius: 10px; font-size: 22px; font-weight: 800;
+  letter-spacing: 0.3em; text-transform: uppercase; text-align: center;
+}
+.mp-code-field input:focus { border-color: var(--cyan); outline-offset: 1px; }
+.mp-lobby { display: flex; flex-direction: column; gap: 16px; }
+.mp-room-code {
+  display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center;
+  background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px;
+}
+.mp-label { font-size: 11.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-dim); }
+.mp-code {
+  font-size: clamp(30px, 9vw, 46px); font-weight: 900; letter-spacing: 0.22em;
+  color: var(--cyan); text-shadow: 0 0 18px rgba(34, 211, 238, 0.4);
+  font-variant-numeric: tabular-nums;
+}
+.mp-copy { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.mp-status { color: var(--gold); font-size: 13px; }
+.mp-seats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.mp-seat {
+  position: relative; display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+  background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+}
+.mp-seat.me { border-color: rgba(34, 211, 238, 0.55); }
+.mp-seat.empty { border-style: dashed; color: var(--ink-dim); }
+.mp-seat b { font-size: 16px; }
+.mp-seat small { color: var(--ink-dim); font-size: 12.5px; }
+.mp-seat small.ready { color: var(--green); font-weight: 700; }
+.mp-dot { width: 9px; height: 9px; border-radius: 50%; position: absolute; top: 16px; right: 16px; }
+.mp-dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.mp-dot.off { background: var(--red); }
+.mp-you {
+  position: absolute; bottom: 12px; right: 14px; font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--cyan);
+}
+.mp-deck-row {
+  display: flex; gap: 12px; align-items: end; flex-wrap: wrap;
+  background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+}
+.mp-deck-row label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-dim); flex: 1; min-width: 200px; }
+.mp-deck-row select { background: var(--bg1); border: 1px solid var(--line); color: var(--ink); padding: 10px; border-radius: 10px; }
+
+/* --- banners de rede na partida online ----------------------------------- */
+.net-banner {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  z-index: 120; padding: 7px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  background: var(--bg2); border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.net-banner.ok { border-color: rgba(74, 222, 128, 0.45); color: #bbf7d0; }
+.net-banner.warn { border-color: rgba(251, 191, 36, 0.5); color: #fde68a; }
+.online-match .opp-bar { position: relative; }
+
+/* --- contraste / legibilidade ------------------------------------------- */
+.hint { color: #b3bce0; }
+.small, small { line-height: 1.4; }
+.chip { letter-spacing: 0.04em; }
+
+/* --- responsivo do multiplayer ------------------------------------------ */
+@media (max-width: 700px) {
+  .menu-screen { padding-top: 2vh; gap: 18px; }
+  .menu-card { min-height: 74px; }
+  .mp-card { padding: 16px; }
+  .mp-deck-row { align-items: stretch; }
+  .mp-deck-row .btn { width: 100%; }
+  .net-banner { font-size: 11.5px; padding: 6px 12px; max-width: 92vw; text-align: center; }
+}

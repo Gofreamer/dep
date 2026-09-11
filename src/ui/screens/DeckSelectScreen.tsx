@@ -13,7 +13,7 @@ export const DeckSelectScreen: React.FC = () => {
   const openBuilder = useApp((s) => s.openBuilder);
   const [, force] = React.useState(0);
   const [selected, setSelected] = React.useState(metaStore.state.activeDeckId);
-  const [oppDeck, setOppDeck] = React.useState('deck-controle-tatico');
+  const [oppDeck, setOppDeck] = React.useState<string>(() => metaStore.listDecks()[1]?.id ?? metaStore.listDecks()[0]?.id ?? '');
   const [difficulty, setDifficulty] = React.useState(metaStore.state.settings.difficulty);
   const [seedText, setSeedText] = React.useState('');
 
@@ -48,9 +48,9 @@ export const DeckSelectScreen: React.FC = () => {
   };
 
   return (
-    <div className="screen deckselect-screen">
+    <div className="screen deckselect-screen" data-testid="deck-select-screen">
       <header className="screen-head">
-        <button className="btn ghost" onClick={() => go('menu')}>← Voltar</button>
+        <button className="btn ghost" onClick={() => go('menu')} data-testid="deck-back">← Voltar</button>
         <h2>Escolha seu baralho</h2>
         <button className="btn" onClick={() => openBuilder(selected || null)}>✎ Editar</button>
       </header>
@@ -60,7 +60,7 @@ export const DeckSelectScreen: React.FC = () => {
           const v = validateDeck(d.cards, DEFAULT_CONFIG.deckRules);
           const stats = deckStats(d.cards);
           return (
-            <button key={d.id} className={`deck-option ${selected === d.id ? 'selected' : ''}`} onClick={() => setSelected(d.id)}>
+            <button key={d.id} className={`deck-option ${selected === d.id ? 'selected' : ''}`} onClick={() => setSelected(d.id)} data-testid={`deck-option-${d.id}`} aria-pressed={selected === d.id}>
               <b className="do-name">{d.name}</b>
               <small className="do-desc">{JET_STARTER_DECKS.find((s0) => s0.id === d.id)?.description ?? `Baralho personalizado — ${Object.keys(d.cards).length} tipos de carta`}</small>
               <div className="do-stats">
@@ -73,7 +73,7 @@ export const DeckSelectScreen: React.FC = () => {
             </button>
           );
         })}
-        <button className="deck-option new-deck" onClick={() => openBuilder(null)}>
+        <button className="deck-option new-deck" onClick={() => openBuilder(null)} data-testid="deck-option-new">
           <b>+ Novo baralho</b>
           <small>Comece do zero no construtor</small>
         </button>
@@ -93,13 +93,13 @@ export const DeckSelectScreen: React.FC = () => {
       <div className="match-setup">
         <label>
           Oponente:
-          <select value={oppDeck} onChange={(e) => setOppDeck(e.target.value)}>
+          <select value={oppDeck} onChange={(e) => setOppDeck(e.target.value)} data-testid="deck-opponent" aria-label="Baralho do oponente">
             {decks.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
         </label>
         <label>
           Dificuldade:
-          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)}>
+          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)} data-testid="deck-difficulty" aria-label="Dificuldade da IA">
             <option value="easy">Fácil</option>
             <option value="normal">Normal</option>
             <option value="hard">Difícil</option>
@@ -107,9 +107,9 @@ export const DeckSelectScreen: React.FC = () => {
         </label>
         <label>
           Semente (opcional):
-          <input value={seedText} placeholder="aleatória" onChange={(e) => setSeedText(e.target.value)} />
+          <input value={seedText} placeholder="aleatória" onChange={(e) => setSeedText(e.target.value)} data-testid="deck-seed" aria-label="Semente da partida" />
         </label>
-        <button className="btn big primary" disabled={!selected} onClick={play}>Batalhar!</button>
+        <button className="btn big primary" disabled={!selected} onClick={play} data-testid="deck-start">Batalhar!</button>
       </div>
       <p className="hint">Alvo: {DEFAULT_CONFIG.victory.targetPoints} {T.victoryPointName}s · {T.characterPlural}: {registry.allCards().filter((c) => c.kind === 'CHARACTER').length} no jogo</p>
     </div>

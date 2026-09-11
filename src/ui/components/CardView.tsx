@@ -43,6 +43,8 @@ export const CardView: React.FC<{ def: CardDef; quantity?: number; onClick?: () 
       aria-label={onClick ? `${def.name} — ver detalhes` : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       style={{ ['--faction' as any]: color }}
+      data-card-id={def.id}
+      data-testid={`card-${def.id}`}
     >
       <div className="card-head">
         <span className="card-name">{def.name}</span>
@@ -132,6 +134,8 @@ export const CardMini: React.FC<{ def: CardDef; count?: number; quantity?: numbe
       aria-label={onClick ? `${def.name}${hp ? ` (${hp} HP)` : ''}` : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       style={{ ['--faction' as any]: color }}
+      data-card-id={def.id}
+      data-testid={`card-${def.id}`}
     >
       <div className="mini-art"><CardArt def={def} className="art-svg" /></div>
       <div className="mini-info">

@@ -7,6 +7,7 @@ import type { MatchRecord } from '../persistence/types';
 import { registry } from '../engine/registry';
 import { charDef, charactersInPlay, player } from '../engine/queries';
 import { expandDeck } from '../data/deckUtils';
+import { cuesFromEvents } from './cues';
 import { JET_STARTER_DECKS } from '../data/jet/starterDecks';
 import { JET_TUTORIAL_DECKS } from '../data/jet/tutorialDecks';
 
@@ -234,41 +235,8 @@ export class MatchController {
   private processEvents(): void {
     const evs: GameEvent[] = this.engine.eventsSince(this.lastSeq);
     this.lastSeq = this.engine.state.eventSeq;
-    for (const ev of evs) {
-      const p = ev.payload as Record<string, any>;
-      switch (ev.type) {
-        case 'DAMAGE_DEALT':
-          if (!p.preview && p.uid && p.amount > 0) this.cue({ kind: 'damage', uid: p.uid, text: `-${p.amount}`, big: p.amount >= 50 });
-          break;
-        case 'HEALED':
-          if (p.uid && p.amount > 0) this.cue({ kind: 'heal', uid: p.uid, text: `+${p.amount}` });
-          break;
-        case 'CHARACTER_DEFEATED':
-          this.cue({ kind: 'ko', uid: p.uid, text: 'DERROTADO' });
-          this.cue({ kind: 'shake' });
-          break;
-        case 'ATTACK_USED':
-          this.cue({ kind: 'attack', uid: p.uid });
-          break;
-        case 'CHARACTER_UPGRADED':
-          this.cue({ kind: 'upgrade', uid: p.uid, text: 'EVOLUIU!' });
-          break;
-        case 'STATUS_APPLIED':
-          this.cue({ kind: 'status', uid: p.uid, text: String(p.status ?? '') });
-          break;
-        case 'VICTORY_POINTS_CHANGED':
-          this.cue({ kind: 'vp', player: ev.player ?? undefined, text: `+${p.amount} PV` });
-          break;
-        case 'COIN_FLIPPED':
-          this.cue({ kind: 'coin', text: p.success ? '✦ Cara!' : '✧ Coroa' });
-          break;
-        case 'MATCH_ENDED':
-          this.cue({ kind: 'shake', big: true });
-          break;
-        default:
-          break;
-      }
-    }
+    // Tradução evento→cue compartilhada com o multiplayer (src/game/cues.ts).
+    for (const seed of cuesFromEvents(evs)) this.cue(seed);
   }
 
   private cue(c: Omit<Cue, 'id'>): void {

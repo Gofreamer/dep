@@ -22,8 +22,8 @@ export const InspectModal: React.FC = () => {
   const def = defOf(inst);
   return (
     <div className="modal-backdrop" onClick={() => setInspect(null)}>
-      <div className="modal inspect" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={() => setInspect(null)}>✕</button>
+      <div className="modal inspect" role="dialog" aria-modal="true" aria-label={`Detalhes de ${def.name}`} onClick={(e) => e.stopPropagation()} data-testid="inspect-modal">
+        <button className="close-btn" onClick={() => setInspect(null)} aria-label="Fechar detalhes" data-testid="inspect-close">✕</button>
         <CardView def={def} />
       </div>
     </div>
@@ -42,8 +42,8 @@ export const DefInspectModal: React.FC<{ def: ReturnType<typeof defOf> | null; o
   if (!def) return null;
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal inspect" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>✕</button>
+      <div className="modal inspect" role="dialog" aria-modal="true" aria-label={`Detalhes de ${def.name}`} onClick={(e) => e.stopPropagation()} data-testid="def-inspect-modal">
+        <button className="close-btn" onClick={onClose} aria-label="Fechar detalhes" data-testid="def-inspect-close">✕</button>
         <CardView def={def} />
       </div>
     </div>

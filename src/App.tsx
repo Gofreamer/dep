@@ -5,6 +5,8 @@ import { DeckSelectScreen } from './ui/screens/DeckSelectScreen';
 import { DeckBuilderScreen } from './ui/screens/DeckBuilderScreen';
 import { CollectionScreen, HistoryScreen, SettingsScreen, ResultsScreen } from './ui/screens/CollectionHistorySettings';
 import { MatchScreen } from './ui/screens/MatchScreen';
+import { MultiplayerScreen } from './ui/screens/MultiplayerScreen';
+import { OnlineMatchScreen } from './ui/screens/OnlineMatchScreen';
 
 export default function App() {
   const screen = useApp((s) => s.screen);
@@ -17,6 +19,8 @@ export default function App() {
       {screen === 'builder' && <DeckBuilderScreen />}
       {screen === 'collection' && <CollectionScreen />}
       {screen === 'match' && <MatchScreen key={useApp.getState().matchConfig?.seed} />}
+      {screen === 'multiplayer' && <MultiplayerScreen />}
+      {screen === 'onlineMatch' && <OnlineMatchScreen />}
       {screen === 'results' && <ResultsScreen />}
       {screen === 'history' && <HistoryScreen />}
       {screen === 'settings' && <SettingsScreen />}

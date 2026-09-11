@@ -49,6 +49,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
           {isDev && (
             <button
               type="button"
+              aria-label="Copiar detalhes (dev)"
               onClick={() => { void navigator.clipboard?.writeText(details); }}
             >
               Copiar detalhes (dev)

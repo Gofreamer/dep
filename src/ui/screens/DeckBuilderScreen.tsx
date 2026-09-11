@@ -104,10 +104,10 @@ export const DeckBuilderScreen: React.FC = () => {
   const factions = registry.allFactions();
 
   return (
-    <div className="screen builder-screen">
+    <div className="screen builder-screen" data-testid="builder-screen">
       <header className="screen-head">
-        <button className="btn ghost" onClick={() => { save(); go('menu'); }}>← Salvar e voltar</button>
-        <input className="deck-name-input" value={name} onChange={(e) => setName(e.target.value)} onBlur={save} />
+        <button className="btn ghost" onClick={() => { save(); go('menu'); }} data-testid="builder-back">← Salvar e voltar</button>
+        <input className="deck-name-input" value={name} onChange={(e) => setName(e.target.value)} onBlur={save} aria-label="Nome do baralho" data-testid="builder-name" />
         <div className="head-actions">
           <button className="btn" onClick={() => { save(); const c = metaStore.copyDeck(deckId!); if (c) { setDeckId(c.id); setName(c.name); setCards({ ...c.cards }); } }}>Copiar</button>
           <button className="btn danger" onClick={() => { if (deckId && metaStore.listDecks().length > 1) { metaStore.deleteDeck(deckId); go('menu'); } }}>Excluir</button>
@@ -119,7 +119,7 @@ export const DeckBuilderScreen: React.FC = () => {
         {/* Biblioteca */}
         <section className="library">
           <div className="filters">
-            <input placeholder="Buscar pelo nome…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input placeholder="Buscar pelo nome…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Buscar carta" data-testid="builder-search" />
             <select value={kind} onChange={(e) => setKind(e.target.value as any)}>
               {KINDS.map((k) => <option key={k} value={k}>{k === 'ALL' ? 'Todos os tipos' : T.kindNames[k].plural}</option>)}
             </select>
@@ -167,7 +167,7 @@ export const DeckBuilderScreen: React.FC = () => {
 
         {/* Baralho atual */}
         <aside className="deck-panel">
-          <div className={`deck-validity ${validation.valid ? 'ok' : 'bad'}`}>
+          <div className={`deck-validity ${validation.valid ? 'ok' : 'bad'}`} data-testid="builder-validity" role="status">
             {validation.valid ? `✓ Válido — ${stats.total}/${DEFAULT_CONFIG.deckRules.max} cartas` : validation.errors.map((e, i) => <div key={i}>⚠ {e}</div>)}
           </div>
           <div className="deck-contents">
