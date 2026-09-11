@@ -5,6 +5,7 @@ import { DefInspectModal } from '../components/Modals';
 import type { CardDef, CardKind } from '../../engine/types';
 import { TERMINOLOGY as T } from '../../data/terminology';
 import { registry } from '../../engine/registry';
+import { setSoundEnabled } from '../audio';
 
 export const CollectionScreen: React.FC = () => {
   const go = useApp((s) => s.go);
@@ -61,14 +62,14 @@ export const CollectionScreen: React.FC = () => {
   }, [cards]);
 
   return (
-    <div className="screen collection-screen">
+    <div className="screen collection-screen" data-testid="collection-screen">
       <header className="screen-head">
         <button className="btn ghost" onClick={() => go('menu')}>← Voltar</button>
         <h2>Coleção — {cards.length} cartas</h2>
         <span className="record-badge">{metaStore.state.wins}V / {metaStore.state.losses}D</span>
       </header>
       <div className="filters">
-        <input placeholder="Buscar…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input placeholder="Buscar…" value={search} onChange={(e) => setSearch(e.target.value)} data-testid="collection-search" aria-label="Buscar carta" />
         <select value={kind} onChange={(e) => setKind(e.target.value as any)}>
           <option value="ALL">Todos os tipos</option>
           {Object.entries(T.kindNames).map(([k, v]) => <option key={k} value={k}>{v.plural}</option>)}
@@ -113,7 +114,7 @@ export const HistoryScreen: React.FC = () => {
   const deckName = (id: string) => decks.find((d) => d.id === id)?.name ?? id;
   const history = metaStore.state.history;
   return (
-    <div className="screen history-screen">
+    <div className="screen history-screen" data-testid="history-screen">
       <header className="screen-head">
         <button className="btn ghost" onClick={() => go('menu')}>← Voltar</button>
         <h2>Histórico de partidas</h2>
@@ -145,7 +146,7 @@ export const SettingsScreen: React.FC = () => {
     force((x) => x + 1);
   };
   return (
-    <div className="screen settings-screen">
+    <div className="screen settings-screen" data-testid="settings-screen">
       <header className="screen-head">
         <button className="btn ghost" onClick={() => go('menu')}>← Voltar</button>
         <h2>Ajustes</h2>
@@ -166,11 +167,19 @@ export const SettingsScreen: React.FC = () => {
             <option value="fast">Rápida</option>
           </select>
         </label>
-        <label className="check"><input type="checkbox" checked={settings.devMode} onChange={(e) => patch({ devMode: e.target.checked })} /> Modo desenvolvedor (painel de debug nas partidas)</label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={settings.soundEnabled !== false}
+            onChange={(e) => { patch({ soundEnabled: e.target.checked }); setSoundEnabled(e.target.checked); }}
+            data-testid="settings-sound"
+          /> Efeitos sonoros (tons curtos gerados no navegador)
+        </label>
+        <label className="check"><input type="checkbox" checked={settings.devMode} onChange={(e) => patch({ devMode: e.target.checked })} data-testid="settings-dev" /> Modo desenvolvedor (painel de debug nas partidas)</label>
         <label className="check"><input type="checkbox" checked={settings.tutorialDone} onChange={(e) => patch({ tutorialDone: e.target.checked })} /> Tutorial concluído</label>
         <button className="btn danger" onClick={() => { if (confirm('Apagar TODOS os dados locais (baralhos, histórico)?')) { metaStore.resetAll(); showToast('Dados apagados.'); force((x) => x + 1); } }}>Apagar todos os dados</button>
         <div className="about">
-          <b>{T.title}</b> — protótipo de TCG digital. Engine genérica orientada a dados: toda a terminologia, facções e cartas vêm de configuração, prontas para um futuro reskin.
+          <b>{T.title} v1</b> — TCG digital com engine genérica orientada a dados: toda a terminologia, facções e cartas vêm de configuração. Partidas contra a IA, tutorial, construtor de baralhos, coleção com artes oficiais e multiplayer privado para dois jogadores.
         </div>
       </div>
     </div>
@@ -184,15 +193,15 @@ export const ResultsScreen: React.FC = () => {
   const startMatch = useApp((s) => s.startMatch);
   const win = outcome === 'win';
   return (
-    <div className={`screen results-screen ${win ? 'win' : 'loss'}`}>
+    <div className={`screen results-screen ${win ? 'win' : 'loss'}`} data-testid="results-screen">
       <div className="results-card">
         <h1>{win ? 'Vitória!' : 'Derrota…'}</h1>
         <p>{win ? 'Você alcançou o alvo de Pontos de Vitória. A liga reconhece sua força!' : 'O oponente levou a melhor. Ajuste o baralho e tente de novo!'}</p>
         <div className="results-actions">
-          <button className="btn big primary" onClick={() => cfg && startMatch({ ...cfg, seed: Math.floor(Math.random() * 1e9) })}>Revanche imediata</button>
-          <button className="btn" onClick={() => go('deckSelect')}>Trocar baralho</button>
-          <button className="btn" onClick={() => go('builder')}>Editar baralho</button>
-          <button className="btn ghost" onClick={() => go('menu')}>Menu principal</button>
+          <button className="btn big primary" onClick={() => cfg && startMatch({ ...cfg, seed: Math.floor(Math.random() * 1e9) })} data-testid="results-rematch">Revanche imediata</button>
+          <button className="btn" onClick={() => go('deckSelect')} data-testid="results-change-deck">Trocar baralho</button>
+          <button className="btn" onClick={() => go('builder')} data-testid="results-edit-deck">Editar baralho</button>
+          <button className="btn ghost" onClick={() => go('menu')} data-testid="results-menu">Menu principal</button>
         </div>
       </div>
     </div>

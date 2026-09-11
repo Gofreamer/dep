@@ -1,24 +1,40 @@
 import React from 'react';
 import { useMatch } from '../matchStore';
+import { useMultiplayer } from '../../multiplayer/store';
 import type { Cue } from '../../game/controller';
 
 /**
  * Floating damage numbers, particles and shakes — purely visual echoes of
  * already-resolved engine events.
  */
+/**
+ * Camada de efeitos. Lê as duas fontes possíveis de cues (partida local/IA e
+ * partida online) e as trata de forma idêntica — o feedback visual é o mesmo
+ * nos dois modos.
+ */
 export const FXLayer: React.FC = () => {
-  const cues = useMatch((s) => s.cues);
-  const dropCue = useMatch((s) => s.dropCue);
+  const matchCues = useMatch((s) => s.cues);
+  const onlineCues = useMultiplayer((s) => s.onlineCues);
+  const dropMatch = useMatch((s) => s.dropCue);
+  const dropOnline = useMultiplayer((s) => s.dropCue);
+
+  const cues = React.useMemo(
+    () => [
+      ...matchCues.map((c) => ({ cue: c, drop: dropMatch })),
+      ...onlineCues.map((c) => ({ cue: c, drop: dropOnline }))
+    ].slice(-24),
+    [matchCues, onlineCues, dropMatch, dropOnline]
+  );
 
   React.useEffect(() => {
     if (cues.length === 0) return;
-    const timers = cues.map((c) => setTimeout(() => dropCue(c.id), 1600));
+    const timers = cues.map(({ cue, drop }) => setTimeout(() => drop(cue.id), 1600));
     return () => timers.forEach(clearTimeout);
-  }, [cues, dropCue]);
+  }, [cues]);
 
   return (
     <div className="fx-layer" aria-hidden>
-      {cues.map((c) => {
+      {cues.map(({ cue: c }) => {
         const el = c.uid ? document.querySelector(`[data-uid="${c.uid}"]`) : null;
         const rect = el?.getBoundingClientRect();
         const style: React.CSSProperties = rect

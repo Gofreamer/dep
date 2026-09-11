@@ -40,7 +40,7 @@ export class MetaStore {
       wins: 0,
       losses: 0,
       history: [],
-      settings: { difficulty: 'normal', speed: 'normal', devMode: import.meta.env.DEV, tutorialDone: false, player1Name: 'Você' }
+      settings: { difficulty: 'normal', speed: 'normal', devMode: import.meta.env.DEV, tutorialDone: false, player1Name: 'Você', soundEnabled: true }
     };
   }
 
@@ -58,6 +58,8 @@ export class MetaStore {
       this.state.history = history.slice(0, 100);
     }
     if (!this.state.settings) this.state.settings = this.defaults().settings;
+    // Campo opcional da v1: saves antigos recebem o padrão sem invalidar nada.
+    if (typeof this.state.settings.soundEnabled !== 'boolean') this.state.settings.soundEnabled = true;
     if (!Array.isArray(this.state.favorites)) this.state.favorites = [];
     if (!Array.isArray(this.state.history)) this.state.history = [];
     if (typeof this.state.wins !== 'number') this.state.wins = 0;

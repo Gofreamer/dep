@@ -1,0 +1,28 @@
+# JET TCG — servidor de sala privada (Cloudflare Worker + Durable Object)
+#
+# Deploy:   npx wrangler deploy --config worker/wrangler.toml
+# Dev:      npm run worker:dev   (wrangler dev, http://localhost:8787)
+#
+# NÃO há segredos neste arquivo. A única variável é a lista de origens
+# permitidas (CLIENT_ORIGINS) — edite para o domínio real do frontend.
+
+name = "jet-tcg-multiplayer"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# Origens aceitas para abrir WebSocket (separadas por vírgula).
+# `localhost` do Vite já é permitido por padrão no código.
+# Use "*" apenas em testes locais — nunca em produção.
+[vars]
+CLIENT_ORIGINS = "https://jet-tcg.pages.dev,http://localhost:5173,http://localhost:4173"
+
+[[durable_objects.bindings]]
+name = "JET_ROOM"
+class_name = "RoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomDO"]
+
+[observability]
+enabled = true

@@ -27,6 +27,12 @@ export interface Settings {
   devMode: boolean;
   tutorialDone: boolean;
   player1Name: string;
+  /**
+   * Efeitos sonoros. Campo OPCIONAL adicionado na v1: saves antigos (v2) sem
+   * este campo recebem `true` na migração — não é mudança incompatível, então
+   * `SAVE_SCHEMA_VERSION` não sobe e nenhum deck do usuário é descartado.
+   */
+  soundEnabled?: boolean;
 }
 
 /** Versão atual do schema de save — aumente em qualquer mudança incompatível. */
