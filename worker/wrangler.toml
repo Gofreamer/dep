@@ -14,7 +14,7 @@ compatibility_date = "2026-09-01"
 # `localhost` do Vite já é permitido por padrão no código.
 # Use "*" apenas em testes locais — nunca em produção.
 [vars]
-CLIENT_ORIGINS = "https://jet-tcg.pages.dev,http://localhost:5173,http://localhost:4173"
+CLIENT_ORIGINS = "https://dep-7ed.pages.dev,http://localhost:5173,http://localhost:4173"
 
 [[durable_objects.bindings]]
 name = "JET_ROOM"
