@@ -20,6 +20,17 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.PORT ?? 4173);
 const BASE_URL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 
+/**
+ * Dev local sem browsers do Playwright instalados: aponte para qualquer
+ * Chromium (ex.: PW_CHROMIUM_EXECUTABLE=/caminho/para/chromium). Sem a
+ * variável, o comportamento padrão do Playwright é mantido (CI).
+ */
+function chromiumExec(): { launchOptions?: { executablePath: string; args: string[] } } {
+  return process.env.PW_CHROMIUM_EXECUTABLE
+    ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_EXECUTABLE, args: ['--no-sandbox', '--disable-dev-shm-usage'] } }
+    : {};
+}
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
@@ -33,12 +44,13 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    // PW_NO_VIDEO=1 desliga a gravação (ambientes sem o ffmpeg do Playwright).
+    video: process.env.PW_NO_VIDEO ? 'off' : 'retain-on-failure'
   },
   projects: [
     {
       name: 'desktop-chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, ...chromiumExec() },
       testIgnore: ['**/responsive.spec.ts']
     },
     {
@@ -48,12 +60,12 @@ export default defineConfig({
     },
     {
       name: 'mobile-touch',
-      use: { ...devices['iPhone 13'], viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true },
+      use: { ...devices['iPhone 13'], browserName: 'chromium', viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, ...chromiumExec() },
       testMatch: ['**/responsive.spec.ts']
     },
     {
       name: 'tablet',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 }, hasTouch: true },
+      use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 }, hasTouch: true, ...chromiumExec() },
       testMatch: ['**/responsive.spec.ts']
     }
   ],

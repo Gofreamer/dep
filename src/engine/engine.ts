@@ -939,6 +939,26 @@ function runDebugOp(g: G, op: string, p: Record<string, unknown>): void {
       me.victoryPoints = Math.max(0, p.value as number);
       break;
     }
+    case 'setTurn': {
+      // Debug/dev apenas: ajusta o contador de turno exibido (stress visual).
+      // Também devolve a vez ao jogador humano (activePlayer 0): garante um
+      // estado determinístico pro E2E — o banner mostra "Seu turno · Turno N"
+      // e nenhum tick pendente da IA volta a agir.
+      state.turn = Math.max(1, p.value as number);
+      state.activePlayer = 0;
+      break;
+    }
+    case 'discardHand': {
+      // Debug/dev apenas: descarta N cartas aleatórias da mão (stress visual
+      // de descarte grande no E2E de layout).
+      const n = Math.min(me.hand.length, (p.amount as number) ?? 1);
+      for (let i = 0; i < n; i++) {
+        const idx = Math.floor(rand(state) * me.hand.length);
+        const [c] = me.hand.splice(idx, 1);
+        me.discard.push(c);
+      }
+      break;
+    }
     case 'triggerAbility': {
       const t = findCard(state, p.targetUid as string);
       if (t) state.triggerQueue.push({ event: (p.event as string) ?? 'turnStart', sourceUid: t.card.uid, player: t.card.owner });

@@ -42,6 +42,23 @@ export const MatchScreen: React.FC = () => {
     ctl.onInvalid = (code) => showToast(T.errorTexts[code] ?? code);
     setController(ctl);
     reset();
+    // Gancho dev-only (instrumentação p/ E2E de stress e depuração manual):
+    // expõe engine+controller quando o Modo desenvolvedor está ativo.
+    if (metaStore.state.settings.devMode) {
+      (window as unknown as Record<string, unknown>).__jetDev = {
+        engine: ctl.engine,
+        controller: ctl,
+        sync: () => {
+          const eng = ctl.engine;
+          sync(eng.version, eng.state, eng.legalActions(0), eng.getPending());
+        },
+        debug: (op: string, payload: Record<string, unknown> = {}) => {
+          ctl.engine.debugCommand(op, { player: 0, ...payload });
+          const eng = ctl.engine;
+          sync(eng.version, eng.state, eng.legalActions(0), eng.getPending());
+        },
+      };
+    }
     ctl.start(() => {
       const eng = ctl.engine;
       sync(eng.version, eng.state, eng.legalActions(0), eng.getPending());
@@ -64,7 +81,10 @@ export const MatchScreen: React.FC = () => {
     } catch {
       // Preload nunca pode impedir a partida de iniciar.
     }
-    return () => ctl.stop();
+    return () => {
+      ctl.stop();
+      delete (window as unknown as Record<string, unknown>).__jetDev;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.playerDeckId, cfg?.opponentDeckId, cfg?.seed]);
 
@@ -201,6 +221,7 @@ export const MatchScreen: React.FC = () => {
         isActive={isActive}
         legal={owner === 0 ? legal : null}
         targeting={targeting}
+        compact={!isActive}
         onClick={() => (setupMode ? clickInSetup(inst) : clickBoardChar(inst, owner))}
       />
     );
@@ -235,7 +256,7 @@ export const MatchScreen: React.FC = () => {
       {/* campo inimigo */}
       <div className="field-row">
         <div className="bench-row opp-bench">
-          {opp.bench.map((c) => renderChar(c, 1, false))}
+          {opp.bench.map((c) => <React.Fragment key={c.uid}>{renderChar(c, 1, false)}</React.Fragment>)}
           {Array.from({ length: Math.max(0, st.config.board.benchSize - opp.bench.length) }).map((_, i) => <div key={i} className="slot empty mini-slot" />)}
         </div>
       </div>
@@ -251,7 +272,7 @@ export const MatchScreen: React.FC = () => {
       {/* meu banco */}
       <div className="field-row">
         <div className="bench-row my-bench">
-          {me.bench.map((c) => renderChar(c, 0, false))}
+          {me.bench.map((c) => <React.Fragment key={c.uid}>{renderChar(c, 0, false)}</React.Fragment>)}
           {Array.from({ length: Math.max(0, st.config.board.benchSize - me.bench.length) }).map((_, i) => <div key={i} className="slot empty mini-slot" />)}
         </div>
       </div>

@@ -93,13 +93,13 @@ export class MatchController {
     const st = this.engine.state;
     const me = player(st, 0);
     me.hand = [];
-    me.deck = me.deck.filter((c) => true);
     const want = ['agent-jenny-base', 'agent-xixim-base', 'agent-ran-yuki-base', 'jres-energia', 'jres-energia', 'jact-leitura', 'jeq-manopla'];
     for (const defId of want) {
-      const inDeck = me.deck.find((c) => c.defId === defId);
-      if (inDeck) me.hand.push(inDeck);
+      // Remove do deck a cada iteração: 'jres-energia' aparece 2× e cada
+      // ocorrência precisa ser uma INSTÂNCIA distinta (uids únicos no React).
+      const idx = me.deck.findIndex((c) => c.defId === defId);
+      if (idx >= 0) me.hand.push(...me.deck.splice(idx, 1));
     }
-    me.deck = me.deck.filter((c) => !me.hand.includes(c));
     st.triggerQueue = [];
   }
 
