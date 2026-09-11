@@ -279,12 +279,7 @@ body.shake { animation: bodyShake 0.42s ease; }
    ========================================================================== */
 .match-screen { padding: 8px; gap: 6px; position: relative; overflow: hidden; }
 .opp-bar, .my-bar { display: flex; align-items: center; gap: 16px; padding: 4px 10px; }
-/* A barra de ações precisa ficar SEMPRE acima da mão. `.hand` é absoluta com
-   z-index 20; sem empilhamento próprio aqui, as cartas pintavam por cima do
-   dock e interceptavam o clique em "Pronto"/"Encerrar Turno" — reproduzido em
-   navegador real (Firefox 1366×768) pelo E2E. `position: relative` não altera
-   o layout, só cria o contexto de empilhamento. */
-.my-bar { position: relative; z-index: 30; }
+
 .player-name { font-weight: 800; letter-spacing: 0.04em; }
 .ai-tag { color: var(--magenta); font-size: 10px; border: 1px solid rgba(232, 121, 249, 0.4); border-radius: 99px; padding: 1px 7px; margin-left: 6px; }
 .opp-info, .my-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
@@ -399,8 +394,19 @@ body.shake { animation: bodyShake 0.42s ease; }
 }
 .hand::-webkit-scrollbar { display: none; }
 
-/* dock de comandos */
-.command-dock { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; flex: 2; }
+/* dock de comandos.
+   `position: relative; z-index: 30` mantém os BOTÕES acima da mão: `.hand` é
+   absoluta com z-index 20 e, sem isso, as cartas pintavam por cima do dock e
+   interceptavam o clique em "Pronto"/"Encerrar Turno" (reproduzido em Firefox
+   1366×768 pelo E2E). Subir só o dock — e não a `.my-bar` inteira, que ocupa a
+   largura toda — evita o efeito contrário de cobrir as cartas da mão.
+   `nowrap` + scroll horizontal impede o dock de crescer em várias linhas e
+   invadir a faixa reservada à mão. */
+.command-dock {
+  display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-end; flex: 2;
+  position: relative; z-index: 30; overflow-x: auto; scrollbar-width: none;
+}
+.command-dock::-webkit-scrollbar { display: none; }
 .dock-btn {
   background: var(--glass); border: 1px solid var(--line); border-radius: 11px; padding: 9px 14px;
   font-size: 12.5px; font-weight: 700; color: var(--ink-dim); backdrop-filter: blur(6px);

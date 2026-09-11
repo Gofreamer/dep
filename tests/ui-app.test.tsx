@@ -126,6 +126,11 @@ describe('fluxo de produto (UI real)', () => {
     await waitFor(() => expect(screen.getByTestId('inspect-modal')).toBeTruthy());
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByTestId('inspect-modal')).toBeNull());
+    // REGRESSÃO: o overlay de pausa também ouvia Escape no window, então fechar
+    // a inspeção ABRIA a pausa e deixava um .modal-backdrop cobrindo a partida
+    // (achado pelo E2E em Chromium). O modal mais acima deve consumir o Escape.
+    expect(screen.queryByTestId('pause-modal')).toBeNull();
+    expect(document.querySelector('.modal-backdrop')).toBeNull();
   });
 
   it('15) botão Encerrar Turno existe e fica habilitado só no seu turno', async () => {

@@ -94,10 +94,16 @@ jobs:
 
       # Sem VITE_MULTIPLAYER_URL: o app mostra "Servidor multiplayer não
       # configurado." e o teste multiplayer é pulado de propósito.
+      # `shell: bash` + `set -o pipefail` são obrigatórios: sem pipefail o
+      # status do pipe é o do `tee`, e o job ficaria VERDE mesmo com testes
+      # falhando (aconteceu de verdade nesta branch).
       - name: E2E (desktop + mobile + tablet)
         id: e2e
         continue-on-error: true
-        run: npm run test:e2e 2>&1 | tee /tmp/e2e.log
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee /tmp/e2e.log
 
       # Os logs de job e artefatos ficam em blob storage; publicar o resumo no
       # PR mantém o resultado legível pela API do GitHub.
