@@ -18,7 +18,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "kof-12",
       "name": "KOF 12",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "kof-12",
         "capturedAt": "2026-09-10",
@@ -29,7 +29,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "asgard",
       "name": "Asgard",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "asgard",
         "capturedAt": "2026-09-10",
@@ -40,7 +40,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "morning-star",
       "name": "Morning Star",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "morning-star",
         "capturedAt": "2026-09-10",
@@ -51,7 +51,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "bastard-gran-tubaroes-xyz",
       "name": "Bastard Gran Tubarões XYZ",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "bastard-gran-tubaroes-xyz",
         "capturedAt": "2026-09-10",
@@ -62,7 +62,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "rainbow-six",
       "name": "Rainbow Six",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "rainbow-six",
         "capturedAt": "2026-09-10",
@@ -73,7 +73,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "salvatore",
       "name": "Salvatore",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "salvatore",
         "capturedAt": "2026-09-10",
@@ -84,7 +84,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "platinum",
       "name": "Platinum",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "platinum",
         "capturedAt": "2026-09-10",
@@ -95,7 +95,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "id": "weigon",
       "name": "Weigon",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "agents",
         "sourceId": "weigon",
         "capturedAt": "2026-09-10",
@@ -109,7 +109,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "name": "Base",
       "sidegradeIntent": "Kit padrão do agente.",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "editions",
         "sourceId": "BASE",
         "capturedAt": "2026-09-10",
@@ -121,7 +121,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "name": "MVP",
       "sidegradeIntent": "Troca a Skill (ou Signature) por variante de prêmio individual — sidegrade.",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "editions",
         "sourceId": "MVP",
         "capturedAt": "2026-09-10",
@@ -133,7 +133,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "name": "Champion",
       "sidegradeIntent": "Troca a Signature por variante de campeonato — sidegrade.",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "editions",
         "sourceId": "CHAMPION",
         "capturedAt": "2026-09-10",
@@ -145,7 +145,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "name": "Finals",
       "sidegradeIntent": "Troca a Skill por variante de final — sidegrade.",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "editions",
         "sourceId": "FINALS",
         "capturedAt": "2026-09-10",
@@ -157,7 +157,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
       "name": "Icon",
       "sidegradeIntent": "Troca a Skill por variante ícone — sidegrade premium.",
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "editions",
         "sourceId": "ICON",
         "capturedAt": "2026-09-10",
@@ -176,7 +176,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#salvatore_hashika gloves",
         "capturedAt": "2026-09-10",
@@ -193,7 +193,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_henry",
         "capturedAt": "2026-09-10",
@@ -210,7 +210,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#bastard gran tubaroes xyz_kaio",
         "capturedAt": "2026-09-10",
@@ -227,7 +227,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#platinum_baek seo-jin",
         "capturedAt": "2026-09-10",
@@ -245,7 +245,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "MVP"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_jenny",
         "capturedAt": "2026-09-10",
@@ -262,7 +262,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#weigon_olivia mih",
         "capturedAt": "2026-09-10",
@@ -279,7 +279,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#rainbow six_wei fang",
         "capturedAt": "2026-09-10",
@@ -296,7 +296,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#bastard gran tubaroes xyz_ruby",
         "capturedAt": "2026-09-10",
@@ -313,7 +313,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "BASE"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_xixim",
         "capturedAt": "2026-09-10",
@@ -331,7 +331,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "FINALS"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#asgard_alice westland",
         "capturedAt": "2026-09-10",
@@ -349,7 +349,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "FINALS"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#asgard_tarruh",
         "capturedAt": "2026-09-10",
@@ -367,7 +367,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "FINALS"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#asgard_tayna lannister muller",
         "capturedAt": "2026-09-10",
@@ -385,7 +385,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "CHAMPION"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_ran yuki",
         "capturedAt": "2026-09-10",
@@ -403,7 +403,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "CHAMPION"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_shirakami niku",
         "capturedAt": "2026-09-10",
@@ -421,7 +421,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "MVP"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#rainbow six_wei wang",
         "capturedAt": "2026-09-10",
@@ -439,7 +439,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "ICON"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_mik kashnov",
         "capturedAt": "2026-09-10",
@@ -457,7 +457,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "CHAMPION"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_ryan smith",
         "capturedAt": "2026-09-10",
@@ -475,7 +475,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "CHAMPION"
       ],
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_saki",
         "capturedAt": "2026-09-10",
@@ -502,7 +502,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+3 Influência e corta Apoio. Silencia a Vanguarda rival; se ela estiver Marcada, também a Imobiliza e consome a Marca."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#salvatore_hashika gloves",
         "capturedAt": "2026-09-10",
@@ -527,7 +527,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+2 Influência e bloqueia todos os Confrontos. Purifica a Vanguarda local e as Vanguardas adjacentes, além de reduzir em 1 a recarga local."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_henry",
         "capturedAt": "2026-09-10",
@@ -552,7 +552,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência e tenta causar Ruptura. Aplica Exaustão; contra alvo Marcado, rouba 1 Ímpeto e consome a Marca."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#bastard gran tubaroes xyz_kaio",
         "capturedAt": "2026-09-10",
@@ -577,7 +577,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência, corta Apoio e Atordoa a Vanguarda rival. Se a Habilidade dela estiver em recarga, também a Imobiliza."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#platinum_baek seo-jin",
         "capturedAt": "2026-09-10",
@@ -602,7 +602,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+1 Influência em cada zona com Vanguarda aliada. Vanguardas sob estado negativo recebem Tenacidade antes de serem Purificadas."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_jenny",
         "capturedAt": "2026-09-10",
@@ -627,7 +627,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+2 Influência e bloqueia todos os Confrontos. Cada Vanguarda aliada sob estado negativo recebe +1 Influência antes de ser Purificada."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#weigon_olivia mih",
         "capturedAt": "2026-09-10",
@@ -652,7 +652,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência e Silencia a Vanguarda rival. Se a Habilidade dela estiver em recarga, rouba 1 Ímpeto."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#rainbow six_wei fang",
         "capturedAt": "2026-09-10",
@@ -677,7 +677,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+3 Influência e Imobiliza a Vanguarda rival. Se ela estiver Marcada, perde mais 1 Influência e a Marca é consumida."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#bastard gran tubaroes xyz_ruby",
         "capturedAt": "2026-09-10",
@@ -702,7 +702,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência, tenta causar Ruptura e drena 1 Ímpeto. As Vanguardas inimigas adjacentes ficam Exaustas."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_xixim",
         "capturedAt": "2026-09-10",
@@ -727,7 +727,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+1 Influência em cada zona com Vanguarda aliada e reduz em 1 a recarga de todas essas Vanguardas."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#asgard_alice westland",
         "capturedAt": "2026-09-10",
@@ -752,7 +752,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+3 Influência e bloqueia todos os Confrontos da zona. Purifica e concede Tenacidade às Vanguardas aliadas adjacentes."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#asgard_tarruh",
         "capturedAt": "2026-09-10",
@@ -777,7 +777,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência, corta Apoio e drena 1 Ímpeto na zona. Toda Vanguarda inimiga com Habilidade em recarga fica Silenciada."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#asgard_tayna lannister muller",
         "capturedAt": "2026-09-10",
@@ -802,7 +802,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+3 Influência, corta Apoio e Marca a Vanguarda rival por 2 rodadas. Se estiver atrás em Domínio, recupera 1 Ímpeto."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_ran yuki",
         "capturedAt": "2026-09-10",
@@ -827,7 +827,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+3 Influência, bloqueia todos os Confrontos, Purifica e concede Tenacidade a todas as Vanguardas aliadas."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#kof 12_shirakami niku",
         "capturedAt": "2026-09-10",
@@ -852,7 +852,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência, corta Apoio e Atordoa a Vanguarda rival. Se estiver Marcada, também a Imobiliza e consome a Marca."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#rainbow six_wei wang",
         "capturedAt": "2026-09-10",
@@ -877,7 +877,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+1 Influência em cada zona com Vanguarda aliada, reduz a recarga das Vanguardas adjacentes e recupera 1 Ímpeto se estiver atrás em Domínio."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_mik kashnov",
         "capturedAt": "2026-09-10",
@@ -902,7 +902,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "+1 Influência em cada zona com Vanguarda aliada e concede Tenacidade a todas elas. Se estiver atrás em Domínio, recupera 1 Ímpeto."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_ryan smith",
         "capturedAt": "2026-09-10",
@@ -927,7 +927,7 @@ export const JET_SNAPSHOT: JetSnapshot = {
         "description": "-2 Influência, tenta causar Ruptura e Silencia a Vanguarda atingida. Vanguardas inimigas adjacentes ficam Exaustas."
       },
       "provenance": {
-        "sourceRepository": "RocksXB/jet-tactics",
+        "sourceRepository": "RocksXB/jet-tactics.",
         "sourceType": "curated-agents",
         "sourceId": "curated-agents-6#morning star_saki",
         "capturedAt": "2026-09-10",

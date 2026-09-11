@@ -106,7 +106,15 @@ export const BoardCard: React.FC<{
 
 /** Zona (pilha) de baralho/descarte. */
 export const ZonePile: React.FC<{ label: string; count: number; kind: 'deck' | 'discard'; onClick?: () => void }> = ({ label, count, kind, onClick }) => (
-  <div className={`zone-pile ${kind}`} onClick={onClick} title={label}>
+  <div
+    className={`zone-pile ${kind}`}
+    onClick={onClick}
+    title={label}
+    role={onClick ? 'button' : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    aria-label={`${label}: ${count} cartas`}
+    onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
+  >
     <div className="pile-visual" />
     <span className="pile-count">{count}</span>
     <span className="pile-label">{label}</span>

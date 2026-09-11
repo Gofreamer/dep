@@ -6,8 +6,9 @@ import { metaStore } from '../persistence/store';
 import type { MatchRecord } from '../persistence/types';
 import { registry } from '../engine/registry';
 import { charDef, charactersInPlay, player } from '../engine/queries';
-import { expandDeck, STARTER_DECKS, TUTORIAL_DECKS } from '../data/fixtures/nexo/decks';
+import { expandDeck } from '../data/deckUtils';
 import { JET_STARTER_DECKS } from '../data/jet/starterDecks';
+import { JET_TUTORIAL_DECKS } from '../data/jet/tutorialDecks';
 
 // ---------------------------------------------------------------------------
 // FX cues — visual representations of already-resolved game events
@@ -81,7 +82,7 @@ export class MatchController {
       for (const [id, n] of Object.entries(saved.cards)) for (let i = 0; i < n; i++) cards.push(id);
       return cards.map((id) => registry.card(id));
     }
-    const starter = [...JET_STARTER_DECKS, ...STARTER_DECKS, ...TUTORIAL_DECKS].find((d) => d.id === deckId);
+    const starter = [...JET_TUTORIAL_DECKS, ...JET_STARTER_DECKS].find((d) => d.id === deckId);
     if (starter) return expandDeck(starter).map((id) => registry.card(id));
     return expandDeck(JET_STARTER_DECKS[0]).map((id) => registry.card(id));
   }
@@ -119,7 +120,7 @@ export class MatchController {
 
   /** UI → engine entry point. Applies tutorial gating. Returns success. */
   send(cmd: Command): boolean {
-    if (this.outcome) return false;
+    if (this.outcome || this.stopped) return false;
     if (this.engine.state.phase === 'setup' && cmd.player !== undefined && this.engine.state.players[cmd.player].isAI && cmd.player !== 1) return false;
     if (this.tutorialActive && !this.tutorialAllows(cmd)) {
       this.onInvalid(this.tutorialBlockedText());
@@ -164,12 +165,38 @@ export class MatchController {
     if (this.stopped || this.outcome) return;
     const st = this.engine.state;
     if (st.phase === 'gameOver') { this.checkOutcome(); return; }
+    if (st.phase === 'setup') {
+      // No setup o activePlayer ainda não alterna: quem prepara é cada jogador.
+      // O controller dirige SEMPRE o setup da IA aqui — sem isso a partida
+      // trava na preparação quando o humano finaliza primeiro.
+      const aiPlayer = st.players.find((p) => p.isAI && !p.setupDone);
+      if (!aiPlayer) { this.checkOutcome(); return; }
+      const cmd = aiNextCommand(this.engine, aiPlayer.index);
+      const r = this.engine.dispatch(cmd);
+      if (!r.ok) {
+        // SEM fallback silencioso: comando ilegal da IA é um bug e deve ficar
+        // visível (item 31) — nunca mascarado com END_TURN.
+        this.onInvalid(`ia (setup) ilegal: ${cmd.type} — ${r.error ?? '?'}`);
+        this.processEvents();
+        this.onSync();
+        return; // para o tick: partida visivelmente parada, bug denunciado
+      }
+      this.processEvents();
+      this.onSync();
+      this.scheduleAiTick();
+      return;
+    }
     const ai = st.players[st.activePlayer];
     if (!ai.isAI) return;
     const cmd = aiNextCommand(this.engine, ai.index);
     const r = this.engine.dispatch(cmd);
-    if (!r.ok && cmd.type !== 'END_TURN') {
-      this.engine.dispatch({ type: 'END_TURN', player: ai.index });
+    if (!r.ok) {
+      // SEM fallback silencioso (item 31): a bateria de partidas garante que a
+      // IA só emite comandos legais; se um dia falhar, o bug fica visível.
+      this.onInvalid(`ia ilegal: ${cmd.type} — ${r.error ?? '?'}`);
+      this.processEvents();
+      this.onSync();
+      return;
     }
     this.processEvents();
     this.onSync();

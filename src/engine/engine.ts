@@ -61,7 +61,9 @@ export class MatchEngine {
   /** Sends a command; returns ok/error plus the events emitted by it. */
   dispatch(cmd: Command): CommandResult {
     const seqBefore = this.state.eventSeq;
-    if (cmd.type !== 'RESOLVE_CHOICE') this.pending = null;
+    // NOTA: o pending NÃO é limpo aqui. Comandos normais com escolha pendente
+    // são rejeitados pelo gate 'choice_pending' em execute() — descartar o
+    // pending silenciosamente abandonava geradores no meio de efeitos.
     let result: CommandResult;
     try {
       const gen = this.execute(cmd);
@@ -151,6 +153,22 @@ export class MatchEngine {
       }
     }
     this.mulliganRedraws[pIdx] = attempts;
+    // Garantia dura: com requireBasic, a mão inicial NUNCA pode ficar sem
+    // starter — sem isso o setup fica impossível (partida travada). Se o
+    // redesenho não bastar, troca determinística com o baralho.
+    if (cfg.requireBasic && !hasStarter()) {
+      const idx = p.deck.findIndex((c) => canSeatAtSetupStarter(c));
+      if (idx >= 0) {
+        const starter = p.deck.splice(idx, 1)[0];
+        p.hand.push(starter);
+        const back = p.hand.findIndex((c) => !canSeatAtSetupStarter(c));
+        if (back >= 0 && p.hand.length > cfg.handSize) {
+          p.deck.push(p.hand.splice(back, 1)[0]);
+          shuffleDeck(g, pIdx);
+        }
+        this.mulliganRedraws[pIdx] = attempts + 1;
+      }
+    }
   }
 
   private mulliganRedraws: [number, number] = [0, 0];
@@ -390,6 +408,15 @@ export class MatchEngine {
       const pending = this.pending;
       if (!pending) return;
       if (pending.request.player !== cmd.player) throw new EngineError('not_your_choice');
+      const req = pending.request;
+      // Validação da resposta: uids precisam estar entre os candidatos e a
+      // contagem respeitar min/max — resposta malformada não pode entrar no
+      // gerador suspenso e corromper o efeito em andamento.
+      const sel = cmd.selected ?? [];
+      const uniq = new Set(sel);
+      if (uniq.size !== sel.length) throw new EngineError('invalid_choice_selection');
+      for (const uid of sel) if (!req.candidates.includes(uid)) throw new EngineError('invalid_choice_selection');
+      if (sel.length < req.min || sel.length > req.max) throw new EngineError('invalid_choice_selection');
       this.pending = null;
       let r = pending.gen.next(cmd.selected);
       while (!r.done) {
@@ -765,7 +792,7 @@ export class MatchEngine {
   }
 
   private concede(pIdx: PlayerId): void {
-    if (this.state.phase === 'gameOver') return;
+    if (this.state.phase === 'gameOver') throw new EngineError('game_over');
     this.state.winner = (pIdx === 0 ? 1 : 0) as PlayerId;
     this.state.endReason = 'concede';
     this.state.phase = 'gameOver';

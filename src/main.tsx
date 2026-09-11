@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 import './styles.css';
 import { registerJetDataPack } from './data/jet/pack';
 
@@ -10,6 +11,8 @@ registerJetDataPack();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );

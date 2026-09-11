@@ -25,7 +25,7 @@ describe('Roster JET importado (fonte real)', () => {
     expect(report.agentsRegistered.length).toBeGreaterThanOrEqual(18);
     // toda carta de agente carrega proveniência rastreável
     const jenny = registry.card('agent-jenny-base') as any;
-    expect(jenny.provenance.sourceRepository).toBe('RocksXB/jet-tactics');
+    expect(jenny.provenance.sourceRepository).toBe('RocksXB/jet-tactics.');
     expect(jenny.provenance.sourceId).toContain('kof 12_jenny');
   });
 

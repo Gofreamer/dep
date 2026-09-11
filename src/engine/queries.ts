@@ -143,7 +143,10 @@ function collectAbilityMods(out: { dealt: AggregatedMods; taken: AggregatedMods;
     if (mods.damageDealtMult) out.dealt.mult *= mods.damageDealtMult;
     if (mods.damageDealtVsAffinity) { /* handled by caller with affinity */ }
   } else {
-    if (mods.damageTakenFlat) out.taken.flat += mods.damageTakenFlat;
+    // CONVENÇÃO ÚNICA (igual a StatusDef): damageTakenFlat > 0 = REDUZ o dano
+    // recebido (ex.: Placa de Impacto 10, aura do Henry 10). Era somado aqui —
+    // equipamentos defensivos AUMENTAVAM o dano sofrido (bug de sinal).
+    if (mods.damageTakenFlat) out.taken.flat -= mods.damageTakenFlat;
     if (mods.damageTakenMult) out.taken.mult *= mods.damageTakenMult;
   }
   out.other.push(mods);
@@ -169,11 +172,9 @@ export function aggregateMods(state: MatchState, mc: ModContext): AggregatedResu
   const out: AggregatedResult = { dealt: emptyMods(), taken: emptyMods(), other: [] };
   const push = (mods: Mods | undefined, side: 'dealt' | 'taken') => collectAbilityMods(out, mods, mc.char, side);
 
-  // Statuses on the character
-  for (const st of mc.char.statuses) {
-    const sdef = registry.status(st.id);
-    if (sdef?.damageTakenFlat && mc.side === 'taken') out.taken.flat -= sdef.damageTakenFlat * (st.stacks || 1);
-  }
+  // NOTA: status NÃO contribuem aqui — damageTakenFlat/damageTakenBonusFlat de
+  // status são aplicados exclusivamente em applyDamage (dano de qualquer fonte,
+  // sem dupla contagem). Ver convenção em StatusDef (src/engine/types.ts).
 
   // Equipment attached to this character
   for (const eq of mc.char.attached) {
@@ -285,8 +286,11 @@ export function isDefeated(state: MatchState, inst: CardInstance): boolean {
 export function retreatCostOf(state: MatchState, inst: CardInstance): number {
   const def = charDef(inst);
   let cost = def.retreatCost;
+  // Equipamentos E recursos conectados podem modular o recuo (ex.: Relé de
+  // Transferência — texto: 'recusta com 1 Energia a menos').
   for (const eq of inst.attached) {
     if (eq.kind === 'EQUIPMENT') cost += (defOf(eq) as Extract<CardDef, { kind: 'EQUIPMENT' }>).mods?.retreatCostMod ?? 0;
+    else if (eq.kind === 'RESOURCE') cost += (defOf(eq) as Extract<CardDef, { kind: 'RESOURCE' }>).mods?.retreatCostMod ?? 0;
   }
   for (const f of state.fields) {
     const fdef = defOf(f) as Extract<CardDef, { kind: 'FIELD' }>;

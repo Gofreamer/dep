@@ -29,7 +29,19 @@ export interface Settings {
   player1Name: string;
 }
 
+/** Versão atual do schema de save — aumente em qualquer mudança incompatível. */
+export const SAVE_SCHEMA_VERSION = 2;
+
+/**
+ * MetaState persistido (LocalStorageAdapter). Estratégia de migração:
+ *  - `version` guarda a versão do schema do save (v1 = era NEXO, v2 = JET).
+ *  - migrate(): roda em TODO load; cada passo v(n)→v(n+1) é uma função pura.
+ *  - saves inválidos/corrompidos → adapter retorna null → defaults seguros.
+ *  - cartas fora do catálogo ativo → decks com tais cartas são descartados
+ *    com fallback para os starters JET (ver MetaStore.migrate).
+ */
 export interface MetaState {
+  /** schemaVersion do save (ver SAVE_SCHEMA_VERSION). */
   version: number;
   decks: SavedDeck[];
   activeDeckId: string;

@@ -104,7 +104,7 @@ describe('Fluxo completo do jogador (controller)', () => {
 
   it('tutorial bloqueia comandos fora do passo atual', () => {
     registerDataPack();
-    const ctl = new MatchController({ playerDeckId: 'deck-jet-kof-12', opponentDeckId: 'deck-jet-asgard', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
+    const ctl = new MatchController({ playerDeckId: 'deck-jet-tutorial-aluno', opponentDeckId: 'deck-jet-tutorial-instrutor', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
     ctl.start(() => {});
     const me = player(ctl.engine.state, 0);
     // passo 0: apenas SETUP_SET_ACTIVE
@@ -130,7 +130,7 @@ describe('Fluxo completo do jogador (controller)', () => {
 
   it('mão do tutorial vem preparada (rigged)', () => {
     registerDataPack();
-    const ctl = new MatchController({ playerDeckId: 'deck-jet-kof-12', opponentDeckId: 'deck-jet-asgard', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
+    const ctl = new MatchController({ playerDeckId: 'deck-jet-tutorial-aluno', opponentDeckId: 'deck-jet-tutorial-instrutor', difficulty: 'easy', seed: 777, tutorial: true, victoryTarget: 1 });
     const me = player(ctl.engine.state, 0);
     const defIds = me.hand.map((c) => c.defId);
     expect(defIds).toContain('agent-jenny-base');

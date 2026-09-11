@@ -1,6 +1,7 @@
 import type { MatchRecord, MetaState, PersistenceAdapter, SavedDeck } from './types';
 import { LocalStorageAdapter } from './local';
 import { JET_STARTER_DECKS } from '../data/jet/starterDecks';
+import { SAVE_SCHEMA_VERSION } from './types';
 import { registerJetDataPack } from '../data/jet/pack';
 import { registry } from '../engine/registry';
 
@@ -31,7 +32,7 @@ export class MetaStore {
     const collection: Record<string, number> = {};
     for (const def of activeCatalog()) collection[def.id] = 99;
     return {
-      version: 1,
+      version: SAVE_SCHEMA_VERSION,
       decks,
       activeDeckId: decks[0]?.id ?? '',
       collection,
@@ -44,8 +45,24 @@ export class MetaStore {
   }
 
   private migrate(): void {
-    // Future schema migrations live here.
+    // Pipeline de migração: v1 (era NEXO) → v2 (JET standalone).
+    if (this.state.version === 1) {
+      // v1→v2: decks/coleção são revalidados contra o catálogo ativo abaixo;
+      // histórico e estatísticas são preservados; nada mais muda de formato.
+      this.state.version = 2;
+    }
+    if (this.state.version !== SAVE_SCHEMA_VERSION) {
+      // Save de versão desconhecida (mais nova/antiga demais): reset seguro.
+      const history = Array.isArray(this.state.history) ? this.state.history : [];
+      this.state = this.defaults();
+      this.state.history = history.slice(0, 100);
+    }
     if (!this.state.settings) this.state.settings = this.defaults().settings;
+    if (!Array.isArray(this.state.favorites)) this.state.favorites = [];
+    if (!Array.isArray(this.state.history)) this.state.history = [];
+    if (typeof this.state.wins !== 'number') this.state.wins = 0;
+    if (typeof this.state.losses !== 'number') this.state.losses = 0;
+    if (!Array.isArray(this.state.decks)) this.state.decks = this.defaults().decks;
     if (!this.state.collection) this.state.collection = {};
     for (const def of activeCatalog()) if (!this.state.collection[def.id]) this.state.collection[def.id] = 99;
     // Baralhos salvos com cartas fora do catálogo ativo (ex.: fixture NEXO do
@@ -62,7 +79,13 @@ export class MetaStore {
   }
 
   save(): void {
-    this.adapter.save(this.state);
+    // Falha de persistência (storage cheio/indisponível) NUNCA derruba o jogo:
+    // o estado continua válido em memória.
+    try {
+      this.adapter.save(this.state);
+    } catch {
+      // noop — gravação é best-effort
+    }
   }
 
   // decks ----------------------------------------------------------------—

@@ -49,7 +49,7 @@ export function normalizeAgent(raw: Raw, capturedAt: string, sourceCommit?: stri
     imageUrl: str(pick(raw, ['imageUrl', 'image', 'artwork', 'art', 'portrait'])),
     editions,
     provenance: {
-      sourceRepository: 'RocksXB/jet-tactics',
+      sourceRepository: 'RocksXB/jet-tactics.',
       sourceType: 'curated-agents',
       sourceId: str(pick(raw, ['__sourceId'])) ?? name,
       capturedAt,
@@ -81,7 +81,7 @@ export function normalizeKit(raw: Raw, capturedAt: string, sourceCommit?: string
     ultimate: abilitySeed(pick(raw, ['suprema', 'supreme', 'ultimateOfficial'])),
     stats: obj(pick(raw, ['stats', 'power', 'poderes'])) as Record<string, number> | undefined,
     provenance: {
-      sourceRepository: 'RocksXB/jet-tactics',
+      sourceRepository: 'RocksXB/jet-tactics.',
       sourceType: 'curated-agents',
       sourceId: str(pick(raw, ['__sourceId'])) ?? agentId,
       capturedAt,
@@ -96,7 +96,7 @@ export function normalizeEdition(raw: Raw, capturedAt: string, sourceCommit?: st
     id,
     name: str(pick(raw, ['name', 'nome', 'label'])) ?? id,
     sidegradeIntent: str(pick(raw, ['sidegrade', 'intent', 'description', 'descricao'])),
-    provenance: { sourceRepository: 'RocksXB/jet-tactics', sourceType: 'editions', sourceId: id, capturedAt, sourceCommit }
+    provenance: { sourceRepository: 'RocksXB/jet-tactics.', sourceType: 'editions', sourceId: id, capturedAt, sourceCommit }
   };
 }
 
@@ -106,7 +106,7 @@ export function normalizeTeam(raw: Raw, capturedAt: string, sourceCommit?: strin
     id,
     name: str(pick(raw, ['name', 'nome', 'label'])) ?? id,
     color: str(pick(raw, ['color', 'cor'])),
-    provenance: { sourceRepository: 'RocksXB/jet-tactics', sourceType: 'agents', sourceId: id, capturedAt, sourceCommit }
+    provenance: { sourceRepository: 'RocksXB/jet-tactics.', sourceType: 'agents', sourceId: id, capturedAt, sourceCommit }
   };
 }
 

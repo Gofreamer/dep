@@ -194,7 +194,18 @@ export function computeAttackDamage(g: G, attacker: CardInstance, target: CardIn
 
 export function applyDamage(g: G, target: CardInstance, amount: number, opts: DamageOpts = {}): number {
   if (amount <= 0 || g.state.phase === 'gameOver') return 0;
-  const dealt = Math.min(amount, maxHp(g.state, target) === 0 ? amount : amount);
+  // Flats de status (convenção única — ver StatusDef): tenacity/shield reduzem,
+  // marked aumenta. Aplicável a dano de qualquer fonte, exatamente uma vez.
+  let adjusted = amount;
+  for (const st of target.statuses) {
+    const sd = registry.status(st.id);
+    if (!sd) continue;
+    const stacks = st.stacks || 1;
+    if (sd.damageTakenFlat) adjusted -= sd.damageTakenFlat * stacks;
+    if (sd.damageTakenBonusFlat) adjusted += sd.damageTakenBonusFlat * stacks;
+  }
+  adjusted = Math.max(0, adjusted);
+  const dealt = adjusted;
   target.damage += dealt;
   g.state.stats.damage[target.owner] += dealt;
   g.emit('DAMAGE_DEALT', target.owner, {
