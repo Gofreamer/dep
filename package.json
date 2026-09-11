@@ -16,9 +16,11 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "worker:dev": "wrangler dev --config worker/wrangler.toml",
-    "check": "npm run typecheck && npm run typecheck:worker && npm test && npm run test:long && npm run build",
+    "check": "npm run typecheck && npm run typecheck:worker && npm test && npm run test:long && npm run test:fuzz:long && npm run build",
     "typecheck:worker": "tsc -p worker/tsconfig.json --noEmit",
-    "test:worker": "node scripts/run-worker-tests.mjs"
+    "test:worker": "node scripts/run-worker-tests.mjs",
+    "test:fuzz": "vitest run tests/fuzz-matches.test.ts",
+    "test:fuzz:long": "JET_LONG_TESTS=1 JET_FUZZ_MATCHES=1000 vitest run tests/fuzz-matches.test.ts"
   },
   "dependencies": {
     "react": "^18.3.1",
