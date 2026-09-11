@@ -224,13 +224,24 @@ export function artUrlOrigin(url: string): JetArtOrigin {
 }
 
 /**
- * Valor bruto da foto BASE no registro do jogador — mesma prioridade do Jet
- * Cards (`js/utils/photos.js`): `photo` → `photoUrl` → `image`. Usado pelo
- * importador para distinguir "sem imagem" (vazio) de "URL inválida".
+ * Valor bruto da foto BASE no registro do jogador — mesma semântica do Jet
+ * Cards (`js/utils/photos.js`): `player.photo || player.photoUrl ||
+ * player.image || ""`.
+ *
+ * Ou seja: o PRIMEIRO valor string NÃO VAZIO (após `trim`) entre os três
+ * campos. Um `photo` vazio (ou só espaços) NÃO bloqueia `photoUrl`/`image` —
+ * comportamento de `||`, não de `??`.
+ *
+ * Usado pelo importador para distinguir "sem imagem" (vazio) de "URL inválida".
  */
 export function rawBasePhotoOf(player: JetCardsPlayerSeed | null | undefined): string {
-  const raw = player?.photo ?? player?.photoUrl ?? player?.image;
-  return typeof raw === 'string' ? raw.trim() : '';
+  if (!player) return '';
+  for (const candidate of [player.photo, player.photoUrl, player.image]) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    if (trimmed) return trimmed;
+  }
+  return '';
 }
 
 /**

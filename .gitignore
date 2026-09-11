@@ -3,3 +3,19 @@ dist/
 *.local
 .DS_Store
 *.tsbuildinfo
+
+# Playwright (E2E)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Cloudflare Worker
+/worker/.wrangler/
+/worker/dist/
+.wrangler/
+
+# Ambiente real nunca entra no repo (só .env.example com placeholders)
+.env
+.env.*
+!.env.example

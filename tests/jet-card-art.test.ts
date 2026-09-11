@@ -20,6 +20,7 @@ import {
   isArtUrlAllowed,
   isKnownArtEdition,
   normalizeAgentName,
+  rawBasePhotoOf,
   resolveArtWithIndex,
   type TcgAgentRef
 } from '../src/integrations/jet/cardArt';
@@ -102,6 +103,40 @@ describe('matching de agente BASE', () => {
     expect(basePhotoOf(null)).toBe('');
     // Sem DiceBear no TCG: valor não-HTTP vira ausência (fallback procedural).
     expect(basePhotoOf({ photo: 'nota-url' })).toBe('');
+  });
+
+  // A fonte usa `photo || photoUrl || image || ""` (falsy), NÃO `??`.
+  // Um campo vazio/só-espaços NÃO pode bloquear os campos seguintes — era o
+  // bug da integração: `photo: ''` parava a cascata e a arte BASE era perdida.
+  it('campo vazio não bloqueia os campos seguintes (|| e não ??)', () => {
+    expect(rawBasePhotoOf({ photo: '', photoUrl: 'https://example.com/a.webp' })).toBe('https://example.com/a.webp');
+    expect(basePhotoOf({ photo: '', photoUrl: 'https://example.com/a.webp' })).toBe('https://example.com/a.webp');
+    expect(rawBasePhotoOf({ photo: '   ', photoUrl: '', image: 'https://example.com/b.webp' })).toBe('https://example.com/b.webp');
+    expect(basePhotoOf({ photo: '   ', photoUrl: '', image: 'https://example.com/b.webp' })).toBe('https://example.com/b.webp');
+  });
+
+  it('cascata para no primeiro valor não vazio e ignora tipos não-string', () => {
+    expect(rawBasePhotoOf({ photo: '  https://a/p.png  ', photoUrl: 'https://a/u.png' })).toBe('https://a/p.png');
+    expect(rawBasePhotoOf({ photo: 0, photoUrl: null, image: 'https://a/i.png' })).toBe('https://a/i.png');
+    expect(rawBasePhotoOf({ photo: undefined, photoUrl: undefined, image: undefined })).toBe('');
+    expect(rawBasePhotoOf({ photo: '   ' })).toBe('');
+    expect(rawBasePhotoOf(undefined)).toBe('');
+  });
+
+  it('buildArtSnapshot aproveita photoUrl quando photo é vazio', () => {
+    const { snapshot, report } = buildArtSnapshot({
+      ...BASE_INPUT,
+      tcgAgents: TCG_AGENTS(),
+      players: {
+        'KOF 12_Jenny': { name: 'Jenny', team: 'KOF 12', photo: '', photoUrl: 'https://example.com/jenny-fallback.webp' }
+      },
+      specials: {}
+    });
+    const entry = snapshot.entries.find((e) => e.identityId === 'agent-jenny' && e.edition === 'BASE');
+    expect(entry?.url).toBe('https://example.com/jenny-fallback.webp');
+    expect(report.baseRecognized).toBe(1);
+    expect(report.tcgAgentsWithoutBaseArt).not.toContain('agent-jenny');
+    expect(report.recordsWithoutImage).toEqual([]);
   });
 });
 
