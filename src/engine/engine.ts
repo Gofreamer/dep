@@ -471,6 +471,11 @@ export class MatchEngine {
     }
     if (this.state.phase !== 'setup') {
       yield* this.drainTriggers();
+      // REGRA: dano de QUALQUER fonte (ação, habilidade, status) precisa
+      // resolver derrotas imediatamente — antes, um op de dano de efeito
+      // podia deixar personagens derrotados "em campo" até o próximo turno
+      // (estado impossível detectado pelo every-card-playable).
+      yield* resolveDefeats(this.g());
       checkMatchEnd(this.g());
     }
   }

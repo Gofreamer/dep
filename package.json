@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:long": "JET_LONG_TESTS=1 vitest run tests/jet-matches.test.ts",
+    "test:every-card": "vitest run tests/every-card-playable.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "worker:dev": "wrangler dev --config worker/wrangler.toml",
