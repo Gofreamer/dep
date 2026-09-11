@@ -60,13 +60,16 @@ export function remoteArtUrl(def: ArtResolvable | null | undefined): string | nu
  */
 export function preloadCardArt(defs: Iterable<ArtResolvable>): void {
   try {
-    if (typeof Image === 'undefined') return;
+    // Sem referência direta a `Image`: o módulo precisa compilar também no
+    // Worker (multiplayer), onde o DOM não existe. Fora do navegador é no-op.
+    const ctor = (globalThis as unknown as { Image?: new () => { decoding: string; src: string } }).Image;
+    if (typeof ctor !== 'function') return;
     const seen = new Set<string>();
     for (const def of defs) {
       const resolved = resolveCardArt(def);
       if (resolved.kind !== 'remote' || seen.has(resolved.url)) continue;
       seen.add(resolved.url);
-      const img = new Image();
+      const img = new ctor();
       img.decoding = 'async';
       img.src = resolved.url;
     }

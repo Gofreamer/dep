@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "worker:dev": "wrangler dev --config worker/wrangler.toml",
-    "check": "npm run typecheck && npm test && npm run test:long && npm run build"
+    "check": "npm run typecheck && npm run typecheck:worker && npm test && npm run test:long && npm run build",
+    "typecheck:worker": "tsc -p worker/tsconfig.json --noEmit"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -23,6 +24,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260911.1",
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.19.0",
     "@types/react": "^18.3.12",
@@ -32,5 +34,8 @@
     "vite": "^8.3.0",
     "vitest": "^5.0.0",
     "wrangler": "^4.131.0"
+  },
+  "engines": {
+    "node": ">=20.19"
   }
 }
