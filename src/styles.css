@@ -390,7 +390,12 @@ body.shake { animation: bodyShake 0.42s ease; }
 /* mão do jogador */
 .hand {
   position: absolute; bottom: 76px; left: 0; right: 0; display: flex; gap: 8px;
-  justify-content: center; padding: 10px 14px; overflow-x: auto; z-index: 20; scrollbar-width: none;
+  /* `safe center`: centraliza enquanto cabe, mas quando a mão transborda passa
+     a alinhar no início. Com `center` puro o conteúdo vaza pelos DOIS lados e o
+     começo fica inacessível mesmo rolando — as primeiras cartas da mão ficavam
+     impossíveis de clicar (reproduzido pelo E2E em Chromium: "element is
+     outside of the viewport"). */
+  justify-content: safe center; padding: 10px 14px; overflow-x: auto; z-index: 20; scrollbar-width: none;
 }
 .hand::-webkit-scrollbar { display: none; }
 
