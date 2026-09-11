@@ -59,3 +59,78 @@ export const DefInspectModal: React.FC<{ def: ReturnType<typeof defOf> | null; o
     </div>
   );
 };
+
+/**
+ * Painel de escolha pendente (anti-soft-lock).
+ *
+ * Garantia: QUALQUER ChoiceRequest emitido pelo engine é resolvível pela UI.
+ * Escolhas de carta da mão/descarte (`kind: 'cards'`) e opções (`kind:
+ * 'option'`) não têm representação clicável no tabuleiro — antes podiam
+ * deixar a partida travada. Este painel lista todos os candidatos com rótulo
+ * (e nome da carta quando disponível) e NÃO bloqueia o tabuleiro: clicar num
+ * personagem do board continua funcionando como atalho.
+ */
+export const ChoicePanel: React.FC<{ onResolve: (selected: string[]) => void }> = ({ onResolve }) => {
+  const pending = useMatch((s) => s.pending);
+  const stateRef = useMatch((s) => s.stateRef);
+  const [selected, setSelected] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    setSelected([]);
+  }, [pending?.prompt, pending?.candidates.join('|')]);
+
+  if (!pending) return null;
+  const req = pending;
+  const label = (uid: string): string => {
+    if (req.labels?.[uid]) return req.labels[uid];
+    if (stateRef) {
+      const inst = findInst(stateRef, uid);
+      if (inst) return defOf(inst).name;
+    }
+    return uid;
+  };
+  const multi = req.max > 1;
+  const toggle = (uid: string) => {
+    setSelected((sel) => {
+      if (sel.includes(uid)) return sel.filter((x) => x !== uid);
+      const next = [...sel, uid];
+      return next.slice(-req.max);
+    });
+  };
+  const canConfirm = selected.length >= req.min || req.optional;
+  const confirm = () => onResolve(canConfirm ? selected : []);
+
+  return (
+    <div className="choice-panel" data-testid="choice-panel" role="region" aria-label="Escolha pendente">
+      <div className="choice-prompt">
+        <span>🎯 {req.prompt}</span>
+        <span className="choice-hint">
+          {multi ? `Escolha ${req.min === req.max ? req.min : `${req.min}–${req.max}`} itens` : 'Escolha uma opção'}
+        </span>
+      </div>
+      <div className="choice-options">
+        {req.candidates.map((uid) => (
+          <button
+            key={uid}
+            className={`choice-chip ${selected.includes(uid) ? 'selected' : ''}`}
+            data-testid={`choice-${uid}`}
+            onClick={() => {
+              if (multi) toggle(uid);
+              else onResolve([uid]);
+            }}
+          >
+            {label(uid)}
+          </button>
+        ))}
+      </div>
+      {multi && (
+        <div className="choice-actions">
+          {req.optional && <button className="btn" onClick={() => onResolve([])}>Nenhum</button>}
+          <button className="btn primary" disabled={!canConfirm} onClick={confirm} data-testid="choice-confirm">
+            Confirmar ({selected.length})
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

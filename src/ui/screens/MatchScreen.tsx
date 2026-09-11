@@ -10,7 +10,7 @@ import { TERMINOLOGY as T } from '../../data/terminology';
 import { BoardCard, ZonePile, findInst } from '../components/BoardCard';
 import { CardMini } from '../components/CardView';
 import { preloadCardArt } from '../../data/jet/art';
-import { InspectModal } from '../components/Modals';
+import { InspectModal, ChoicePanel } from '../components/Modals';
 import { FXLayer } from '../components/FXLayer';
 import { DebugPanel } from '../components/DebugPanel';
 
@@ -98,6 +98,12 @@ export const MatchScreen: React.FC = () => {
   // ----- handlers -----------------------------------------------------------
   const clickHandCard = (card: CardInstance) => {
     if (targetMode === 'attach') { setTargeting(null); return; }
+    // Escolha pendente sobre cartas da mão (ex.: descartar/comprar escolhas) —
+    // antes estes candidatos NÃO eram selecionáveis pela UI (soft-lock real).
+    if (targetMode === 'pending' && highlightUids.has(card.uid)) {
+      controller.resolveChoice([card.uid]);
+      return;
+    }
     const info = legal.hand[card.uid];
     if (!info?.playable) {
       if (info?.reason) showToast(T.errorTexts[info.reason] ?? info.reason);
@@ -335,14 +341,14 @@ export const MatchScreen: React.FC = () => {
       </div>
 
       {/* banner de alvo */}
-      {targetMode && (
+      {targetMode === 'attach' && (
         <div className="target-banner">
-          {targetMode === 'pending'
-            ? `🎯 ${pendingReq?.prompt}`
-            : (stateRef.players[0].hand.find((c) => c.uid === targetingFrom)?.kind === 'CHARACTER' ? '🎯 Escolha quem evoluir' : '🎯 Escolha um personagem seu')}
+          {stateRef.players[0].hand.find((c) => c.uid === targetingFrom)?.kind === 'CHARACTER' ? '🎯 Escolha quem evoluir' : '🎯 Escolha um personagem seu'}
           <button className="cancel-target" onClick={() => setTargeting(null)}>Cancelar</button>
         </div>
       )}
+      {/* painel de escolha pendente (anti-soft-lock: TODA escolha é resolvível) */}
+      <ChoicePanel onResolve={(sel) => controller.resolveChoice(sel)} />
 
       {/* tutorial */}
       {tutorial?.active && (
