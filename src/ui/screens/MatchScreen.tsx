@@ -9,6 +9,7 @@ import type { MatchState } from '../../engine/types';
 import { TERMINOLOGY as T } from '../../data/terminology';
 import { BoardCard, ZonePile, findInst } from '../components/BoardCard';
 import { CardMini } from '../components/CardView';
+import { preloadCardArt } from '../../data/jet/art';
 import { InspectModal } from '../components/Modals';
 import { FXLayer } from '../components/FXLayer';
 import { DebugPanel } from '../components/DebugPanel';
@@ -49,6 +50,20 @@ export const MatchScreen: React.FC = () => {
         setTutorial({ active: true, step: ctl.tutorialStep, title: step?.title ?? 'Tutorial', text: step?.text ?? '' });
       }
     });
+    // Pré-carrega (best-effort, sem bloquear a partida) SOMENTE as artes dos
+    // dois decks desta partida — nunca o catálogo inteiro.
+    try {
+      const st = ctl.engine.state;
+      const instances = [...st.players[0].deck, ...st.players[0].hand, ...st.players[1].deck, ...st.players[1].hand];
+      const defs = instances.flatMap((c) => {
+        try { return [defOf(c)]; } catch { return []; }
+      });
+      const w = window as unknown as { requestIdleCallback?: (cb: () => void) => void };
+      if (typeof w.requestIdleCallback === 'function') w.requestIdleCallback(() => preloadCardArt(defs));
+      else setTimeout(() => preloadCardArt(defs), 0);
+    } catch {
+      // Preload nunca pode impedir a partida de iniciar.
+    }
     return () => ctl.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.playerDeckId, cfg?.opponentDeckId, cfg?.seed]);

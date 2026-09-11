@@ -2,7 +2,8 @@ import React from 'react';
 import type { AttackDef, CardDef, CharacterDef, ResourceCost } from '../../engine/types';
 import { registry } from '../../engine/registry';
 import { TERMINOLOGY as T } from '../../data/terminology';
-import { Artwork, factionColor } from './Artwork';
+import { factionColor } from './Artwork';
+import { CardArt } from './CardArt';
 
 export const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -57,7 +58,7 @@ export const CardView: React.FC<{ def: CardDef; quantity?: number; onClick?: () 
         {quantity !== undefined && <span className="chip qty">×{quantity}</span>}
       </div>
       <div className="card-art">
-        <Artwork seed={def.art.seed} motif={def.art.motif} faction={def.faction} className="art-svg" />
+        <CardArt def={def} className="art-svg" />
         <span className="rarity" style={{ color: RARITY_COLORS[def.rarity] }}>{RARITY_GLYPH[def.rarity]}</span>
       </div>
       {def.text && <div className="card-rulebox">{def.text}</div>}
@@ -132,7 +133,7 @@ export const CardMini: React.FC<{ def: CardDef; count?: number; quantity?: numbe
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       style={{ ['--faction' as any]: color }}
     >
-      <div className="mini-art"><Artwork seed={def.art.seed} motif={def.art.motif} faction={def.faction} className="art-svg" /></div>
+      <div className="mini-art"><CardArt def={def} className="art-svg" /></div>
       <div className="mini-info">
         <div className="mini-name">{def.name} {(count ?? quantity) !== undefined && (count ?? quantity)! > 1 && <em>×{count ?? quantity}</em>}</div>
         <div className="mini-sub">
