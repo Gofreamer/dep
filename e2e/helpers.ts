@@ -7,7 +7,19 @@ import { expect, type Page } from '@playwright/test';
  * oficiais vêm de URLs remotas e o ambiente de CI pode não ter saída para a
  * internet. O jogo tem fallback procedural, então arte ausente NÃO é defeito.
  */
-const BENIGN = [/Failed to load resource/i, /net::ERR_/i, /ERR_INTERNET_DISCONNECTED/i, /ERR_NAME_NOT_RESOLVED/i, /favicon/i];
+// As artes oficiais são servidas por um host remoto (github.com/…?raw=true).
+// Falha de rede e o aviso do Firefox sobre cookie de terceiro partido nesse
+// host NÃO são defeito do jogo — o resolver tem fallback procedural.
+const BENIGN = [
+  /Failed to load resource/i,
+  /net::ERR_/i,
+  /ERR_INTERNET_DISCONNECTED/i,
+  /ERR_NAME_NOT_RESOLVED/i,
+  /favicon/i,
+  /Cookie .* has been rejected/i,
+  /cross-site context/i,
+  /SameSite/i
+];
 
 export function watchConsole(page: Page): string[] {
   const errors: string[] = [];
@@ -44,9 +56,21 @@ export async function startAiMatch(page: Page, deckId = 'deck-jet-kof-12'): Prom
   await expect(page.getByTestId('hand')).toBeVisible();
 }
 
-/** Conclui a preparação dos dois lados e espera o turno 1. */
+/**
+ * Escolhe o Agente Base na preparação. O botão "Pronto" (`setup-done`) só
+ * existe depois de `st.players[0].active` estar definido, então este passo é
+ * obrigatório — cartas jogáveis na preparação não têm a classe `.dim`.
+ */
+export async function chooseActiveAgent(page: Page): Promise<void> {
+  const playable = page.getByTestId('hand').locator('.card-mini.playable');
+  await expect(playable.first()).toBeVisible({ timeout: 20_000 });
+  await playable.first().click();
+  await expect(page.getByTestId('setup-done')).toBeVisible({ timeout: 20_000 });
+}
+
+/** Escolhe o Ativo e conclui a preparação dos dois lados, esperando o turno 1. */
 export async function finishSetup(page: Page): Promise<void> {
-  await expect(page.getByTestId('setup-done')).toBeVisible();
+  await chooseActiveAgent(page);
   await page.getByTestId('setup-done').click();
   await expect(page.getByTestId('end-turn')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId('turn-banner')).toContainText(/Turno/i, { timeout: 20_000 });

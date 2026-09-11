@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectNoConsoleErrors, finishSetup, startAiMatch, toMenu, watchConsole } from './helpers';
+import { chooseActiveAgent, expectNoConsoleErrors, finishSetup, startAiMatch, toMenu, watchConsole } from './helpers';
 
 /**
  * Fluxo de produto no navegador real: baralho → partida → mão → inspeção →
@@ -12,8 +12,8 @@ test.describe('fluxo local contra a IA', () => {
     const errors = watchConsole(page);
     await startAiMatch(page);
 
-    // preparação: escolher o agente Base e concluir
-    await expect(page.getByTestId('setup-done')).toBeVisible();
+    // preparação: escolher o Agente Base e concluir
+    await chooseActiveAgent(page);
     await page.getByTestId('setup-done').click();
     await expect(page.getByTestId('end-turn')).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId('turn-banner')).toBeVisible();

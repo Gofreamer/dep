@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectNoConsoleErrors, toMenu, watchConsole } from './helpers';
+import { chooseActiveAgent, expectNoConsoleErrors, toMenu, watchConsole } from './helpers';
 
 /**
  * Fumaça: o app de produção carrega, navega e não quebra. Roda em Chromium e
@@ -49,7 +49,8 @@ test.describe('fumaça (desktop)', () => {
     await page.getByTestId('deck-start').click();
     await expect(page.getByTestId('match-screen')).toBeVisible();
     await expect(page.getByTestId('hand')).toBeVisible();
-    await expect(page.getByTestId('setup-done')).toBeVisible();
+    // "Pronto" só existe depois de escolher o Agente Base
+    await chooseActiveAgent(page);
     await page.getByTestId('setup-done').click();
     await expect(page.getByTestId('end-turn')).toBeVisible({ timeout: 20_000 });
     expectNoConsoleErrors(errors);
