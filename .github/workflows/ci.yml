@@ -4,33 +4,146 @@ on:
   push:
   pull_request:
 
+env:
+  NODE_VERSION: '22'
+
 jobs:
   verify:
+    name: Typecheck, testes e build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Instalar dependências (lockfile exato)
         run: npm ci
 
-      - name: Typecheck
+      - name: Auditoria de dependências
+        # Falha em vulnerabilidade moderada ou pior. Dev-only e documentada
+        # não deveria aparecer aqui; se aparecer, resolva de propósito.
+        run: npm audit --audit-level=moderate
+
+      - name: Typecheck (app + testes + e2e)
         run: npm run typecheck
+
+      - name: Typecheck (Worker)
+        run: npm run typecheck:worker
 
       - name: Testes (vitest)
         run: npm test
 
-      # Bateria longa opcional (135 partidas IA×IA): roda no CI para vigiar
-      # travas e jogadas ilegais da IA. Remova se o job ficar lento demais.
+      # Bateria longa (135 partidas IA×IA): vigia travas e jogadas ilegais da IA.
       - name: Bateria longa de partidas
-        run: JET_LONG_TESTS=1 npx vitest run tests/jet-matches.test.ts
+        run: npm run test:long
 
       - name: Build de produção
         run: npm run build
+
+      - name: Publicar artefato de build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  worker-integration:
+    name: Worker multiplayer (integração real)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # Sobe o wrangler dev (workerd + Durable Object local) e roda
+      # tests/worker-live.test.ts com dois clientes WebSocket reais.
+      - name: Teste de integração do Worker
+        run: npm run test:worker
+
+  e2e:
+    name: E2E de navegador
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Instalar navegadores
+        run: npx playwright install --with-deps chromium firefox
+
+      # Sem VITE_MULTIPLAYER_URL: o app mostra "Servidor multiplayer não
+      # configurado." e o teste multiplayer é pulado de propósito.
+      - name: E2E (desktop + mobile + tablet)
+        run: npm run test:e2e
+
+      - name: Publicar artefatos de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  e2e-multiplayer:
+    name: E2E multiplayer (2 navegadores + Worker)
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Subir Worker local
+        run: |
+          npx wrangler dev --config worker/wrangler.toml --ip 127.0.0.1 --port 8787 --local &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8787/health > /dev/null; then echo "worker pronto"; exit 0; fi
+            sleep 2
+          done
+          echo "worker não respondeu" && exit 1
+
+      - name: Build apontando para o Worker local
+        run: VITE_MULTIPLAYER_URL=http://127.0.0.1:8787 npm run build
+
+      - name: E2E multiplayer
+        run: JET_WORKER_URL=http://127.0.0.1:8787 npx playwright test --project=desktop-chromium multiplayer.spec.ts
+
+      - name: Publicar artefatos de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-multiplayer
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
 
   # NOTA: não há script de lint neste repositório (ESLint não configurado —
   # decisão do projeto: typecheck estrito + testes cobrem a qualidade estática

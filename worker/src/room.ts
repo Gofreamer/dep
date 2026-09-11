@@ -12,6 +12,7 @@
  */
 
 import {
+  ERROR_TEXTS,
   MAX_MESSAGE_BYTES,
   PROTOCOL_VERSION,
   isRoomCode,
@@ -190,8 +191,11 @@ export class RoomDO {
       return seat;
     }
     if (msg.type === 'JOIN_ROOM') {
-      if (msg.roomCode !== core.roomCode) {
-        this.sendTo(connectionId, { type: 'ERROR', code: 'room_not_found', message: 'Sala não encontrada.' });
+      // Sala sem nenhum jogador é sala que nunca foi criada (código digitado
+      // errado) ou que já foi encerrada — entrar NÃO pode criá-la.
+      const exists = core.seatInfo(0).present || core.seatInfo(1).present;
+      if (msg.roomCode !== core.roomCode || !exists) {
+        this.sendTo(connectionId, { type: 'ERROR', code: 'room_not_found', message: ERROR_TEXTS.room_not_found });
         return null;
       }
       const result = core.join(msg.name);

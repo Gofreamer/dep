@@ -14,11 +14,19 @@ dado, não código.
 
 ```bash
 npm install
-npm run dev      # abre em http://localhost:5173
-npm run build    # build de produção (tsc -b && vite build)
-npm test         # suíte de testes (vitest) — 268 testes
-JET_LONG_TESTS=1 npm test -- tests/jet-matches.test.ts  # bateria de 135 partidas IA×IA
+npm run dev            # abre em http://localhost:5173
+npm run build          # build de produção (tsc -b && vite build)
+npm run preview        # serve o build em http://localhost:4173
+npm test               # suíte de testes (vitest)
+npm run test:long      # bateria de 135 partidas IA×IA
+npm run test:worker    # integração real do Worker (sobe wrangler dev)
+npm run test:e2e       # E2E de navegador (Playwright)
+npm run check          # tudo: typecheck + worker typecheck + testes + bateria + build
 ```
+
+Configuração opcional: copie `.env.example` para `.env` e defina
+`VITE_MULTIPLAYER_URL` com o endereço do servidor de salas. **Sem isso o jogo
+funciona normalmente** — só o modo multiplayer fica indisponível.
 
 ## Arquitetura
 
@@ -41,10 +49,18 @@ src/
   integrations/jet/  # camada Jet Tactics → JET TCG (types, normalize, converter,
                      # importer, provenance) — sem acoplamento em runtime
   game/              # MatchController: ponte engine ⇄ UI (comandos, IA, tutorial)
+  net/               # multiplayer compartilhado (protocolo, visão por jogador,
+                     #   RoomCore) — puro, roda no Worker E no Node
+  multiplayer/       # cliente de WebSocket + store Zustand do modo online
   persistence/       # interface de persistência + adapter localStorage
-  ui/                # React: título, seleção de deck, builder, coleção, partida…
-tests/               # engine, invariáveis (conservação/legais), integração JET, fluxo
-scripts/             # import-jet-tactics.ts (raw JSON → snapshot com proveniência)
+  ui/                # React: título, menu, seleção de deck, builder, coleção,
+                     #   partida local, partida online, ajustes
+worker/              # Cloudflare Worker + Durable Object (salas privadas)
+tests/               # engine, invariáveis, integração JET, fluxo, UI (jsdom),
+                     #   RoomCore e integração real do Worker
+e2e/                 # Playwright: fumaça, fluxo, responsivo, multiplayer
+scripts/             # import-jet-tactics.ts, run-worker-tests.mjs
+docs/                # importação, artes, balanceamento, hardening, release
 ```
 
 ## Conceitos
@@ -108,6 +124,10 @@ com tradeoffs — não "a mesma carta mais forte".
 - RNG centralizado e semeado (partidas reproduzíveis)
 - IA heurística com 3 dificuldades (usa as mesmas `legalActions`)
 - Tutorial interativo, painel de debug (apenas modo dev), rematch instantânea
+- **Multiplayer privado 1×1**: servidor autoritativo, código de sala de 6
+  caracteres + link de convite, token de assento para reconexão, revisão
+  monotônica e idempotência por `commandId`. Sem contas, sem chat, sem filas —
+  ver [worker/README.md](worker/README.md)
 
 ## Importação Jet Tactics
 
@@ -132,12 +152,19 @@ Guardian/Duelist/Commander) e checklist de carta nova.
 ## Testes
 
 ```bash
-npx vitest run
+npm test            # vitest: engine, dados, UI (jsdom), protocolo/RoomCore
+npm run test:long   # 135 partidas IA×IA (travas e jogadas ilegais)
+npm run test:worker # Worker real (wrangler dev) + 2 clientes WebSocket
+npm run test:e2e    # Playwright: Chromium, Firefox, mobile e tablet
 ```
 
 Cobrem: invariáveis de engine (deploy Base-only, conservação de instâncias
 com censo, pilha real de evolução, skip-stage, `characterCondition` idêntico
 em legalActions e dispatch, mulligans, `benchAtSetup`, deep merge de config,
 identityId/holo/raridade, field override, sweep legalActions↔dispatch),
-integração Jet Tactics (conversão, pendentes, proveniência) e fluxo completo
-de partida.
+integração Jet Tactics (conversão, pendentes, proveniência), fluxo completo de
+partida, UI real em jsdom (fluxos de produto, ErrorBoundary), protocolo e
+máquina de sala do multiplayer, integração real do Worker e E2E de navegador.
+
+O relatório do lançamento está em **[docs/RELEASE-V1.md](docs/RELEASE-V1.md)** e
+o histórico em **[CHANGELOG.md](CHANGELOG.md)**.
