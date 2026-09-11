@@ -595,6 +595,41 @@ body.shake { animation: bodyShake 0.42s ease; }
   pointer-events: none;
 }
 
+/* ---------- JET TCG: artes oficiais (CardArt) ---------- */
+/* A <img> da arte real ocupa exatamente o box da arte procedural (que já tem
+   overflow hidden nos containers .card-art/.mini-art/.bc-art): nunca estoura
+   a carta, nunca distorce (object-fit vem inline: cover por padrão). */
+.card-art-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* Prévia de agentes na seleção de baralho */
+.deck-preview {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+}
+.deck-preview-label {
+  font-size: 12.5px;
+  color: var(--ink-dim);
+  font-weight: 700;
+}
+.deck-preview-thumb {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+  background: var(--bg2);
+}
+
 /* ---------- builder: variantes do agente ---------- */
 .variants-strip {
   position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);

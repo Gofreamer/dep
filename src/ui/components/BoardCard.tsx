@@ -3,7 +3,8 @@ import type { CardInstance, LegalActions, MatchState } from '../../engine/types'
 import { charDef, currentHp, defOf, getStatus, maxHp } from '../../engine/queries';
 import { registry } from '../../engine/registry';
 import { TERMINOLOGY as T } from '../../data/terminology';
-import { Artwork, factionColor } from './Artwork';
+import { factionColor } from './Artwork';
+import { CardArt } from './CardArt';
 import { stageLabel, triggerShort } from './CardView';
 
 const STATUS_ICON: Record<string, string> = {
@@ -49,7 +50,7 @@ export const BoardCard: React.FC<{
         <span className="bc-hp" data-damaged={inst.damage > 0}>{hp}<small>/{hpMax}</small></span>
       </div>
       <div className="bc-art">
-        <Artwork seed={def.art.seed} motif={def.art.motif} faction={def.faction} className="art-svg" />
+        <CardArt def={def} className="art-svg" eager />
         <div className="hp-bar"><span style={{ width: `${hpPct}%` }} data-low={hpPct <= 30} /></div>
         {inst.damage > 0 && <span className="dmg-count">−{inst.damage}</span>}
       </div>

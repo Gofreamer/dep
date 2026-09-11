@@ -2,9 +2,10 @@ import React from 'react';
 import { useApp, metaStore } from '../appStore';
 import { validateDeck, deckStats } from '../../data/deckUtils';
 import { JET_STARTER_DECKS } from '../../data/jet/starterDecks';
-import { DEFAULT_CONFIG } from '../../engine/types';
+import { DEFAULT_CONFIG, type CardDef } from '../../engine/types';
 import { TERMINOLOGY as T } from '../../data/terminology';
 import { registry } from '../../engine/registry';
+import { CardArt } from '../components/CardArt';
 
 export const DeckSelectScreen: React.FC = () => {
   const go = useApp((s) => s.go);
@@ -17,6 +18,25 @@ export const DeckSelectScreen: React.FC = () => {
   const [seedText, setSeedText] = React.useState('');
 
   const decks = metaStore.listDecks();
+
+  // Prévia dos agentes do baralho selecionado (artes oficiais quando houver).
+  const previewAgents = React.useMemo((): CardDef[] => {
+    const selectedDeck = decks.find((d) => d.id === selected);
+    if (!selectedDeck) return [];
+    const seen = new Set<string>();
+    const out: CardDef[] = [];
+    for (const id of Object.keys(selectedDeck.cards)) {
+      const def = registry.tryCard(id);
+      if (!def || def.kind !== 'CHARACTER') continue;
+      const key = def.identityId ?? def.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(def);
+      if (out.length >= 8) break;
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   const play = () => {
     if (!selected) return;
@@ -58,6 +78,17 @@ export const DeckSelectScreen: React.FC = () => {
           <small>Comece do zero no construtor</small>
         </button>
       </div>
+
+      {previewAgents.length > 0 && (
+        <div className="deck-preview" aria-label="Agentes do baralho selecionado">
+          <span className="deck-preview-label">Agentes:</span>
+          {previewAgents.map((def) => (
+            <span key={def.id} className="deck-preview-thumb" title={`${def.name}${def.edition ? ` · ${def.edition}` : ''}`}>
+              <CardArt def={def} className="art-svg" />
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="match-setup">
         <label>

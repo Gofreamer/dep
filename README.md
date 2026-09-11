@@ -16,7 +16,7 @@ dado, não código.
 npm install
 npm run dev      # abre em http://localhost:5173
 npm run build    # build de produção (tsc -b && vite build)
-npm test         # suíte de testes (vitest) — 235 testes
+npm test         # suíte de testes (vitest) — 268 testes
 JET_LONG_TESTS=1 npm test -- tests/jet-matches.test.ts  # bateria de 135 partidas IA×IA
 ```
 
