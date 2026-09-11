@@ -165,8 +165,23 @@ jobs:
       - name: Build apontando para o Worker local
         run: VITE_MULTIPLAYER_URL=http://127.0.0.1:8787 npm run build
 
+      # As DUAS variáveis são necessárias no momento do teste: JET_WORKER_URL
+      # liga o Worker e VITE_MULTIPLAYER_URL é o que o spec usa para decidir se
+      # pula. Sem a segunda os testes eram PULADOS e o job ficava verde à toa.
       - name: E2E multiplayer
-        run: JET_WORKER_URL=http://127.0.0.1:8787 npx playwright test --project=desktop-chromium multiplayer.spec.ts
+        shell: bash
+        run: |
+          set -o pipefail
+          JET_WORKER_URL=http://127.0.0.1:8787 \
+          VITE_MULTIPLAYER_URL=http://127.0.0.1:8787 \
+            npx playwright test --project=desktop-chromium multiplayer.spec.ts 2>&1 | tee /tmp/mp.log
+
+      # Trava explícita contra verde vazio: skipped não é passed.
+      - name: Garantir que os testes multiplayer realmente rodaram
+        shell: bash
+        run: |
+          grep -E "[1-9][0-9]* passed" /tmp/mp.log > /dev/null \
+            || { echo "NENHUM teste multiplayer foi executado (tudo skipped?)"; exit 1; }
 
       - name: Publicar artefatos de falha
         if: failure()
