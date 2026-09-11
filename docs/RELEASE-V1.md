@@ -141,9 +141,19 @@ Projetos configurados: **desktop-chromium** (1440×900), **desktop-firefox**
 | `e2e/responsive.spec.ts` | sem transbordo horizontal, área de toque ≥ 40 px, board cabe no celular |
 | `e2e/multiplayer.spec.ts` | **dois contextos de navegador**: criar sala → código → entrar → baralhos → prontos → partida, mão do adversário invisível, nenhuma `<img src="data:">`, preparação, concessão, revanche, convite por link `?room=` |
 
-**Execução neste ambiente: bloqueada — ver §9.** A configuração e a coleta dos
-26 testes foram verificadas com `npx playwright test --list`; os arquivos são
-typechecados por `npm run typecheck`.
+**Executados na CI em navegador real** (run `34572311434`, commit `022c6be`):
+
+| Job | Resultado |
+| --- | --- |
+| `E2E de navegador` | **24 passed · 2 skipped** (47.3 s) — Chromium, Firefox, iPhone 13 (WebKit), tablet |
+| `E2E multiplayer (2 navegadores + Worker)` | **2 passed** (10.4 s) |
+
+Os 2 skipped do primeiro job são justamente os testes multiplayer, que rodam no
+job dedicado com o Worker de pé. Total executado em navegador: **26 testes**.
+
+No sandbox de desenvolvimento não há navegador instalável (ver §9), então esses
+números vêm da CI — que é onde eles devem rodar mesmo. A primeira execução real
+encontrou 4 defeitos que nenhum teste anterior pegava; estão na §5.
 
 ### 3.6 Build de produção
 
@@ -253,6 +263,39 @@ declarado), nenhum rebalanceamento subjetivo:
 7. **`tamnhos` → `tamanhos`** (campo de configuração) e `engines.node` alinhado
    ao mínimo exigido pelo Vite 8 (`>=20.19`).
 
+Encontrados **somente** pela execução do E2E em navegador real (nenhum teste
+anterior, em jsdom ou de engine, os detectava):
+
+8. **Escape abria o menu de pausa junto com a inspeção.** `InspectModal` e
+   `PauseOverlay` ouviam `keydown` no `window`; fechar a inspeção com Escape
+   também ligava a pausa e deixava um `.modal-backdrop` cobrindo a partida,
+   bloqueando qualquer clique seguinte. Corrigido com listener em fase de
+   *capture* + `stopPropagation`, registrado só com o modal aberto. Regressão
+   coberta em `tests/ui-app.test.tsx` — verificado que a asserção **falha** sem o
+   fix.
+9. **Cartas da mão cobriam o dock de ações.** `.hand` é absoluta com
+   `z-index: 20` e `.my-bar` só ganhava empilhamento dentro da media query
+   mobile; em desktop as cartas interceptavam o clique em "Pronto"/"Encerrar
+   Turno" (reproduzido em Firefox 1366×768). Corrigido subindo apenas o
+   `.command-dock` — subir a `.my-bar` inteira causava o efeito oposto, cobrindo
+   as cartas.
+10. **As primeiras cartas da mão ficavam inalcançáveis** quando a mão
+    transbordava: `justify-content: center` com `overflow-x: auto` faz o
+    conteúdo vazar pelos dois lados e o início fica fora da área rolável.
+    Corrigido com `justify-content: safe center`.
+11. **`deck-select` no E2E multiplayer** exigia escolher o Agente Base antes do
+    "Pronto" (mesma regra do modo local).
+
+Dois **verde-falsos da própria CI**, ambos corrigidos:
+
+12. `npm run test:e2e 2>&1 | tee` sem `pipefail` devolvia o status do `tee`: o
+    job dava `success` com 2 testes falhando. Corrigido com `shell: bash` +
+    `set -o pipefail`.
+13. O job de E2E multiplayer reportava `2 skipped` porque `VITE_MULTIPLAYER_URL`
+    (variável de build) não estava no ambiente do teste — o job "passava" sem
+    executar nada. Corrigido exportando as duas variáveis e adicionando um passo
+    que falha se o log não mostrar nenhum teste `passed`.
+
 ---
 
 ## 6. Artes
@@ -306,16 +349,17 @@ Nenhuma consulta em runtime a HUD-RPG, Jet Tactics, Fórum ou Firebase:
 
 ### Bloqueado neste ambiente (não é pendência de código)
 
-1. **Execução dos E2E de navegador.** Não há navegador instalável neste sandbox:
-   `npx playwright install chromium` falha (download bloqueado — apenas
-   `github.com` e `registry.npmjs.org` são alcançáveis; `cdn.playwright.dev` e
-   `storage.googleapis.com` não), não existe Chrome/Firefox no sistema
-   (`~/.cache/ms-playwright` vazio, nenhum binário no PATH) e as bibliotecas
-   mínimas de um Chromium (`libnss3`, `libgbm`, `libasound`, `libpango`) estão
-   ausentes, com `apt` negado para o usuário atual. Os 26 testes estão escritos,
-   typechecados e coletados; **precisam ser executados no CI**, onde
-   `npx playwright install --with-deps` funciona. É o único item de verificação
-   que não pude concluir aqui.
+1. **E2E de navegador não rodam no sandbox de desenvolvimento** — só na CI, e
+   foi lá que rodaram (§3.5). `npx playwright install chromium` falha aqui
+   (download bloqueado: apenas `github.com` e `registry.npmjs.org` são
+   alcançáveis), não existe Chrome/Firefox no sistema e as bibliotecas mínimas
+   de um Chromium (`libnss3`, `libgbm`, `libasound`, `libpango`) estão ausentes,
+   com `apt` negado. **Itens concluídos na CI:** os 26 testes passaram em
+   Chromium, Firefox, WebKit (iPhone 13) e tablet, incluindo o fluxo multiplayer
+   completo em dois navegadores contra o Worker. Pendência real restante: os
+   logs de job e artefatos do Actions ficam em blob storage inalcançável daqui,
+   então o diagnóstico foi feito pelas anotações da API e por um resumo que a
+   própria CI publica no PR.
 2. **Deploy do Worker e do frontend.** Não há credencial Cloudflare neste
    ambiente, então não houve `wrangler deploy` nem publicação no Pages — e, por
    consequência, não existe URL de preview pública para citar. O código, o

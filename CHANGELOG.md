@@ -45,7 +45,8 @@ autoritativo.
   `ErrorBoundary` com render de verdade, protocolo/sala
   (`tests/net-room.test.ts`, 41 casos), integração real do Worker com dois
   clientes WebSocket (`tests/worker-live.test.ts`, 14 casos) e E2E de navegador
-  (`e2e/`, 26 casos em Chromium, Firefox, mobile e tablet).
+  (`e2e/`, 26 casos) — **executados na CI** em Chromium, Firefox, WebKit
+  (iPhone 13) e tablet: 24 passed + 2 passed no job multiplayer.
 - **CI**: typecheck do app e do Worker, vitest, bateria de 135 partidas,
   auditoria de dependências, build, integração do Worker e E2E (inclusive
   multiplayer com dois navegadores).
@@ -76,6 +77,14 @@ autoritativo.
   a camada agora atende os dois modos sem duplicar regra.
 - **Clique em carta não posicionável na preparação não fazia nada**; agora abre
   a inspeção.
+- **Escape abria o menu de pausa junto com a inspeção**, deixando um backdrop
+  que bloqueava a partida (dois listeners de `keydown` no `window`).
+- **Cartas da mão cobriam o dock de ações** em desktop, impedindo o clique em
+  "Pronto"/"Encerrar Turno".
+- **As primeiras cartas da mão ficavam inalcançáveis** quando a mão transbordava
+  (`justify-content: center` + `overflow-x: auto`); agora `safe center`.
+- **Dois verde-falsos na CI**: o pipe do E2E sem `pipefail` e o job multiplayer
+  que pulava os testes por falta de `VITE_MULTIPLAYER_URL` no ambiente de teste.
 - **Erro de digitação** em campo de configuração (`tamnhos` → `tamanhos`) e
   `engines.node` alinhado ao mínimo exigido pelo Vite 8 (`>=20.19`).
 
