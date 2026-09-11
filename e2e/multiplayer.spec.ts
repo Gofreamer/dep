@@ -89,9 +89,15 @@ test.describe('multiplayer privado (dois navegadores)', () => {
       expect(dataUris).toBe(0);
     }
 
-    // --- preparação concluída nos dois lados ----------------------------
-    await expect(pageA.getByTestId('online-setup-done')).toBeVisible({ timeout: 20_000 });
-    await expect(pageB.getByTestId('online-setup-done')).toBeVisible({ timeout: 20_000 });
+    // --- preparação: cada um escolhe o Agente Base e conclui -------------
+    // "Pronto" só é renderizado quando setupMode && me.active && !me.setupDone,
+    // então é preciso clicar numa carta jogável primeiro (mesma regra do local).
+    for (const p of [pageA, pageB]) {
+      const playable = p.getByTestId('online-hand').locator('.card-mini.playable');
+      await expect(playable.first()).toBeVisible({ timeout: 20_000 });
+      await playable.first().click();
+      await expect(p.getByTestId('online-setup-done')).toBeVisible({ timeout: 20_000 });
+    }
     await pageA.getByTestId('online-setup-done').click();
     await pageB.getByTestId('online-setup-done').click();
     await expect(pageA.getByTestId('online-turn')).toBeVisible({ timeout: 20_000 });
