@@ -20,7 +20,9 @@
     "typecheck:worker": "tsc -p worker/tsconfig.json --noEmit",
     "test:worker": "node scripts/run-worker-tests.mjs",
     "test:fuzz": "vitest run tests/fuzz-matches.test.ts",
-    "test:fuzz:long": "JET_LONG_TESTS=1 JET_FUZZ_MATCHES=1000 vitest run tests/fuzz-matches.test.ts"
+    "test:fuzz:long": "JET_LONG_TESTS=1 JET_FUZZ_MATCHES=1000 vitest run tests/fuzz-matches.test.ts",
+    "meta:sim": "tsx scripts/meta-sim.ts",
+    "ranked:sim": "tsx scripts/bot-ladder-sim.ts"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -39,6 +41,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.0.1",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vite": "^8.3.0",
     "vitest": "^5.0.0",

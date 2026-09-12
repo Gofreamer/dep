@@ -124,6 +124,25 @@ export class MatchEngine {
     return JSON.parse(JSON.stringify({ ...this.state, log: this.state.log.slice(-20) }));
   }
 
+  /**
+   * Clona este engine em um engine independente para SIMULAÇÃO (lookahead da
+   * IA, replay server-side). O log é descartado (irrelevante para simulação),
+   * o que mantém o clone barato. O clone é DETERMINÍSTICO: mesmo rngState,
+   * mesmas zonas — essencial para o replay server-authoritative.
+   */
+  cloneForSimulation(aiChooser?: (req: ChoiceRequest) => string[]): MatchEngine {
+    const clone = Object.create(MatchEngine.prototype) as MatchEngine;
+    clone.state = JSON.parse(JSON.stringify(this.state));
+    clone.state.log = [];
+    clone.version = 0;
+    clone.pending = null;
+    clone.lastCommand = null;
+    clone.lastCardId = null;
+    const chooser = aiChooser ?? ((req: ChoiceRequest) => defaultAiChoice(clone.state, req));
+    clone.aiChooser = chooser;
+    return clone;
+  }
+
   // -------------------------------------------------------------------------
   // Choice driving (suspension for human decisions)
   // -------------------------------------------------------------------------

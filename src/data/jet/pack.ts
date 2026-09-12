@@ -2,7 +2,10 @@ import { registry } from '../../engine/registry';
 import { JET_SNAPSHOT } from './snapshot';
 import { AGENT_TCG_PROFILES } from './agentProfiles';
 import { JET_ENERGY, registerJetEnergy } from './energy';
-import { JET_TECHNIQUES, JET_EQUIPMENT, JET_FIELDS } from './auxiliares';
+import { JET_TECHNIQUES } from './techniques';
+import { JET_EQUIPMENT } from './equipment';
+import { JET_FIELDS } from './fields';
+import { JET_TEAM } from './team';
 import { importSnapshot, pendingCatalog, type ImportReport } from '../../integrations/jet/importer';
 import { registerStatuses } from '../statuses';
 
@@ -10,11 +13,12 @@ let registered = false;
 let lastReport: ImportReport | null = null;
 
 /**
- * JET CORE SET — the DEFAULT data pack.
+ * JET CORE SET 2.0 — o data pack de PRODUÇÃO (default).
  *
- * Registers, in order: statuses (engine-generic), neutral cosmetics, the
- * auxiliary cards (Energia JET, Técnicas, Equipamentos, Campos) and every
- * agent card produced by the Jet Tactics importer from curated profiles.
+ * Registra, em ordem: statuses (engine-generic), facções neutras, Energia JET,
+ * Técnicas, Equipamentos, Campos, cartas de equipe/sinergia e todos os agentes
+ * produzidos pelo importer Jet Tactics a partir dos perfis curados. NENHUMA
+ * carta NEXO/fixture é registrada aqui.
  */
 export function registerJetDataPack(): ImportReport {
   if (registered && lastReport) return lastReport;
@@ -29,7 +33,7 @@ export function registerJetDataPack(): ImportReport {
 
   // auxiliary cards
   let number = 1;
-  for (const def of [...JET_ENERGY, ...JET_TECHNIQUES, ...JET_EQUIPMENT, ...JET_FIELDS]) {
+  for (const def of [...JET_ENERGY, ...JET_TECHNIQUES, ...JET_EQUIPMENT, ...JET_FIELDS, ...JET_TEAM]) {
     if (!registry.tryCard(def.id)) {
       def.number = number++;
       registry.registerCard(def);
