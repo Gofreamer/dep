@@ -465,6 +465,10 @@ export function* resolveDefeats(g: G): Generator<YieldedChoice, void, string[]> 
             g.emit('MATCH_ENDED', enemy, { reason: 'no_active' });
             return;
           }
+        } else if (p.bench.length === 1) {
+          // Promoção automática: com UMA opção não há decisão a tomar — evita
+          // pending desnecessário (e uma janela de soft-lock no multiplayer).
+          promoteToActive(g, p.bench[0]);
         } else {
           const chosen = yield {
             kind: 'target',

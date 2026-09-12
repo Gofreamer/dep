@@ -124,8 +124,8 @@ export const JET_FIELDS: FieldDef[] = [
     id: 'jfd-arena', kind: 'FIELD', name: 'Arena Oficial', faction: 'neutro', rarity: 'common',
     subtype: 'ARENA',
     tags: ['campo'], art: { motif: 'campo', seed: 'jfd-1' },
-    mods: { damageDealtFlat: 0 },
-    text: 'Campo padrão da liga.',
+    mods: { damageDealtFlat: 5 },
+    text: 'O palco clássico da liga: ataques de TODOS os Agentes causam +5 de dano.',
     scope: 'all'
   },
   {

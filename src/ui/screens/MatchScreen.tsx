@@ -10,7 +10,7 @@ import { TERMINOLOGY as T } from '../../data/terminology';
 import { BoardCard, ZonePile, findInst } from '../components/BoardCard';
 import { CardMini } from '../components/CardView';
 import { preloadCardArt } from '../../data/jet/art';
-import { InspectModal } from '../components/Modals';
+import { InspectModal, ChoicePanel } from '../components/Modals';
 import { FXLayer } from '../components/FXLayer';
 import { DebugPanel } from '../components/DebugPanel';
 
@@ -42,6 +42,23 @@ export const MatchScreen: React.FC = () => {
     ctl.onInvalid = (code) => showToast(T.errorTexts[code] ?? code);
     setController(ctl);
     reset();
+    // Gancho dev-only (instrumentação p/ E2E de stress e depuração manual):
+    // expõe engine+controller quando o Modo desenvolvedor está ativo.
+    if (metaStore.state.settings.devMode) {
+      (window as unknown as Record<string, unknown>).__jetDev = {
+        engine: ctl.engine,
+        controller: ctl,
+        sync: () => {
+          const eng = ctl.engine;
+          sync(eng.version, eng.state, eng.legalActions(0), eng.getPending());
+        },
+        debug: (op: string, payload: Record<string, unknown> = {}) => {
+          ctl.engine.debugCommand(op, { player: 0, ...payload });
+          const eng = ctl.engine;
+          sync(eng.version, eng.state, eng.legalActions(0), eng.getPending());
+        },
+      };
+    }
     ctl.start(() => {
       const eng = ctl.engine;
       sync(eng.version, eng.state, eng.legalActions(0), eng.getPending());
@@ -64,7 +81,10 @@ export const MatchScreen: React.FC = () => {
     } catch {
       // Preload nunca pode impedir a partida de iniciar.
     }
-    return () => ctl.stop();
+    return () => {
+      ctl.stop();
+      delete (window as unknown as Record<string, unknown>).__jetDev;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.playerDeckId, cfg?.opponentDeckId, cfg?.seed]);
 
@@ -98,6 +118,12 @@ export const MatchScreen: React.FC = () => {
   // ----- handlers -----------------------------------------------------------
   const clickHandCard = (card: CardInstance) => {
     if (targetMode === 'attach') { setTargeting(null); return; }
+    // Escolha pendente sobre cartas da mão (ex.: descartar/comprar escolhas) —
+    // antes estes candidatos NÃO eram selecionáveis pela UI (soft-lock real).
+    if (targetMode === 'pending' && highlightUids.has(card.uid)) {
+      controller.resolveChoice([card.uid]);
+      return;
+    }
     const info = legal.hand[card.uid];
     if (!info?.playable) {
       if (info?.reason) showToast(T.errorTexts[info.reason] ?? info.reason);
@@ -195,6 +221,7 @@ export const MatchScreen: React.FC = () => {
         isActive={isActive}
         legal={owner === 0 ? legal : null}
         targeting={targeting}
+        compact={!isActive}
         onClick={() => (setupMode ? clickInSetup(inst) : clickBoardChar(inst, owner))}
       />
     );
@@ -229,7 +256,7 @@ export const MatchScreen: React.FC = () => {
       {/* campo inimigo */}
       <div className="field-row">
         <div className="bench-row opp-bench">
-          {opp.bench.map((c) => renderChar(c, 1, false))}
+          {opp.bench.map((c) => <React.Fragment key={c.uid}>{renderChar(c, 1, false)}</React.Fragment>)}
           {Array.from({ length: Math.max(0, st.config.board.benchSize - opp.bench.length) }).map((_, i) => <div key={i} className="slot empty mini-slot" />)}
         </div>
       </div>
@@ -245,7 +272,7 @@ export const MatchScreen: React.FC = () => {
       {/* meu banco */}
       <div className="field-row">
         <div className="bench-row my-bench">
-          {me.bench.map((c) => renderChar(c, 0, false))}
+          {me.bench.map((c) => <React.Fragment key={c.uid}>{renderChar(c, 0, false)}</React.Fragment>)}
           {Array.from({ length: Math.max(0, st.config.board.benchSize - me.bench.length) }).map((_, i) => <div key={i} className="slot empty mini-slot" />)}
         </div>
       </div>
@@ -335,14 +362,14 @@ export const MatchScreen: React.FC = () => {
       </div>
 
       {/* banner de alvo */}
-      {targetMode && (
+      {targetMode === 'attach' && (
         <div className="target-banner">
-          {targetMode === 'pending'
-            ? `🎯 ${pendingReq?.prompt}`
-            : (stateRef.players[0].hand.find((c) => c.uid === targetingFrom)?.kind === 'CHARACTER' ? '🎯 Escolha quem evoluir' : '🎯 Escolha um personagem seu')}
+          {stateRef.players[0].hand.find((c) => c.uid === targetingFrom)?.kind === 'CHARACTER' ? '🎯 Escolha quem evoluir' : '🎯 Escolha um personagem seu'}
           <button className="cancel-target" onClick={() => setTargeting(null)}>Cancelar</button>
         </div>
       )}
+      {/* painel de escolha pendente (anti-soft-lock: TODA escolha é resolvível) */}
+      <ChoicePanel onResolve={(sel) => controller.resolveChoice(sel)} />
 
       {/* tutorial */}
       {tutorial?.active && (

@@ -36,12 +36,23 @@ export const BoardCard: React.FC<{
 
   const attackRows = def.attacks;
   const activeAttackPlayable = legal?.attacks ?? [];
+  // Reserva compacta: ataques/equips saem do card e viram TOOLTIP (o board não
+  // cresce com partidas longas — badges + tooltip, sem lista no corpo).
+  const compactTitle = compact
+    ? [
+        ...def.attacks.map((a) => `⚔ ${a.name} ${a.damage ?? '—'}`),
+        ...def.abilities.map((a) => `✧ ${a.name}`),
+        ...equipment.map((e) => `⚙ ${defOf(e).name}`),
+        ...inst.statuses.map((s) => `${STATUS_ICON[s.id] ?? '✧'} ${T.statusNames[s.id] ?? s.id}${s.stacks > 1 ? ` ×${s.stacks}` : ''}`)
+      ].join('\n')
+    : undefined;
 
   return (
     <div
       className={`board-card ${isActive ? 'is-active' : ''} ${targeting ? 'targetable' : ''} ${selected ? 'selected' : ''} ${canAttack && isActive && isMySide ? 'can-attack' : ''} ${playableHere && !isActive ? 'soft-glow' : ''} r-${def.rarity}`}
       data-uid={inst.uid}
       onClick={onClick}
+      title={compactTitle}
       style={{ ['--faction' as any]: color }}
     >
       {justPlayed && <span className="just-played" title="Entrou em jogo neste turno">🌙</span>}

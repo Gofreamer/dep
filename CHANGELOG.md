@@ -3,6 +3,48 @@
 Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Este projeto usa versionamento semântico.
 
+## [Não publicado] — Hardening v2 (diagnósticos, fuzz, stress de board)
+
+### Adicionado
+
+- **Detector de soft-lock** (`src/engine/diagnostics.ts`): estados impossíveis
+  (pending sem candidatos, setup impossível, trigger queue não drenada, ativo
+  nulo, derrotados em jogo) + `MatchEngine.diagnose()` com rastro do último
+  comando. Não muta estado; usado em testes, debug e (futuramente) no Worker.
+- **`resolveDefeats` com promoção automática**: reserva com exatamente 1
+  agente elimina o pending desnecessário e a janela de soft-lock no multi.
+- **ChoicePanel anti-soft-lock**: toda escolha pendente (mão, descarte,
+  opções) é clicável; cartas da mão candidatas resolvem a escolha.
+- **Harness every-card** (`tests/every-card-playable.test.ts`, 312 testes):
+  cada uma das 155 CardDefs registradas é realmente jogável (deploy, upgrade
+  em cadeia, equipamento, técnica, campo) com rigging determinístico.
+- **Bateria de fuzz** (`tests/fuzz-matches.test.ts`): 1000 partidas IA×IA
+  determinísticas com gates de invariante por partida (conservação de zonas,
+  comandos legais, fim real). Resultado da base: 504×496, 0 travamentos.
+- **E2E de stress do board** (`e2e/stress.spec.ts`): turno 50, reservas 5+5,
+  mão e descarte grandes, status ativos — layout estável em 5 viewports
+  (1440×900, 1366×768, 768×1024, 390×844, 360×800) a 100% de zoom, log com
+  overflow interno e controles críticos clicáveis após o stress.
+- **Instrumentação dev**: `window.__jetDev` (apenas com `settings.devMode`) com
+  engine, controller, sync e ops de debug; novas ops `setTurn` e
+  `discardHand`. `playwright.config.ts` aceita `PW_CHROMIUM_EXECUTABLE` e
+  `PW_NO_VIDEO` para ambientes sem browsers/ffmpeg do Playwright.
+
+### Corrigido
+
+- **Board crescia indefinidamente em partidas longas**: reservas com ataques
+  listados e ativos gigantes empurravam o dock de comandos para fora do
+  viewport em 1366×768 e 768×1024. Zonas agora têm altura limitada por
+  `clamp()`/`vh` (reserva compacta com badges + tooltip, ativo com scroll
+  interno), mão 18px mais baixa e media queries por altura (≤800px/≤700px)
+  que comprimem o board mantendo dock, banner e mão sempre visíveis.
+- **Tutorial duplicava a mesma instância na mão**: `rigTutorialHand` pegava a
+  MESMA `jres-energia` duas vezes (mesmo uid `c13`) — warning de key do React
+  e carta fantasma. Agora cada ocorrência é uma instância distinta (splice).
+- **`mobile-touch` do Playwright usava WebKit** (`devices['iPhone 13']`):
+  `browserName: 'chromium'` explícito para o projeto rodar em qualquer CI
+  com só o Chromium instalado.
+
 ## [1.0.0] - 2026-09-11
 
 Primeira versão jogável completa: campanha contra a IA, tutorial, construtor de

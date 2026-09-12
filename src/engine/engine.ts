@@ -23,6 +23,7 @@ import { evalCondition, rand, targetCandidates } from './effects/core';
 import { attackDamageTotal, getOp, payAttackCost, resolveAttackTargetGen, runSteps, scalingDamageFor } from './effects/ops';
 import { createMatchState, type MatchOptions } from './state/setup';
 import { computeLegalActions } from './validation';
+import { describeCommand, diagnoseSoftLock, type CommandTrace, type SoftLockReport } from './diagnostics';
 
 class EngineError extends Error {}
 
@@ -45,6 +46,9 @@ export class MatchEngine {
   version = 0;
   private pending: Suspended | null = null;
   private aiChooser: (req: ChoiceRequest) => string[];
+  /** Rastro do último comando + última carta jogada (diagnóstico dev/test). */
+  lastCommand: CommandTrace | null = null;
+  lastCardId: string | null = null;
 
   constructor(opts: MatchEngineOptions) {
     this.state = createMatchState(opts);
@@ -61,6 +65,7 @@ export class MatchEngine {
   /** Sends a command; returns ok/error plus the events emitted by it. */
   dispatch(cmd: Command): CommandResult {
     const seqBefore = this.state.eventSeq;
+    const trace = describeCommand(cmd);
     // NOTA: o pending NÃO é limpo aqui. Comandos normais com escolha pendente
     // são rejeitados pelo gate 'choice_pending' em execute() — descartar o
     // pending silenciosamente abandonava geradores no meio de efeitos.
@@ -69,13 +74,21 @@ export class MatchEngine {
       const gen = this.execute(cmd);
       this.drive(gen);
       result = { ok: true, events: [] };
+      trace.ok = true;
+      const any = cmd as Record<string, unknown>;
+      const uid = any.uid as string | undefined;
+      const found = uid ? findCard(this.state, uid) : null;
+      this.lastCardId = found?.card.defId ?? null;
     } catch (e) {
       if (e instanceof EngineError) {
         result = { ok: false, error: e.message, events: [] };
+        trace.ok = false;
+        trace.error = e.message;
       } else {
         throw e;
       }
     }
+    this.lastCommand = trace;
     result.events = this.eventsSince(seqBefore);
     this.version++;
     return result;
@@ -83,6 +96,16 @@ export class MatchEngine {
 
   getPending(): ChoiceRequest | null {
     return this.pending?.request ?? null;
+  }
+
+  /** Diagnóstico de soft-lock (dev/test/servidor) — nunca altera estado. */
+  diagnose(): SoftLockReport {
+    return diagnoseSoftLock(this.state, {
+      lastCommand: this.lastCommand,
+      lastCardId: this.lastCardId,
+      revision: this.version,
+      pending: this.getPending()
+    });
   }
 
   eventsSince(seq: number) {
@@ -448,6 +471,11 @@ export class MatchEngine {
     }
     if (this.state.phase !== 'setup') {
       yield* this.drainTriggers();
+      // REGRA: dano de QUALQUER fonte (ação, habilidade, status) precisa
+      // resolver derrotas imediatamente — antes, um op de dano de efeito
+      // podia deixar personagens derrotados "em campo" até o próximo turno
+      // (estado impossível detectado pelo every-card-playable).
+      yield* resolveDefeats(this.g());
       checkMatchEnd(this.g());
     }
   }
@@ -909,6 +937,26 @@ function runDebugOp(g: G, op: string, p: Record<string, unknown>): void {
     }
     case 'setVp': {
       me.victoryPoints = Math.max(0, p.value as number);
+      break;
+    }
+    case 'setTurn': {
+      // Debug/dev apenas: ajusta o contador de turno exibido (stress visual).
+      // Também devolve a vez ao jogador humano (activePlayer 0): garante um
+      // estado determinístico pro E2E — o banner mostra "Seu turno · Turno N"
+      // e nenhum tick pendente da IA volta a agir.
+      state.turn = Math.max(1, p.value as number);
+      state.activePlayer = 0;
+      break;
+    }
+    case 'discardHand': {
+      // Debug/dev apenas: descarta N cartas aleatórias da mão (stress visual
+      // de descarte grande no E2E de layout).
+      const n = Math.min(me.hand.length, (p.amount as number) ?? 1);
+      for (let i = 0; i < n; i++) {
+        const idx = Math.floor(rand(state) * me.hand.length);
+        const [c] = me.hand.splice(idx, 1);
+        me.discard.push(c);
+      }
       break;
     }
     case 'triggerAbility': {
