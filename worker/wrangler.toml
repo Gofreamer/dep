@@ -8,9 +8,20 @@
 #   JET_RANKED_SECRET   segredo para assinar tickets da Liga Ranqueada
 #                       (`npx wrangler secret put JET_RANKED_SECRET` — nunca no repo).
 #   ALLOW_INSECURE_ORIGIN = "1" só para testes locais.
-# Banco D1:
-#   npx wrangler d1 create jet-tcg-db
-#   npx wrangler d1 execute jet-tcg-db --file worker/migrations/0001_ranked.sql
+# Banco D1 (Liga Ranqueada):
+#   O binding é adicionado no DEPLOY, depois de criar o banco:
+#     npx wrangler d1 create jet-tcg-db        # anote o database_id
+#     npx wrangler d1 execute jet-tcg-db --file worker/migrations/0001_ranked.sql
+#   e descomente este bloco com o database_id real (não cometa placeholder):
+#
+#   [[d1_databases]]
+#   binding = "JET_DB"
+#   database_name = "jet-tcg-db"
+#   database_id = "SEU_DATABASE_ID_AQUI"
+#   migrations_dir = "migrations"
+#
+#   Sem o binding, o Worker responde 503 em /auth/* e /ranked/* (degradação
+#   segura); multiplayer privado continua funcionando.
 
 name = "jet-tcg-multiplayer"
 main = "src/index.ts"
@@ -21,12 +32,6 @@ compatibility_date = "2026-09-01"
 # Use "*" apenas em testes locais — nunca em produção.
 [vars]
 CLIENT_ORIGINS = "https://dep-7ed.pages.dev,http://localhost:5173,http://localhost:4173"
-
-[[d1_databases]]
-binding = "JET_DB"
-database_name = "jet-tcg-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
-migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
 name = "JET_ROOM"
