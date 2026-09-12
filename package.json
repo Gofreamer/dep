@@ -1,9 +1,9 @@
 {
   "name": "jet-tcg",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "JET TCG — jogo de cartas competitivo (agente vs IA) com engine genérica data-driven.",
+  "description": "JET TCG \u2014 jogo de cartas competitivo (agente vs IA) com engine gen\u00e9rica data-driven.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

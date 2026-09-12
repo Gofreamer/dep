@@ -72,13 +72,24 @@ describe('fluxo de produto (UI real)', () => {
     expect(errors.filter((e) => !e.includes('Not implemented'))).toEqual([]);
   });
 
-  it('3) o menu final apresenta as 7 entradas em PT-BR', async () => {
+  it('3) o menu final apresenta as 8 entradas em PT-BR', async () => {
     renderApp();
     await gotoMenu();
-    const labels = ['Jogar vs IA', 'Multiplayer privado', 'Tutorial', 'Baralhos', 'Coleção', 'Histórico', 'Ajustes'];
+    const labels = ['Jogar vs IA', 'Multiplayer privado', 'Liga Ranqueada', 'Tutorial', 'Baralhos', 'Coleção', 'Histórico', 'Ajustes'];
     for (const label of labels) expect(screen.getByText(label)).toBeTruthy();
     // nenhum botão de debug na experiência padrão
     expect(screen.queryByText(/debug/i)).toBeNull();
+  });
+
+  it('3b) Liga Ranqueada abre (não configurada sem VITE_RANKED_API_URL)', async () => {
+    renderApp();
+    await gotoMenu();
+    fireEvent.click(screen.getByTestId('menu-ranked'));
+    expect(screen.getByTestId('ranked-screen')).toBeTruthy();
+    expect(screen.getByText(/não está configurada/i)).toBeTruthy();
+    // casual vs IA e multiplayer privado seguem sem login
+    fireEvent.click(screen.getByText('Voltar'));
+    expect(screen.getByTestId('menu-screen')).toBeTruthy();
   });
 
   it('6/7) seleção de baralho mostra os 3 starters e inicia a partida', async () => {

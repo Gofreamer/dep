@@ -1,4 +1,5 @@
-import type { AiLevel, ChoiceRequest, Command, GameEvent, MatchState, PlayerId } from '../engine/types';
+import type { AiLevel, CardDef, ChoiceRequest, Command, GameEvent, MatchState, PlayerId } from '../engine/types';
+import type { AiProfile } from '../engine/ai/profile';
 import { DEFAULT_CONFIG } from '../engine/types';
 import { MatchEngine } from '../engine/engine';
 import { aiNextCommand, aiSmartChoice } from '../engine/ai/ai';
@@ -31,6 +32,17 @@ export interface MatchConfig {
   seed?: number;
   tutorial?: boolean;
   victoryTarget?: number;
+  /** Modo Liga Ranqueada: oponente = bot com perfil fixo, comandos gravados. */
+  ranked?: RankedMatchConfig;
+}
+
+/** Configuração de uma partida ranqueada (humano vs bot, server-authoritative). */
+export interface RankedMatchConfig {
+  botName: string;
+  botDeck: CardDef[];
+  botProfile: AiProfile;
+  /** Chamado no fim com os comandos do humano (para submissão ao servidor). */
+  onFinish: (commands: Command[], humanWon: boolean) => void;
 }
 
 export type MatchOutcome = { winner: PlayerId | 'draw'; reason: string; turns: number } | null;
@@ -54,11 +66,12 @@ export class MatchController {
   private cueId = 1;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
+  private rankedCommands: Command[] = [];
 
   constructor(public cfg: MatchConfig) {
     this.tutorialActive = !!cfg.tutorial;
     const playerDeck = this.deckDefIds(cfg.playerDeckId);
-    const oppDeck = this.deckDefIds(cfg.opponentDeckId);
+    const oppDeck = cfg.ranked ? cfg.ranked.botDeck : this.deckDefIds(cfg.opponentDeckId);
     const speed = metaStore.state.settings.speed;
     void speed;
     this.engine = new MatchEngine({
@@ -69,7 +82,7 @@ export class MatchController {
       },
       players: [
         { name: metaStore.state.settings.player1Name || 'Você', deckId: cfg.playerDeckId, isAI: false, aiLevel: 'normal', deck: playerDeck },
-        { name: cfg.tutorial ? 'Instrutor' : 'Oponente', deckId: cfg.opponentDeckId, isAI: true, aiLevel: cfg.tutorial ? 'easy' : cfg.difficulty, deck: oppDeck }
+        { name: cfg.ranked?.botName ?? (cfg.tutorial ? 'Instrutor' : 'Oponente'), deckId: cfg.opponentDeckId, isAI: true, aiLevel: cfg.tutorial ? 'easy' : cfg.difficulty, deck: oppDeck }
       ]
     });
     this.lastSeq = this.engine.state.eventSeq;
@@ -132,6 +145,7 @@ export class MatchController {
       if (r.error) this.onInvalid(r.error);
       return false;
     }
+    if (this.cfg.ranked) this.rankedCommands.push(cmd);
     this.processEvents();
     this.onSync();
     if (this.tutorialActive) this.tutorialAdvance(cmd);
@@ -172,7 +186,7 @@ export class MatchController {
       // trava na preparação quando o humano finaliza primeiro.
       const aiPlayer = st.players.find((p) => p.isAI && !p.setupDone);
       if (!aiPlayer) { this.checkOutcome(); return; }
-      const cmd = aiNextCommand(this.engine, aiPlayer.index);
+      const cmd = this.cfg.ranked ? aiNextCommand(this.engine, aiPlayer.index, this.cfg.ranked.botProfile) : aiNextCommand(this.engine, aiPlayer.index);
       const r = this.engine.dispatch(cmd);
       if (!r.ok) {
         // SEM fallback silencioso: comando ilegal da IA é um bug e deve ficar
@@ -189,7 +203,7 @@ export class MatchController {
     }
     const ai = st.players[st.activePlayer];
     if (!ai.isAI) return;
-    const cmd = aiNextCommand(this.engine, ai.index);
+    const cmd = this.cfg.ranked ? aiNextCommand(this.engine, ai.index, this.cfg.ranked.botProfile) : aiNextCommand(this.engine, ai.index);
     const r = this.engine.dispatch(cmd);
     if (!r.ok) {
       // SEM fallback silencioso (item 31): a bateria de partidas garante que a
@@ -210,6 +224,13 @@ export class MatchController {
     const st = this.engine.state;
     if (st.phase !== 'gameOver' || this.outcome) return;
     this.outcome = { winner: st.winner ?? 'draw', reason: st.endReason ?? '', turns: st.turn };
+    if (this.cfg.ranked) {
+      // Resultado é VALIDADO no servidor (replay); aqui só entregamos os
+      // comandos do humano para submissão — nunca o "eu venci".
+      const humanWon = st.winner === this.human;
+      this.cfg.ranked.onFinish(this.rankedCommands, humanWon);
+      return;
+    }
     if (!this.tutorialActive) {
       const rec: MatchRecord = {
         id: `m-${Date.now()}`,

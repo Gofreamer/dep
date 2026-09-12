@@ -25,6 +25,7 @@ const gamesPerPair = Math.max(1, parseInt(arg('--games', '12'), 10));
 const outFile = resolve(process.cwd(), arg('--out', 'reports/meta.md'));
 const levelRaw = arg('--level', 'hard');
 const aiLevel = (['easy', 'normal', 'hard'].includes(levelRaw) ? levelRaw : 'hard') as 'easy' | 'normal' | 'hard';
+const soft = process.argv.includes('--soft');
 
 const decks = ARCHETYPE_DECKS.map((d) => ({ id: d.id, name: d.name, cards: d.cards }));
 
@@ -62,5 +63,5 @@ console.log(`relatório escrito em ${outFile} (+ .json)`);
 
 if (report.dominant.length) {
   console.warn('⚠️ dominância universal detectada (>65%):', report.dominant.map((d) => `${d.deck} ${(d.winRate * 100).toFixed(1)}%`).join(', '));
-  process.exitCode = 1;
+  if (!soft) process.exitCode = 1;
 }

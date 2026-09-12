@@ -1,10 +1,16 @@
-# JET TCG — servidor de sala privada (Cloudflare Worker + Durable Object)
+# JET TCG — servidor (Cloudflare Worker + Durable Object + D1).
 #
 # Deploy:   npx wrangler deploy --config worker/wrangler.toml
 # Dev:      npm run worker:dev   (wrangler dev, http://localhost:8787)
 #
-# NÃO há segredos neste arquivo. A única variável é a lista de origens
-# permitidas (CLIENT_ORIGINS) — edite para o domínio real do frontend.
+# NÃO há segredos neste arquivo. Variáveis de ambiente:
+#   CLIENT_ORIGINS      origens permitidas para WebSocket/CORS (separadas por vírgula).
+#   JET_RANKED_SECRET   segredo para assinar tickets da Liga Ranqueada
+#                       (`npx wrangler secret put JET_RANKED_SECRET` — nunca no repo).
+#   ALLOW_INSECURE_ORIGIN = "1" só para testes locais.
+# Banco D1:
+#   npx wrangler d1 create jet-tcg-db
+#   npx wrangler d1 execute jet-tcg-db --file worker/migrations/0001_ranked.sql
 
 name = "jet-tcg-multiplayer"
 main = "src/index.ts"
@@ -15,6 +21,12 @@ compatibility_date = "2026-09-01"
 # Use "*" apenas em testes locais — nunca em produção.
 [vars]
 CLIENT_ORIGINS = "https://dep-7ed.pages.dev,http://localhost:5173,http://localhost:4173"
+
+[[d1_databases]]
+binding = "JET_DB"
+database_name = "jet-tcg-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
 name = "JET_ROOM"

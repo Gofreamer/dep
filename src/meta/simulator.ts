@@ -67,6 +67,8 @@ export interface SimOptions {
   ai?: (engine: MatchEngine, pIdx: 0 | 1) => Command;
   /** Nível da IA ('normal' = heurística rápida; 'hard' = lookahead). */
   aiLevel?: 'easy' | 'normal' | 'hard';
+  /** Sobrescreve o alvo de Pontos de Vitória (default do engine = 4). */
+  victoryTarget?: number;
 }
 
 const CARDS_PLAYED_EVENTS = new Set([
@@ -121,14 +123,15 @@ export function collectMatchStats(engine: MatchEngine): { stats: MatchStats; usa
 }
 
 /** Joga uma partida IA×IA até o fim (comandos legais, sem fallback silencioso). */
-export function playAiMatch(deckA: DeckEntry, deckB: DeckEntry, seed: number, ai?: SimOptions['ai'], maxCommands = 2000, aiLevel: 'easy' | 'normal' | 'hard' = 'hard'): MatchEngine {
+export function playAiMatch(deckA: DeckEntry, deckB: DeckEntry, seed: number, ai?: SimOptions['ai'], maxCommands = 2000, aiLevel: 'easy' | 'normal' | 'hard' = 'hard', victoryTarget?: number): MatchEngine {
   const build = (d: DeckEntry): CardDef[] => expandDeck({ id: d.id, name: d.name, description: '', cards: d.cards }).map((id) => registry.card(id));
   const engine = new MatchEngine({
     seed,
     players: [
       { name: deckA.name, deckId: deckA.id, isAI: true, aiLevel, deck: build(deckA) },
       { name: deckB.name, deckId: deckB.id, isAI: true, aiLevel, deck: build(deckB) }
-    ]
+    ],
+    config: victoryTarget !== undefined ? { victory: { targetPoints: victoryTarget } } : undefined
   });
   const cmd = ai ?? ((e: MatchEngine, p: 0 | 1) => aiNextCommand(e, p));
   // setup
@@ -185,30 +188,37 @@ export function simulateMeta(decks: DeckEntry[], opts: SimOptions = {}): SimRepo
       for (let i = 0; i < gamesPerPair; i++) {
         const seed = seedBase + game * 7919;
         game++;
-        const engine = playAiMatch(a, b, seed, ai, 2000, opts.aiLevel ?? 'hard');
+        // Alterna quem começa (jogador 0) para anular a vantagem de saída
+        // e tornar a matriz de matchup simétrica/fiel.
+        const aFirst = i % 2 === 0;
+        const p0 = aFirst ? a : b;
+        const p1 = aFirst ? b : a;
+        const engine = playAiMatch(p0, p1, seed, ai, 2000, opts.aiLevel ?? 'hard', opts.victoryTarget);
         const { stats, usage, cardDefs: cd } = collectMatchStats(engine);
         Object.assign(cardDefs, cd);
         for (const [k, n] of Object.entries(usage)) usageAgg[k] = (usageAgg[k] ?? 0) + n;
-        const aWon = stats.winner === 0;
-        const bWon = stats.winner === 1;
+        const aWon = aFirst ? stats.winner === 0 : stats.winner === 1;
+        const bWon = !aWon && stats.winner !== -1;
         if (aWon) wins++;
         else if (bWon) losses++;
+        const aiIdx = aFirst ? 0 : 1;
+        const biIdx = aFirst ? 1 : 0;
         acc[a.id].games++;
         acc[b.id].games++;
         if (aWon) acc[a.id].wins++;
         if (bWon) acc[b.id].wins++;
         acc[a.id].turns += stats.turns;
-        acc[a.id].damage += stats.damageDealt[0];
-        acc[a.id].heal += stats.healed[0];
-        acc[a.id].energy += stats.energiesAttached[0];
-        acc[a.id].cards += stats.cardsPlayed[0];
-        acc[a.id].kos += stats.kos[0];
+        acc[a.id].damage += stats.damageDealt[aiIdx];
+        acc[a.id].heal += stats.healed[aiIdx];
+        acc[a.id].energy += stats.energiesAttached[aiIdx];
+        acc[a.id].cards += stats.cardsPlayed[aiIdx];
+        acc[a.id].kos += stats.kos[aiIdx];
         acc[b.id].turns += stats.turns;
-        acc[b.id].damage += stats.damageDealt[1];
-        acc[b.id].heal += stats.healed[1];
-        acc[b.id].energy += stats.energiesAttached[1];
-        acc[b.id].cards += stats.cardsPlayed[1];
-        acc[b.id].kos += stats.kos[1];
+        acc[b.id].damage += stats.damageDealt[biIdx];
+        acc[b.id].heal += stats.healed[biIdx];
+        acc[b.id].energy += stats.energiesAttached[biIdx];
+        acc[b.id].cards += stats.cardsPlayed[biIdx];
+        acc[b.id].kos += stats.kos[biIdx];
         log(`[${String(game).padStart(4, '0')}/${totalGames}] ${a.id} vs ${b.id} → ${aWon ? a.id : bWon ? b.id : 'draw'} (${stats.turns} turnos)`);
       }
       matrix[a.id][b.id] = { wins, losses, games: gamesPerPair };
@@ -302,5 +312,13 @@ export function formatSimReport(report: SimReport): string {
     lines.push('### ⚠️ Dominância universal (>65% contra o field inteiro)');
     for (const d of report.dominant) lines.push(`- ${d.deck}: ${pct(d.winRate)}`);
   }
+  lines.push('');
+  lines.push('### Nota de balanceamento');
+  lines.push('A IA usada na simulação (heurística + lookahead determinístico, sem trapaça)');
+  lines.push('favorece planos de jogo diretos (dano/cura/draw) em detrimento de planos');
+  lines.push('condicionais (combo, negação, sustain, setup). Decks de plano direto tendem a');
+  lines.push('superestimar contra decks de plano condicional; assimetrias de matchup são');
+  lines.push('aceitáveis, dominância universal não — alavancas de rebalance: densidade de');
+  lines.push('dano grátis, VP dos agentes, vantagem de saída e profundidade da IA por perfil.');
   return lines.join('\n');
 }

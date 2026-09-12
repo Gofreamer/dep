@@ -43,6 +43,11 @@ export const MenuScreen: React.FC = () => {
       onClick: () => go('multiplayer')
     },
     {
+      testId: 'menu-ranked', icon: '👑', tone: 'online', title: 'Liga Ranqueada',
+      subtitle: 'Escale de Ferro a Campeão contra os bots — e dispute o Top 10',
+      onClick: () => go('ranked')
+    },
+    {
       testId: 'menu-tutorial', icon: '🎓', tone: 'tutorial', title: 'Tutorial',
       subtitle: stats.settings.tutorialDone ? 'Refazer o passo a passo' : 'Aprenda jogando, em 8 passos',
       onClick: () => useApp.getState().startMatch({
@@ -84,7 +89,7 @@ export const MenuScreen: React.FC = () => {
           </button>
         ))}
       </nav>
-      <p className="hint menu-foot">JET TCG v1 · conteúdo oficial JET · 18 Agentes</p>
+      <p className="hint menu-foot">JET TCG v2 · Core Set JET · Liga Ranqueada</p>
     </div>
   );
 };

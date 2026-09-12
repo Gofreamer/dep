@@ -3,8 +3,12 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
-    "types": ["@cloudflare/workers-types"],
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "@cloudflare/workers-types"
+    ],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
@@ -12,5 +16,18 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "../src/net", "../src/engine", "../src/data"]
+  "include": [
+    "src",
+    "../src/net",
+    "../src/engine",
+    "../src/data",
+    "../src/ranked/ranks.ts",
+    "../src/ranked/rating.ts",
+    "../src/ranked/seasons.ts",
+    "../src/ranked/repo.ts",
+    "../src/ranked/bots.ts",
+    "../src/ranked/ladder.ts",
+    "../src/ranked/matchmaking.ts",
+    "../src/ranked/replay.ts"
+  ]
 }

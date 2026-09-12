@@ -5,7 +5,7 @@ import type { MatchConfig } from '../game/controller';
 export type Screen =
   | 'title' | 'menu' | 'deckSelect' | 'builder' | 'collection'
   | 'match' | 'results' | 'history' | 'settings'
-  | 'multiplayer' | 'onlineMatch';
+  | 'multiplayer' | 'onlineMatch' | 'ranked';
 
 interface AppState {
   screen: Screen;
