@@ -23,7 +23,7 @@
 #   Sem o binding, o Worker responde 503 em /auth/* e /ranked/* (degradação
 #   segura); multiplayer privado continua funcionando.
 
-name = "jet-tcg-multiplayer"
+name = "dep"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
