@@ -16,15 +16,11 @@
 import { PROTOCOL_VERSION } from '../../src/net/protocol';
 import { RoomDO, allocateRoomCode } from './room';
 import { corsHeaders, isAllowedOrigin, parseOrigins } from './config';
-import { D1RankedRepo } from './d1repo';
-import { handleAuth, handleRanked } from './rankedApi';
 
 export { RoomDO };
 
 export interface Env {
   JET_ROOM: DurableObjectNamespace;
-  JET_DB?: D1Database;
-  JET_RANKED_SECRET?: string;
   CLIENT_ORIGINS?: string;
   ALLOW_INSECURE_ORIGIN?: string;
 }
@@ -47,23 +43,6 @@ const worker: ExportedHandler<Env> = {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(origin, cfg) });
     }
-
-    // ---- Liga Ranqueada + Auth (HTTP/JSON, contas via D1) ----------------
-    if (url.pathname.startsWith('/auth/') || url.pathname.startsWith('/ranked/')) {
-      if (!env.JET_DB) {
-        return new Response(JSON.stringify({ ok: false, error: 'D1 não configurado (JET_DB)' }), {
-          status: 503,
-          headers: { 'content-type': 'application/json; charset=utf-8', ...corsHeaders(origin, cfg) }
-        });
-      }
-      const repo = new D1RankedRepo(env.JET_DB);
-      const authRes = await handleAuth(request, repo, origin);
-      if (authRes) return authRes;
-      const rankedRes = await handleRanked(request, { JET_RANKED_SECRET: env.JET_RANKED_SECRET }, repo, origin);
-      if (rankedRes) return rankedRes;
-      return new Response(JSON.stringify({ ok: false, error: 'rota não encontrada' }), { status: 404, headers: { 'content-type': 'application/json; charset=utf-8', ...corsHeaders(origin, cfg) } });
-    }
-
     if (request.method !== 'GET') {
       return new Response('method not allowed', { status: 405, headers: corsHeaders(origin, cfg) });
     }

@@ -45,8 +45,8 @@ export function corsHeaders(origin: string | null, cfg: WorkerConfig): Record<st
   const headers: Record<string, string> = { 'content-type': 'application/json; charset=utf-8' };
   if (origin && isAllowedOrigin(origin, cfg)) {
     headers['access-control-allow-origin'] = origin;
-    headers['access-control-allow-methods'] = 'GET, POST, OPTIONS';
-    headers['access-control-allow-headers'] = 'content-type, authorization';
+    headers['access-control-allow-methods'] = 'GET, OPTIONS';
+    headers['access-control-allow-headers'] = 'content-type';
     headers['vary'] = 'Origin';
   }
   return headers;
