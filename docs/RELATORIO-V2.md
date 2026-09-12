@@ -118,7 +118,7 @@ Detalhes: `docs/RANKED.md`.
 
 ## 5. Testes e CI
 
-**Vitest (1203 testes verdes, 15 skipped = worker-live sem servidor):**
+**Vitest (1204 testes verdes, 15 skipped = worker-live sem servidor):**
 
 - every-card JET (`tests/every-card-jet.test.ts`, `every-card-playable.test.ts`);
 - fuzz IA×IA (smoke 60 + **longo 1000** via `npm run test:fuzz:long`);
@@ -136,6 +136,13 @@ navegadores), e **ranked** (`e2e/ranked.spec.ts`).
 bateria longa, **fuzz 1000**, **meta sim**, **bot ladder sim**, build, worker
 integration, E2E desktop/mobile/tablet e E2E multiplayer.
 
+**Estado do CI no PR #7** (todos os jobs do GitHub Actions verdes):
+`Typecheck, testes e build` ✓ · `Worker multiplayer (integração real)` ✓ ·
+`E2E de navegador` ✓ · `E2E multiplayer` ✓ · `Cloudflare Pages` ✓.
+
+> ⚠️ O check externo **"Workers Builds: dep"** (Cloudflare, fora do
+> `.github/workflows/ci.yml`) permanece vermelho no PR — ver §7.
+
 ---
 
 ## 6. Pontos de atenção honestos
@@ -151,3 +158,43 @@ integration, E2E desktop/mobile/tablet e E2E multiplayer.
 3. **Arte/balanceamento**: os agentes vêm da fonte oficial (RocksXB); as
    cartas originais (Técnicas/Equipamentos/Campos/Sinergia) são gameplay
    original do TCG, **nunca apresentadas como lore canônico**.
+
+---
+
+## 7. Check externo "Workers Builds: dep" (Cloudflare)
+
+O check **"Workers Builds: dep"** é um build/deploy do Cloudflare (não faz
+parte do `.github/workflows/ci.yml`) e está **vermelho** no PR #7. Investigação
+completa realizada:
+
+1. **`worker/wrangler.toml`** é **idêntico** ao de `main` (ignorando
+   comentários): mesmos `name`, `main`, `compatibility_date`, bindings
+   (`JET_ROOM`, `CLIENT_ORIGINS`), migração de Durable Object e observability.
+   O bloco `[[d1_databases]]` com placeholder inválido foi **removido**.
+2. **Bundle limpo**: `wrangler deploy --dry-run` (4.131.0 e 4.131.1) gera um
+   bundle de ~342 KiB sem nenhum uso de API Node (`node:`, `require`,
+   `Buffer`); só Web APIs (`crypto.subtle`, `btoa/atob`).
+3. **Runtime real**: `wrangler dev` (workerd) sobe o worker e responde
+   `/health`, `/auth/*`, `/ranked/*`; o job de integração real do CI
+   (`test:worker`, WebSocket + Durable Object) passa.
+4. **Bisect decisivo**: um commit com `worker/src/index.ts` e `config.ts`
+   revertidos ao estado de `main` (bundle ≈ o de `main`, que passou em
+   `c865067`) **continuou falhando** — logo a causa **não é o código novo**
+   (rotas ranked/auth).
+
+Conclusão: a falha é **do lado da conta Cloudflare**, não do repositório. As
+causas prováveis (verificar no dashboard, em **Settings → Builds** do projeto
+`dep`, link "View logs" no comentário do bot no PR):
+
+- **Token de API do Workers Builds expirado/rotacionado** ("Stale API token");
+- **Nome do Worker no dashboard ≠ `name` do `wrangler.toml`**
+  (`jet-tcg-multiplayer`);
+- **Root directory** do build apontando para pasta sem `wrangler.toml`;
+- **Binding D1 `JET_DB`** configurado no dashboard conflitando com o deploy
+  vindo do repositório (o repositório não declara o binding até o D1 real
+  existir — ver `docs/RANKED.md`).
+
+O deploy de produção do Worker **não é bloqueado por este check vermelho** para
+os propósitos deste PR: o worker é compilado, sobe e passa nos testes de
+integração reais; a promoção a produção depende apenas de resolver a
+configuração do Workers Builds no dashboard.
