@@ -1,6 +1,6 @@
 # JET TCG 2.0 — Relatório Final
 
-**Branch:** `feat/jet-tcg-2-ranked-core-meta` · **Versão:** 2.0.0
+**Branch:** `arena/01a09372-dep` (PR #7) · **Versão:** 2.0.0
 
 Este relatório acompanha o PR "JET TCG 2.0 — Core Set completo, meta e Liga
 Ranqueada contra IA". Ele NÃO é uma declaração de conclusão parcial: cada
