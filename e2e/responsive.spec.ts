@@ -59,9 +59,9 @@ test.describe('layout responsivo', () => {
     await page.getByTestId('title-enter').tap();
     await expect(page.getByTestId('menu-screen')).toBeVisible();
 
-    await expect(page.locator('.menu-card')).toHaveCount(7);
+    await expect(page.locator('.menu-card')).toHaveCount(8);
     const baixos: string[] = [];
-    for (const testId of ['menu-play', 'menu-multiplayer', 'menu-tutorial', 'menu-builder', 'menu-collection', 'menu-history', 'menu-settings']) {
+    for (const testId of ['menu-play', 'menu-ranked', 'menu-multiplayer', 'menu-tutorial', 'menu-builder', 'menu-collection', 'menu-history', 'menu-settings']) {
       const el = page.getByTestId(testId);
       await expect(el).toBeVisible();
       const box = await el.boundingBox();
