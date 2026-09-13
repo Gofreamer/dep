@@ -62,7 +62,7 @@ const censusTotal = (e: MatchEngine) => countAllInstances(e.state).total;
 
 beforeAll(() => { registerJetDataPack(); });
 
-describe('Equipamentos JET (5)', () => {
+describe('Equipamentos JET (25)', () => {
   it('Manopla Reforçada: +10 de dano causado pelo anfitrião', () => {
     const e = engine();
     startMain(e);
@@ -156,7 +156,7 @@ describe('Equipamentos JET (5)', () => {
   });
 });
 
-describe('Energias JET (6)', () => {
+describe('Energias JET (10)', () => {
   it('Energia JET paga custo de ataque; Núcleo (wild) também', () => {
     const e = engine();
     startMain(e);
@@ -219,8 +219,8 @@ describe('Energias JET (6)', () => {
     expect(me.active!.damage).toBe(before + 10);
   });
 
-  it('todas as 6 energias estão registradas com resourceType válido', () => {
-    expect(JET_ENERGY.length).toBe(6);
+  it('todas as 10 energias estão registradas com resourceType válido', () => {
+    expect(JET_ENERGY.length).toBe(10);
     for (const r of JET_ENERGY) {
       expect(registry.tryCard(r.id)).toBeDefined();
       expect(r.resourceType).toBe('*');
@@ -233,7 +233,7 @@ function giveEnergies(e: MatchEngine, pIdx: 0 | 1, n: number): void {
   for (let i = 0; i < n; i++) e.debugCommand('giveResource', { targetUid: p.active!.uid, defId: 'jres-energia' });
 }
 
-describe('Técnicas JET (10)', () => {
+describe('Técnicas JET (48)', () => {
   it('Leitura de Combate: compra exatamente 2', () => {
     const e = engine();
     startMain(e);
@@ -334,8 +334,8 @@ describe('Técnicas JET (10)', () => {
     expect(me.active!.damage).toBe(before); // 20 − 30 → 0
   });
 
-  it('todas as 10 técnicas registradas com restrição oncePerTurn', () => {
-    expect(JET_TECHNIQUES.length).toBe(10);
+  it('todas as 48 técnicas registradas com restrição oncePerTurn', () => {
+    expect(JET_TECHNIQUES.length).toBe(48);
     for (const t of JET_TECHNIQUES) {
       expect(registry.tryCard(t.id)).toBeDefined();
       expect(t.restrictions?.some((r) => r.type === 'oncePerTurn'), t.id).toBe(true);
@@ -347,7 +347,7 @@ function me0Deck(e: MatchEngine) {
   return player(e.state, 0).deck;
 }
 
-describe('Campos JET (3)', () => {
+describe('Campos JET (19)', () => {
   it('Ovação da Torcida: ao jogar compra 1; substituição manda o campo anterior ao descarte', () => {
     const e = engine();
     startMain(e);
@@ -384,8 +384,8 @@ describe('Campos JET (3)', () => {
     expect(retreatCostOf(e.state, player(e.state, 1).active!)).toBe((registry.card(player(e.state, 1).active!.defId) as CharacterDef).retreatCost - 1);
   });
 
-  it('os 3 campos declarados existem com subtype correto', () => {
-    expect(JET_FIELDS.length).toBe(3);
+  it('os 19 campos declarados existem com subtype correto', () => {
+    expect(JET_FIELDS.length).toBe(19);
     const byId = Object.fromEntries(JET_FIELDS.map((f: FieldDef) => [f.id, f]));
     expect(byId['jfd-arena'].subtype).toBe('ARENA');
     expect(byId['jfd-ovacao'].subtype).toBe('EVENT');

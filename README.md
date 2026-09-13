@@ -1,9 +1,9 @@
 # JET TCG
 
-Jogo de cartas colecionáveis competitivo no navegador: **Agente vs IA**, no
-universo **JET** (identidade importada do [Jet Tactics](https://github.com/RocksXB/jet-tactics)),
-100% em **PT-BR**. Engine genérica e data-driven — todo o conteúdo do jogo é
-dado, não código.
+Jogo de cartas colecionáveis competitivo no navegador: **Agente vs IA** e
+**Liga Ranqueada contra bots**, no universo **JET** (identidade importada do
+[Jet Tactics](https://github.com/RocksXB/jet-tactics)), 100% em **PT-BR**.
+Engine genérica e data-driven — todo o conteúdo do jogo é dado, não código.
 
 > **Status do roster:** a fonte oficial (`RocksXB/jet-tactics`) estava
 > inacessível durante o desenvolvimento. A camada de integração está completa
@@ -21,8 +21,25 @@ npm test               # suíte de testes (vitest)
 npm run test:long      # bateria de 135 partidas IA×IA
 npm run test:worker    # integração real do Worker (sobe wrangler dev)
 npm run test:e2e       # E2E de navegador (Playwright)
+npm run meta:sim       # meta-simulação (>=1000 partidas IA×IA, relatório em reports/)
+npm run ranked:sim     # simulação do ladder de bots (Rei da Liga)
 npm run check          # tudo: typecheck + worker typecheck + testes + bateria + build
 ```
+
+### Liga Ranqueada (opcional)
+
+A Liga usa o Worker + D1 (Cloudflare). Sem configurar, o jogo funciona
+normalmente (só a Liga fica indisponível):
+
+```bash
+npx wrangler d1 create jet-tcg-db                        # anote o database_id
+npx wrangler d1 execute jet-tcg-db --file worker/migrations/0001_ranked.sql
+npx wrangler secret put JET_RANKED_SECRET                # segredo para tickets
+# adicione o bloco [[d1_databases]] em worker/wrangler.toml com o database_id
+VITE_RANKED_API_URL=<url-do-worker> npm run dev
+```
+
+Veja `docs/RANKED.md` (rotas, auth, Elo, temporadas) e `docs/META.md` (meta).
 
 Configuração opcional: copie `.env.example` para `.env` e defina
 `VITE_MULTIPLAYER_URL` com o endereço do servidor de salas. **Sem isso o jogo

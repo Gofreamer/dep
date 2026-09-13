@@ -1,10 +1,27 @@
-# JET TCG — servidor de sala privada (Cloudflare Worker + Durable Object)
+# JET TCG — servidor (Cloudflare Worker + Durable Object + D1).
 #
 # Deploy:   npx wrangler deploy --config worker/wrangler.toml
 # Dev:      npm run worker:dev   (wrangler dev, http://localhost:8787)
 #
-# NÃO há segredos neste arquivo. A única variável é a lista de origens
-# permitidas (CLIENT_ORIGINS) — edite para o domínio real do frontend.
+# NÃO há segredos neste arquivo. Variáveis de ambiente:
+#   CLIENT_ORIGINS      origens permitidas para WebSocket/CORS (separadas por vírgula).
+#   JET_RANKED_SECRET   segredo para assinar tickets da Liga Ranqueada
+#                       (`npx wrangler secret put JET_RANKED_SECRET` — nunca no repo).
+#   ALLOW_INSECURE_ORIGIN = "1" só para testes locais.
+# Banco D1 (Liga Ranqueada):
+#   O binding é adicionado no DEPLOY, depois de criar o banco:
+#     npx wrangler d1 create jet-tcg-db        # anote o database_id
+#     npx wrangler d1 execute jet-tcg-db --file worker/migrations/0001_ranked.sql
+#   e descomente este bloco com o database_id real (não cometa placeholder):
+#
+#   [[d1_databases]]
+#   binding = "JET_DB"
+#   database_name = "jet-tcg-db"
+#   database_id = "SEU_DATABASE_ID_AQUI"
+#   migrations_dir = "migrations"
+#
+#   Sem o binding, o Worker responde 503 em /auth/* e /ranked/* (degradação
+#   segura); multiplayer privado continua funcionando.
 
 name = "jet-tcg-multiplayer"
 main = "src/index.ts"

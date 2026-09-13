@@ -88,13 +88,14 @@ export const MatchScreen: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.playerDeckId, cfg?.opponentDeckId, cfg?.seed]);
 
-  // outcome → results screen
+  // outcome → results screen (ranqueada navega via onFinish no controlador)
   React.useEffect(() => {
     if (controller?.outcome && stateRef) {
+      if (cfg?.ranked) return; // a tela ranqueada decide a navegação
       const t = setTimeout(() => finishMatch(controller.outcome!.winner === 0 ? 'win' : 'loss'), 1400);
       return () => clearTimeout(t);
     }
-  }, [controller?.outcome, stateRef, finishMatch]);
+  }, [controller?.outcome, stateRef, finishMatch, cfg?.ranked]);
 
   if (!controller || !stateRef || !legal) {
     return <div className="screen match-screen"><div className="loading">Preparando a arena…</div></div>;

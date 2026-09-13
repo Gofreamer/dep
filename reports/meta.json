@@ -1,0 +1,660 @@
+{
+  "games": 1024,
+  "decks": [
+    {
+      "id": "archetype-aggro",
+      "name": "Pressão KOF 12"
+    },
+    {
+      "id": "archetype-control",
+      "name": "Muralha Asgard"
+    },
+    {
+      "id": "archetype-midrange",
+      "name": "Comando Morning Star"
+    },
+    {
+      "id": "archetype-burst",
+      "name": "Tubarões XYZ"
+    },
+    {
+      "id": "archetype-disruption",
+      "name": "Blackout R6"
+    },
+    {
+      "id": "archetype-tempo",
+      "name": "Precisão Platinum"
+    },
+    {
+      "id": "archetype-sustain",
+      "name": "Âncora Weigon"
+    },
+    {
+      "id": "archetype-combo",
+      "name": "Caçada Salvatore"
+    }
+  ],
+  "matrix": {
+    "archetype-aggro": {
+      "archetype-aggro": {
+        "wins": 5,
+        "losses": 11,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 8,
+        "losses": 8,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 11,
+        "losses": 5,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 14,
+        "losses": 2,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 16,
+        "losses": 0,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 11,
+        "losses": 5,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 13,
+        "losses": 3,
+        "games": 16
+      }
+    },
+    "archetype-control": {
+      "archetype-aggro": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 4,
+        "losses": 12,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 8,
+        "losses": 8,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 13,
+        "losses": 3,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      }
+    },
+    "archetype-midrange": {
+      "archetype-aggro": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 4,
+        "losses": 12,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 8,
+        "losses": 8,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 11,
+        "losses": 5,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 15,
+        "losses": 1,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 15,
+        "losses": 1,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 12,
+        "losses": 4,
+        "games": 16
+      }
+    },
+    "archetype-burst": {
+      "archetype-aggro": {
+        "wins": 2,
+        "losses": 14,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 5,
+        "losses": 11,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 8,
+        "losses": 8,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 11,
+        "losses": 5,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 7,
+        "losses": 9,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      }
+    },
+    "archetype-disruption": {
+      "archetype-aggro": {
+        "wins": 1,
+        "losses": 15,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 3,
+        "losses": 13,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 2,
+        "losses": 14,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 4,
+        "losses": 12,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 11,
+        "losses": 5,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 7,
+        "losses": 9,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      }
+    },
+    "archetype-tempo": {
+      "archetype-aggro": {
+        "wins": 3,
+        "losses": 13,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 5,
+        "losses": 11,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 6,
+        "losses": 10,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 6,
+        "losses": 10,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 11,
+        "losses": 5,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 6,
+        "losses": 10,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 7,
+        "losses": 9,
+        "games": 16
+      }
+    },
+    "archetype-sustain": {
+      "archetype-aggro": {
+        "wins": 4,
+        "losses": 12,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 2,
+        "losses": 14,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 2,
+        "losses": 14,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 7,
+        "losses": 9,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 12,
+        "losses": 4,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 12,
+        "losses": 4,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 7,
+        "losses": 9,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 7,
+        "losses": 9,
+        "games": 16
+      }
+    },
+    "archetype-combo": {
+      "archetype-aggro": {
+        "wins": 0,
+        "losses": 16,
+        "games": 16
+      },
+      "archetype-control": {
+        "wins": 6,
+        "losses": 10,
+        "games": 16
+      },
+      "archetype-midrange": {
+        "wins": 4,
+        "losses": 12,
+        "games": 16
+      },
+      "archetype-burst": {
+        "wins": 4,
+        "losses": 12,
+        "games": 16
+      },
+      "archetype-disruption": {
+        "wins": 14,
+        "losses": 2,
+        "games": 16
+      },
+      "archetype-tempo": {
+        "wins": 10,
+        "losses": 6,
+        "games": 16
+      },
+      "archetype-sustain": {
+        "wins": 3,
+        "losses": 13,
+        "games": 16
+      },
+      "archetype-combo": {
+        "wins": 9,
+        "losses": 7,
+        "games": 16
+      }
+    }
+  },
+  "winRates": {
+    "archetype-aggro": 0.71484375,
+    "archetype-control": 0.609375,
+    "archetype-midrange": 0.6640625,
+    "archetype-burst": 0.50390625,
+    "archetype-disruption": 0.3125,
+    "archetype-tempo": 0.36328125,
+    "archetype-sustain": 0.4375,
+    "archetype-combo": 0.39453125
+  },
+  "avgTurns": {
+    "archetype-aggro": 12.94921875,
+    "archetype-control": 23.03125,
+    "archetype-midrange": 15.6328125,
+    "archetype-burst": 9,
+    "archetype-disruption": 19.890625,
+    "archetype-tempo": 10.66015625,
+    "archetype-sustain": 18.83984375,
+    "archetype-combo": 10.46484375
+  },
+  "avgDamage": {
+    "archetype-aggro": 90.18359375,
+    "archetype-control": 135.18359375,
+    "archetype-midrange": 90.4296875,
+    "archetype-burst": 85.5546875,
+    "archetype-disruption": 154.125,
+    "archetype-tempo": 96.671875,
+    "archetype-sustain": 190.2578125,
+    "archetype-combo": 103.65625
+  },
+  "avgHeal": {
+    "archetype-aggro": 4.140625,
+    "archetype-control": 60.63671875,
+    "archetype-midrange": 28.94921875,
+    "archetype-burst": 0,
+    "archetype-disruption": 0.4296875,
+    "archetype-tempo": 0.0390625,
+    "archetype-sustain": 77.28125,
+    "archetype-combo": 0
+  },
+  "avgEnergies": {
+    "archetype-aggro": 1.6171875,
+    "archetype-control": 2.6953125,
+    "archetype-midrange": 3.01953125,
+    "archetype-burst": 0.81640625,
+    "archetype-disruption": 0.5390625,
+    "archetype-tempo": 1.00390625,
+    "archetype-sustain": 1.16015625,
+    "archetype-combo": 0.953125
+  },
+  "avgCardsPlayed": {
+    "archetype-aggro": 13.64453125,
+    "archetype-control": 20.61328125,
+    "archetype-midrange": 21.84765625,
+    "archetype-burst": 7.421875,
+    "archetype-disruption": 15.76171875,
+    "archetype-tempo": 8.9140625,
+    "archetype-sustain": 13.81640625,
+    "archetype-combo": 8.45703125
+  },
+  "avgKos": {
+    "archetype-aggro": 1.03125,
+    "archetype-control": 0.74609375,
+    "archetype-midrange": 0.91796875,
+    "archetype-burst": 0.6796875,
+    "archetype-disruption": 0.43359375,
+    "archetype-tempo": 0.46875,
+    "archetype-sustain": 0.58203125,
+    "archetype-combo": 0.515625
+  },
+  "mostPlayed": [
+    {
+      "id": "jres-energia",
+      "name": "Energia JET",
+      "plays": 6589
+    },
+    {
+      "id": "agent-tarruh-base",
+      "name": "Tarruh",
+      "plays": 1972
+    },
+    {
+      "id": "agent-wei-fang-base",
+      "name": "Wei Fang",
+      "plays": 1072
+    },
+    {
+      "id": "agent-henry-base",
+      "name": "Henry",
+      "plays": 873
+    },
+    {
+      "id": "agent-olivia-mih-base",
+      "name": "Olivia Mih",
+      "plays": 867
+    },
+    {
+      "id": "agent-tayna-lannister-muller-base",
+      "name": "Tayná Lannister Müller",
+      "plays": 854
+    },
+    {
+      "id": "agent-baek-seo-jin-base",
+      "name": "Baek Seo-jin",
+      "plays": 825
+    },
+    {
+      "id": "agent-ruby-base",
+      "name": "Ruby",
+      "plays": 755
+    },
+    {
+      "id": "agent-saki-base",
+      "name": "Saki",
+      "plays": 727
+    },
+    {
+      "id": "agent-wei-wang-base",
+      "name": "Wei Wang",
+      "plays": 657
+    },
+    {
+      "id": "agent-shirakami-niku-base",
+      "name": "Shirakami Niku",
+      "plays": 656
+    },
+    {
+      "id": "agent-xixim-base",
+      "name": "Xixim",
+      "plays": 578
+    },
+    {
+      "id": "agent-alice-westland-base",
+      "name": "Alice Westland",
+      "plays": 530
+    },
+    {
+      "id": "agent-hashika-gloves-base",
+      "name": "Hashika Gloves",
+      "plays": 475
+    },
+    {
+      "id": "agent-kaio-base",
+      "name": "Kaio",
+      "plays": 473
+    },
+    {
+      "id": "agent-ryan-smith-base",
+      "name": "Ryan Smith",
+      "plays": 413
+    },
+    {
+      "id": "agent-ran-yuki-base",
+      "name": "Ran Yuki",
+      "plays": 360
+    },
+    {
+      "id": "agent-mik-kashnov-base",
+      "name": "Mik Kashnov",
+      "plays": 348
+    },
+    {
+      "id": "agent-jenny-base",
+      "name": "Jenny",
+      "plays": 230
+    },
+    {
+      "id": "jsyn-ms-rede",
+      "name": "Rede de Comando",
+      "plays": 209
+    }
+  ],
+  "leastPlayed": [
+    {
+      "id": "jres-overclock",
+      "name": "Overclock",
+      "plays": 24
+    },
+    {
+      "id": "jsyn-tub-isca",
+      "name": "Isca Viva",
+      "plays": 28
+    },
+    {
+      "id": "jfd-zona-de-troca",
+      "name": "Zona de Troca",
+      "plays": 29
+    },
+    {
+      "id": "jres-rele",
+      "name": "Relé de Transferência",
+      "plays": 32
+    },
+    {
+      "id": "jsyn-salv-rastro",
+      "name": "Rastro do Caçador",
+      "plays": 35
+    },
+    {
+      "id": "jsyn-plat-plano",
+      "name": "Plano Mestre",
+      "plays": 37
+    },
+    {
+      "id": "jeq-ultimato-kof",
+      "name": "Ultimato KOF",
+      "plays": 41
+    },
+    {
+      "id": "jsyn-tub-frenesi",
+      "name": "Frenesi Tubarão",
+      "plays": 42
+    },
+    {
+      "id": "jact-allin",
+      "name": "All-In Tubarão",
+      "plays": 43
+    },
+    {
+      "id": "jeq-luva-rapida",
+      "name": "Luva de Caçador",
+      "plays": 46
+    },
+    {
+      "id": "jact-troca-violenta",
+      "name": "Troca Violenta",
+      "plays": 50
+    },
+    {
+      "id": "jsyn-weigon-respiro",
+      "name": "Respiro de Combate",
+      "plays": 52
+    },
+    {
+      "id": "jact-dentes",
+      "name": "Dentes Expostos",
+      "plays": 52
+    },
+    {
+      "id": "jsyn-salv-espreita",
+      "name": "Espreita",
+      "plays": 53
+    },
+    {
+      "id": "jres-estabilizador",
+      "name": "Estabilizador Vital",
+      "plays": 55
+    },
+    {
+      "id": "jeq-colisao-tubarao",
+      "name": "Colisão Tubarão",
+      "plays": 55
+    },
+    {
+      "id": "jfd-bastiao-asgard",
+      "name": "Bastião de Asgard",
+      "plays": 55
+    },
+    {
+      "id": "jeq-protocolo-r6",
+      "name": "Protocolo Blackout",
+      "plays": 57
+    },
+    {
+      "id": "jeq-luneta",
+      "name": "Luneta de Precisão",
+      "plays": 59
+    },
+    {
+      "id": "jfd-mare-vermelha",
+      "name": "Maré Vermelha",
+      "plays": 59
+    }
+  ],
+  "neverPlayed": [],
+  "dominant": [
+    {
+      "deck": "archetype-aggro",
+      "winRate": 0.71484375
+    },
+    {
+      "deck": "archetype-midrange",
+      "winRate": 0.6640625
+    }
+  ]
+}

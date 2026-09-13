@@ -3,6 +3,36 @@
 Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Este projeto usa versionamento semântico.
 
+## [2.0.0] — Core Set completo, meta e Liga Ranqueada contra IA
+
+### Adicionado
+
+- **Core Set JET (155 CardDefs reais)**: 18 Agentes BASE + 10 edições, 10
+  Energias, 48 Técnicas, 26 Equipamentos, 19 Campos, 24 cartas de equipe/
+  sinergia. Pack NEXO (103 CardDefs) permanece como fixture/dev, nunca
+  registrado em produção.
+- **8 arquétipos competitivos** (aggro, control, midrange, burst, disruption,
+  tempo, sustain, combo) + **3 precons de 60 cartas**, todos validados.
+- **IA escalável sem trapaça**: perfis easy/normal/hard/elite com lookahead
+  determinístico; nunca vê informação privada, não controla RNG, não ignora
+  custos.
+- **Meta-simulação** (`npm run meta:sim`): 1024 partidas IA×IA no engine real,
+  matriz de matchup, estatísticas de uso de cartas, relatório markdown/JSON.
+- **Liga Ranqueada (humano vs bot, servidor-autoritativo)**: ranks
+  Ferro→Campeão com **Rei da Liga = CAMPEÃO no Top 10**, Elo idempotente,
+  22 bots (StellaPrime #1, Luna underdog #2, sem trava de posição), anti-
+  trapaça por replay server-side.
+- **D1 + auth**: contas com PBKDF2-SHA256 + salt, token de sessão, rate limit;
+  rotas `/auth/*` e `/ranked/*` no Worker; UI da Liga (perfil, Top 100, Top 10).
+- **Bot ladder sim** (`npm run ranked:sim`) e **CI expandido** (fuzz 1000, meta
+  sim, ranked sim, E2E ranked).
+
+### Corrigido
+
+- `testTimeout` 120s para a bateria longa de 135 partidas (default de 5s do
+  vitest era insuficiente em máquinas lentas).
+- Placeholder de D1 removido do `wrangler.toml` (deploy real do Worker).
+
 ## [Não publicado] — Hardening v2 (diagnósticos, fuzz, stress de board)
 
 ### Adicionado

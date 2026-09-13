@@ -7,6 +7,7 @@ import { CollectionScreen, HistoryScreen, SettingsScreen, ResultsScreen } from '
 import { MatchScreen } from './ui/screens/MatchScreen';
 import { MultiplayerScreen } from './ui/screens/MultiplayerScreen';
 import { OnlineMatchScreen } from './ui/screens/OnlineMatchScreen';
+import { RankedScreen } from './ui/screens/RankedScreen';
 
 export default function App() {
   const screen = useApp((s) => s.screen);
@@ -21,6 +22,7 @@ export default function App() {
       {screen === 'match' && <MatchScreen key={useApp.getState().matchConfig?.seed} />}
       {screen === 'multiplayer' && <MultiplayerScreen />}
       {screen === 'onlineMatch' && <OnlineMatchScreen />}
+      {screen === 'ranked' && <RankedScreen />}
       {screen === 'results' && <ResultsScreen />}
       {screen === 'history' && <HistoryScreen />}
       {screen === 'settings' && <SettingsScreen />}

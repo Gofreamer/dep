@@ -33,12 +33,25 @@ jobs:
       - name: Typecheck (Worker)
         run: npm run typecheck:worker
 
-      - name: Testes (vitest)
+      - name: Testes (vitest) — inclui every-card JET, ranked, Top 10, D1/auth
         run: npm test
 
       # Bateria longa (135 partidas IA×IA): vigia travas e jogadas ilegais da IA.
       - name: Bateria longa de partidas
         run: npm run test:long
+
+      # Fuzz 1000 (IA×IA, sem travar/corromper): requisito da v2.
+      - name: Fuzz 1000 partidas
+        run: npm run test:fuzz:long
+
+      # Meta-simulação (>=1000 partidas, matriz de matchup + uso de cartas).
+      # `--soft`: dominância é aviso de balanceamento, não falha de CI.
+      - name: Meta simulação
+        run: npm run meta:sim -- --games 4 --soft --out reports/meta-ci.md
+
+      # Ladder dos bots (simulação de lotes): garante que o ladder fica vivo.
+      - name: Bot ladder sim
+        run: npm run ranked:sim -- --games 20 --batch 10
 
       - name: Build de produção
         run: npm run build

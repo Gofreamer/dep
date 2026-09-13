@@ -15,12 +15,13 @@ test.describe('fumaça (desktop)', () => {
     expectNoConsoleErrors(errors);
   });
 
-  test('o menu final apresenta as 7 entradas em PT-BR', async ({ page }) => {
+  test('o menu final apresenta as 8 entradas em PT-BR', async ({ page }) => {
     const errors = watchConsole(page);
     await toMenu(page);
     const expected = [
       ['menu-play', 'Jogar vs IA'],
       ['menu-multiplayer', 'Multiplayer privado'],
+      ['menu-ranked', 'Liga Ranqueada'],
       ['menu-tutorial', 'Tutorial'],
       ['menu-builder', 'Baralhos'],
       ['menu-collection', 'Coleção'],
@@ -31,8 +32,8 @@ test.describe('fumaça (desktop)', () => {
       await expect(page.getByTestId(testId)).toBeVisible();
       await expect(page.getByTestId(testId)).toContainText(label);
     }
-    // o menu tem exatamente 7 entradas e nenhuma delas é de debug
-    await expect(page.locator('.menu-card')).toHaveCount(7);
+    // o menu tem exatamente 8 entradas e nenhuma delas é de debug
+    await expect(page.locator('.menu-card')).toHaveCount(8);
     await expect(page.getByTestId('menu-screen')).not.toContainText(/debug/i);
     expectNoConsoleErrors(errors);
   });
