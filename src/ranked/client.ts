@@ -34,13 +34,97 @@ export interface StartMatchResponse {
 
 export interface FinishMatchResponse {
   ok: true;
+  /** matchId derivado do ticket — a chave de idempotência no servidor. */
+  matchId: string;
   result: 'win' | 'loss';
   endReason: string;
   turns: number;
   ratingAfter: number;
   rank: RankId;
+  /** Maior rating da temporada (não regride quando o Elo cai). */
+  peakRating: number | null;
   position: number | null;
+  /** Melhor (menor) posição já ocupada nesta temporada. */
+  bestPosition: number | null;
+  /** Melhor rank já alcançado (não regride ao cair). */
+  highestRank: RankId | null;
   isReiDaLiga: boolean;
+  /** true = o servidor já tinha aplicado este ticket (reenvio não pontua). */
+  alreadyApplied: boolean;
+  seasonId: string;
+}
+
+/** Estado da temporada, vindo do BANCO (o cliente não inventa janela). */
+export type SeasonStatusView = 'pending' | 'active' | 'grace' | 'closed';
+
+export interface RankedSeasonView {
+  id: string;
+  number: number;
+  name: string;
+  startAt: number;
+  endAt: number;
+  graceAfterEnd: number;
+  status: SeasonStatusView;
+  settledAt: number | null;
+}
+
+/** O que o servidor sabe do MEU perfil (pico e currículo não saem do cliente). */
+export interface RankedProfileDetails {
+  rating: number;
+  rank: RankId;
+  peakRating: number;
+  bestPosition: number | null;
+  highestRank: RankId;
+  wins: number;
+  losses: number;
+  streak: number;
+  seasonId: string | null;
+}
+
+export interface RankedSeasonResultRow {
+  seasonId: string;
+  username: string;
+  finalRating: number;
+  peakRating: number;
+  finalPosition: number;
+  bestPosition: number;
+  highestRank: RankId;
+  wasLeagueKing: boolean;
+  /** Melhor posição que o REI DA LIGA ocupou na temporada (1 = topo). */
+  leagueKingPeakPosition: number | null;
+  wins: number;
+  losses: number;
+  settledAt: number;
+}
+
+export interface RankedHistoryRow {
+  rankedMatchId: string;
+  winner: string;
+  playerA: string;
+  playerB: string;
+  deltaA: number;
+  createdAt: number;
+}
+
+export interface RankedProfileResponse {
+  ok: true;
+  profile: RankedProfileView | null;
+  season: { id: string; number: number; name: string; status: SeasonStatusView } | null;
+  details: RankedProfileDetails | null;
+  seasonResult: RankedSeasonResultRow | null;
+  history: RankedHistoryRow[];
+}
+
+export interface RankedSeasonResponse {
+  ok: true;
+  season: RankedSeasonView | null;
+  topTen: RankedProfileView[];
+}
+
+export interface RankedStandingsResponse {
+  ok: true;
+  seasonId: string;
+  standings: RankedSeasonResultRow[];
 }
 
 const TOKEN_KEY = 'jet-ranked-token';
@@ -125,8 +209,17 @@ export const rankedApi = {
   async ladder(token: string): Promise<{ ladder: RankedProfileView[] }> {
     return api('/ranked/ladder?limit=100', { token });
   },
-  async profile(token: string): Promise<{ profile: RankedProfileView | null }> {
+  async profile(token: string): Promise<RankedProfileResponse> {
     return api('/ranked/profile', { token });
+  },
+  /** Temporada corrente + Top 10 (rota PÚBLICA: não exige token). */
+  async season(): Promise<RankedSeasonResponse> {
+    return api('/ranked/season');
+  },
+  /** Standings liquidados de uma temporada (default: a mais recente). */
+  async seasonResults(seasonId?: string): Promise<RankedStandingsResponse> {
+    const q = seasonId ? `?season=${encodeURIComponent(seasonId)}` : '';
+    return api(`/ranked/season/results${q}`);
   },
   async start(token: string, deck: string[]): Promise<StartMatchResponse> {
     return api('/ranked/start', { method: 'POST', token, body: { deck } });

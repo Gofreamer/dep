@@ -8,13 +8,13 @@
  *  - o bot joga com o MESMO engine e as MESMAS regras do humano (custos,
  *    Energia, sorte de coinFlip via seed determinística).
  *
- * StellaPrime (agressivo, #1 inicial, dificuldade 90%) e Luna underdog
+ * StellaPrime (agressiva, #1 inicial, dificuldade 90%) e Luna underdog
  * (controle, #2 inicial, dificuldade 86%) são os âncoras do topo — mas NENHUM
  * bot tem posição travada: um humano pode ultrapassá-los e tomar o #1.
  */
 
 import type { AiProfile } from '../engine/ai/profile';
-import { PROFILE_LEVELS } from '../engine/ai/profile';
+import { LUNA_PROFILE, PROFILE_LEVELS, STELLA_PROFILE } from '../engine/ai/profile';
 
 export interface BotDef {
   id: string;
@@ -43,12 +43,15 @@ const BOTS: BotDef[] = [
   {
     id: 'bot-stella-prime', name: 'StellaPrime', archetypeId: 'archetype-aggro', initialRating: 2460, difficulty: 90,
     blurb: 'A líder da temporada. Pressão implacável desde o primeiro turno.',
-    profile: PROFILE_LEVELS.elite
+    // fonte ÚNICA: o perfil mora em `src/engine/ai/profile.ts` (a 2.0 tinha
+    // STELLA_PROFILE/LUNA_PROFILE definidos e não usados — os bots repetiam
+    // pesos parecidos inline, e as duas cópias divergiam em silêncio).
+    profile: STELLA_PROFILE
   },
   {
     id: 'bot-luna-underdog', name: 'Luna underdog', archetypeId: 'archetype-control', initialRating: 2390, difficulty: 86,
     blurb: 'A azarã que virou muralha. Controle paciente, cura e inevitabilidade.',
-    profile: { ...PROFILE_LEVELS.hard, aggression: 0.4, resourcePreservation: 0.95, futurePlanning: 0.95 }
+    profile: LUNA_PROFILE
   },
   { id: 'bot-moirai', name: 'Moirai', archetypeId: 'archetype-midrange', initialRating: 2310, difficulty: 82, blurb: 'Economia de recursos e vantagem incremental.', profile: PROFILE_LEVELS.hard },
   { id: 'bot-vex-9', name: 'vex_exe', archetypeId: 'archetype-burst', initialRating: 2240, difficulty: 80, blurb: 'Janela explosiva: prepara e converte tudo num turno.', profile: PROFILE_LEVELS.hard },

@@ -879,6 +879,20 @@ body.shake { animation: bodyShake 0.42s ease; }
 .ranked-result { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .ranked-ladder { overflow: hidden; }
 .ranked-ladder h2 { margin: 0 0 8px; }
+.ranked-season { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; }
+.ranked-season b { font-size: 15px; letter-spacing: 0.04em; }
+.season-status { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border: 1px solid var(--line); color: var(--ink-dim); }
+.season-active { color: #4ade80; border-color: rgba(74, 222, 128, 0.4); }
+.season-grace { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); }
+.season-closed { color: #f87171; border-color: rgba(248, 113, 113, 0.4); }
+.ranked-season-result { font-weight: 600; }
+.ranked-peak { color: var(--ink-dim); }
+.ranked-ranks { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.rank-chip { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink-dim); }
+.rank-chip.active { color: var(--ink); border-color: rgba(34, 211, 238, 0.6); background: rgba(34, 211, 238, 0.12); font-weight: 700; }
+.ranked-history ul { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.ranked-history li.win { color: #4ade80; }
+.ranked-history li.loss { color: var(--ink-dim); }
 .ladder-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .ladder-table th, .ladder-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--line); }
 .ladder-table th { color: var(--ink-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }

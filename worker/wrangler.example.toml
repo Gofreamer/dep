@@ -1,0 +1,49 @@
+# EXEMPLO de configuração de produção da Liga Ranqueada — NÃO é lido por nenhum
+# script (`worker:dev` e o deploy usam `wrangler.toml`). Copie para um arquivo
+# próprio, cole o `database_id` que o `wrangler d1 create` imprimir e faça o
+# deploy com `--config`. Assim o repo nunca guarda id inventado: um id fake
+# deixa o binding "válido" na hora e quebra no primeiro SELECT.
+#
+#   cp worker/wrangler.example.toml worker/wrangler.local.toml
+#   npx wrangler d1 create jet-tcg-db
+#     # -> escreva o database_id impresso no arquivo copiado
+#   npx wrangler d1 migrations apply jet-tcg-db --local     # testa em local
+#   npx wrangler d1 migrations apply jet-tcg-db --remote    # produção
+#   npx wrangler secret put JET_RANKED_SECRET               # >=32 caracteres
+#   npx wrangler deploy --config worker/wrangler.local.toml
+#
+# Migrations: `migrations_dir` é relativo a este arquivo, apontando para
+# `worker/migrations/` (0001_ranked.sql, 0002_ranked_seasons.sql). Nunca edite
+# uma migration já aplicada: adicione `0003_*.sql`.
+
+name = "jet-tcg-multiplayer"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+CLIENT_ORIGINS = "https://dep-7ed.pages.dev,http://localhost:5173,http://localhost:4173"
+# Ambiente do fallback de dev do segredo. Em produção deixe "production": sem
+# JET_RANKED_SECRET a Liga recusa escrita com 503 em vez de usar chave padrão.
+NODE_ENV = "production"
+
+[[durable_objects.bindings]]
+name = "JET_ROOM"
+class_name = "RoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomDO"]
+
+[[d1_databases]]
+binding = "JET_DB"
+database_name = "jet-tcg-db"
+# OBRIGATORIAMENTE o id impresso por `npx wrangler d1 create jet-tcg-db`.
+database_id = "COLE_AQUI_O_DATABASE_ID"
+migrations_dir = "migrations"
+
+[observability]
+enabled = true
+
+# Cron da escada (2–8 partidas bot×bot por invocação): veja worker/wrangler.toml.
+[triggers]
+crons = ["7 * * * *"]

@@ -6,6 +6,7 @@ import { MemoryRankedRepo } from '../src/ranked/repo';
 import { BOT_ROSTER, botById, profileForDifficulty } from '../src/ranked/bots';
 import { findOpponentFromRoster, pickOpponent, seedBots } from '../src/ranked/matchmaking';
 import { currentSeason, seasonAcceptsMatch, SEASON_1 } from '../src/ranked/seasons';
+import { LUNA_PROFILE, STELLA_PROFILE } from '../src/engine/ai/profile';
 
 describe('rating (Elo)', () => {
   it('expectedScore é simétrica e coerente', () => {
@@ -137,5 +138,48 @@ describe('seasons', () => {
     const graceEnd = SEASON_1.endAt + SEASON_1.graceAfterEnd;
     expect(seasonAcceptsMatch(SEASON_1, SEASON_1.endAt + 1000)).toBe(true);
     expect(seasonAcceptsMatch(SEASON_1, graceEnd + 1000)).toBe(false);
+  });
+});
+
+describe('perfis de IA dos âncoras (fonte única)', () => {
+  it('StellaPrime e Luna underdog usam os perfis de `engine/ai/profile.ts`', () => {
+    const stella = botById('bot-stella-prime')!;
+    const luna = botById('bot-luna-underdog')!;
+    // a 2.0 definia STELLA_PROFILE/LUNA_PROFILE e não usava: os bots traziam
+    // pesos parecidos inline, e as duas cópias divergiam sem ninguém notar.
+    expect(stella.profile).toBe(STELLA_PROFILE);
+    expect(luna.profile).toBe(LUNA_PROFILE);
+    expect(stella.name).toBe('StellaPrime');
+    expect(luna.name).toBe('Luna underdog');
+    expect(stella.difficulty).toBe(90);
+    expect(luna.difficulty).toBe(86);
+    expect(stella.initialRating).toBeGreaterThan(luna.initialRating);
+  });
+
+  it('os dois estilos são diferentes de verdade (não é a mesma tabela de pesos)', () => {
+    expect(STELLA_PROFILE.aggression).toBeGreaterThan(LUNA_PROFILE.aggression + 0.4);
+    expect(LUNA_PROFILE.resourcePreservation).toBeGreaterThan(STELLA_PROFILE.resourcePreservation);
+    expect(LUNA_PROFILE.boardWeight).toBeGreaterThan(STELLA_PROFILE.boardWeight);
+    expect(STELLA_PROFILE.id).not.toBe(LUNA_PROFILE.id);
+  });
+
+  it('dificuldade declarada e força do perfil são monotônicas (sem inversão)', () => {
+    // O roster pode manter um override de identidade (ex.: o sustain de
+    // MareAlta93 é `hard` com aggression menor), mas NUNCA pode anunciar
+    // dificuldade baixa e jogar mais forte que quem anunciou acima — é isso que
+    // a frase "dificuldade 74%" precisa significar na tela de matchmaking.
+    const strength: Record<string, number> = { easy: 0, normal: 1, hard: 2, elite: 3, 'stella-prime': 3, 'luna-underdog': 2 };
+    for (const b of BOT_ROSTER) {
+      expect(strength[b.profile.id], `perfil desconhecido: ${b.profile.id}`).toBeDefined();
+      expect(profileForDifficulty(b.difficulty).id, `${b.name}: ${b.difficulty}% não mapeia para um perfil inexistente`).toBeDefined();
+    }
+    const byDifficulty = [...BOT_ROSTER].sort((x, y) => y.difficulty - x.difficulty);
+    for (let i = 1; i < byDifficulty.length; i++) {
+      const prev = strength[byDifficulty[i - 1].profile.id];
+      const cur = strength[byDifficulty[i].profile.id];
+      expect(cur, `${byDifficulty[i].name} (${byDifficulty[i].difficulty}%) não pode ser mais forte que ${byDifficulty[i - 1].name} (${byDifficulty[i - 1].difficulty}%)`).toBeLessThanOrEqual(prev);
+    }
+    // e o topo da escada é quem diz ser
+    expect(strength[botById('bot-stella-prime')!.profile.id]).toBe(3);
   });
 });

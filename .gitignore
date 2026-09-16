@@ -22,3 +22,6 @@ dist/
 
 # scripts locais de auditoria (não versionados)
 .scratch/
+
+# config de deploy local (contém database_id do projeto)
+worker/wrangler.local.toml

@@ -16,7 +16,7 @@ import { expandDeck } from '../src/data/deckUtils';
 import { MatchEngine } from '../src/engine/engine';
 import { aiNextCommand, aiSmartChoice } from '../src/engine/ai/ai';
 import type { AiProfile } from '../src/engine/ai/profile';
-import { BOT_ROSTER, botById } from '../src/ranked/bots';
+import { BOT_COUNT, BOT_ROSTER, botById } from '../src/ranked/bots';
 import { MemoryRankedRepo } from '../src/ranked/repo';
 import { seedBots } from '../src/ranked/matchmaking';
 import { applyRankedResult, leaderboard } from '../src/ranked/ladder';
@@ -80,7 +80,7 @@ async function main(): Promise<void> {
   await seedBots(repo);
 
   const rated = [...BOT_ROSTER].map((b) => ({ id: b.id, rating: b.initialRating })).sort((a, b) => b.rating - a.rating);
-  console.log(`JET TCG 2.0 — bot ladder simulation (${totalGames} partidas, lotes de ${batchSize})`);
+  console.log(`JET TCG 2.1 — bot ladder simulation (${BOT_COUNT} bots, ${totalGames} partidas, lotes de ${batchSize})`);
 
   let seededRng = 20260912;
   const nextSeed = () => (seededRng = (seededRng * 7919 + 13) % 2147483647);
@@ -113,7 +113,8 @@ async function main(): Promise<void> {
   const lb = await leaderboard(repo, 10);
   console.log('\n=== Top 10 do ladder (após simulação) ===');
   for (const e of lb) {
-    console.log(`${String(e.position).padStart(2)}. ${e.username.padEnd(18)} ${e.rating} ${e.rank}${e.isReiDaLiga ? ' · REI DA LIGA' : ''}`);
+    const name = botById(e.username)?.name ?? e.username;
+    console.log(`${String(e.position).padStart(2)}. ${name.padEnd(18)} ${e.rating} ${e.rank}${e.isReiDaLiga ? ' · REI DA LIGA' : ''}`);
   }
   const stella = lb.find((e) => e.username === 'bot-stella-prime');
   console.log(`\nStellaPrime em #${stella?.position ?? '?'}${stella?.position === 1 ? ' (ainda #1 — sem trava: humanos/outros bots podem ultrapassar)' : ' (não está #1 — sem trava de posição)'}`);

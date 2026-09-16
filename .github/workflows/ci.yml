@@ -44,14 +44,25 @@ jobs:
       - name: Fuzz 1000 partidas
         run: npm run test:fuzz:long
 
-      # Meta-simulação (>=1000 partidas, matriz de matchup + uso de cartas).
-      # `--soft`: dominância é aviso de balanceamento, não falha de CI.
-      - name: Meta simulação
-        run: npm run meta:sim -- --games 4 --soft --out reports/meta-ci.md
+      # GATE DE META (sem `--soft`): winrate por arquétipo dentro de 35–65%,
+      # matchup direto dentro de 20–80% e matriz 100% fechada. A 2.0 usava
+      # `--soft`, que transformava dominância de 75% em aviso e deixava o job
+      # verde — é exatamente por isso que o gate não pode ser suave.
+      #
+      # Por que isto não é flaky: as sementes são LITERAIS (20260912, 777, …) e
+      # os assentos são alternados par/ímpar, então a mesma árvore produz o
+      # mesmo número byte por byte — não há RNG de CI para sortear o resultado.
+      # O volume (8 partidas/par × 8 réplicas = 2304 partidas, ~512 por deck) é
+      # o mínimo para 1–2 pp de diferença não serem sorteio; `--games 4` (a
+      # amostra antiga) tinha erro padrão de ~10 pp e seria amostra pequena.
+      # Para rodadas exploratórias use `--soft` LOCALMENTE, nunca aqui.
+      - name: Meta simulação (gate de release)
+        run: npm run meta:sim -- --games 8 --seeds 8 --level hard --out reports/meta-ci.md
 
-      # Ladder dos bots (simulação de lotes): garante que o ladder fica vivo.
+      # Ladder dos bots (>=1000 partidas bot×bot): matchmaking por rating vivo,
+      # idempotência de rating e estabilidade da escada de ranks.
       - name: Bot ladder sim
-        run: npm run ranked:sim -- --games 20 --batch 10
+        run: npm run ranked:sim -- --games 40 --batch 25
 
       - name: Build de produção
         run: npm run build
@@ -61,6 +72,18 @@ jobs:
         with:
           name: dist
           path: dist
+          retention-days: 7
+
+      # O relatório da meta simulação é sempre publicado (inclusive quando o
+      # gate reprova): é o dado que sustenta a decisão de balanceamento.
+      - name: Publicar relatório da meta simulação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meta-ci
+          path: |
+            reports/meta-ci.md
+            reports/meta-ci.json
           retention-days: 7
 
   worker-integration:
