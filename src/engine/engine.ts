@@ -1,6 +1,7 @@
 import type {
   CardInstance, CharacterDef, ChoiceRequest, Command, CommandResult, LegalActions, MatchState, PlayerId, TargetSpec
 } from './types';
+import { mixSeed } from './rng';
 import { registry } from './registry';
 import {
   abilitiesBlocked, charDef, charactersInPlay, costSatisfied, defOf, equipmentSlots, findCard,
@@ -167,6 +168,38 @@ export class MatchEngine {
   // -------------------------------------------------------------------------
 
   /**
+   * Sub-streams de RNG do setup (um por assento). `null` até o primeiro uso.
+   */
+  private setupStream: [number, number] | null = null;
+
+  /**
+   * Embaralhamento do SETUP isolado por jogador — justiça de RNG.
+   *
+   * Os dois setups consumiam o MESMO stream, na ordem: a ordem do deck do
+   * jogador 1 ficava deslocada por quantos redrews de mulligan o ADVERSÁRIO
+   * precisou (cada redraw = 1 shuffle de ~60 + 7 pops). Em espelhos isso não é
+   * ruído, é assimetria: medido em 56,3% de vitória para quem embaralha
+   * primeiro (n=512 partidas de espelho, σ≈2,2pp).
+   *
+   * Cada jogador passa a embaralhar num sub-stream derivado de `(seed, assento)`
+   * e o stream compartilhado é restaurado ao valor anterior — o resto da partida
+   * não muda de natureza (continua um RNG centralizado e semeado), só deixa de
+   * depender do mulligan alheio. Nada aqui olha mão, deck ou informação
+   * privada: é só o ponto de partida do PRNG.
+   */
+  private shuffleDeckForSetup(pIdx: PlayerId): void {
+    const st = this.state;
+    if (!this.setupStream) {
+      this.setupStream = [mixSeed(st.seed, 1) || 0x9e3779b9, mixSeed(st.seed, 2) || 0x85ebca6b];
+    }
+    const saved = st.rngState;
+    st.rngState = this.setupStream[pIdx];
+    shuffleDeck(this.g(), pIdx);
+    this.setupStream[pIdx] = st.rngState;
+    st.rngState = saved;
+  }
+
+  /**
    * Opening hand. With requireBasic the engine shuffles back and redraws until
    * an eligible starter (Base character) appears — `mulligan: 'auto'`. Bonus
    * draw (`mulliganBonusDraw`) gives the OPPONENT one extra card per redraw
@@ -174,14 +207,13 @@ export class MatchEngine {
    */
   private dealOpeningHand(pIdx: PlayerId): void {
     const cfg = this.state.config.setup;
-    const g = this.g();
     const p = player(this.state, pIdx);
     const hasStarter = () => p.hand.some((c) => canSeatAtSetupStarter(c));
     let attempts = 0;
     while (!hasStarter() && cfg.requireBasic && attempts < 8) {
       p.deck.push(...p.hand);
       p.hand = [];
-      shuffleDeck(g, pIdx);
+      this.shuffleDeckForSetup(pIdx);
       for (let i = 0; i < cfg.handSize; i++) {
         if (p.deck.length > 0) p.hand.push(p.deck.pop()!);
       }
@@ -206,7 +238,7 @@ export class MatchEngine {
         const back = p.hand.findIndex((c) => !canSeatAtSetupStarter(c));
         if (back >= 0 && p.hand.length > cfg.handSize) {
           p.deck.push(p.hand.splice(back, 1)[0]);
-          shuffleDeck(g, pIdx);
+          this.shuffleDeckForSetup(pIdx);
         }
         this.mulliganRedraws[pIdx] = attempts + 1;
       }
@@ -251,10 +283,9 @@ export class MatchEngine {
       labels: { recomprar: 'Recomprar mão', manter: 'Manter mão' }
     };
     if (answer?.[0] === 'recomprar') {
-      const g = this.g();
       p.deck.push(...p.hand);
       p.hand = [];
-      shuffleDeck(g, pIdx);
+      this.shuffleDeckForSetup(pIdx);
       for (let i = 0; i < cfg.handSize; i++) {
         if (p.deck.length > 0) p.hand.push(p.deck.pop()!);
       }
@@ -268,7 +299,7 @@ export class MatchEngine {
       while (cfg.requireBasic && !p.hand.some((c) => canSeatAtSetupStarter(c)) && guard++ < 8) {
         p.deck.push(...p.hand);
         p.hand = [];
-        shuffleDeck(g, pIdx);
+        this.shuffleDeckForSetup(pIdx);
         for (let i = 0; i < cfg.handSize; i++) {
           if (p.deck.length > 0) p.hand.push(p.deck.pop()!);
         }

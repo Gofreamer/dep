@@ -2,6 +2,7 @@ import type { CardDef, MatchState, PlayerId, PlayerState } from '../types';
 import { DEFAULT_CONFIG } from '../types';
 import { registry } from '../registry';
 import { newCardInstance, shuffleDeck, G } from '../effects/shared';
+import { warmRng } from '../rng';
 
 export interface PlayerSetup {
   name: string;
@@ -46,7 +47,10 @@ export function createMatchState(opts: MatchOptions): MatchState {
   const state: MatchState = {
     id: `match-${opts.seed}`,
     seed: opts.seed,
-    rngState: opts.seed >>> 0 || 0x9e3779b9,
+    // `warmRng`: avalanche + aquecimento. Ver comentário em `src/engine/rng.ts`
+    // — o sorteio de quem começa é o primeiro consumo do stream e não pode
+    // herdar padrão da semente literal usada em simulações e replays.
+    rngState: warmRng(opts.seed),
     turn: 0,
     activePlayer: 0,
     phase: 'setup',
