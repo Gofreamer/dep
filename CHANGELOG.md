@@ -3,6 +3,85 @@
 Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 Este projeto usa versionamento semântico.
 
+## [2.1.0] — Regras que vieram da carta, meta por causa estrutural, Liga real
+
+Correção do que a auditoria de produção encontrou **no código** (não no
+README): cada item abaixo tem teste ou arquivo correspondente.
+
+### Corrigido
+
+- **`attackCostReduce` sem piso**: `impulso-kof` + `catalisador` zeravam o custo
+  de qualquer ataque (`Ultimato KOF` de 5E saía por 3E; ataque de 2E, de graça,
+  no turno 1). Agora `attackCostFloor: 1` e `maxAttackCostReduce: 1` em
+  `rules.ts` — fonte única para `legalActions` **e** `dispatch`
+  (`tests/jet-cost-reduce.test.ts`).
+- **"1 ACTION por turno" era só config do turno**: carta `ACTION` sem
+  restrição própria podia ser repetida. `toTechnique` passa a declarar
+  `[{type:'oncePerTurn'}]` como default e `checkRestrictions` é a única fonte
+  (`tests/jet-action-once.test.ts`, 6 casos).
+- **`maxCopiesPerIdentity` não era imposto** pelo `validateDeck` — identidade
+  com 4 cópias por carta permitia 8+ de um mesmo agente. Imposto na validação
+  compartilhada pelo produto e pela Liga (`validateSubmittedDeck`).
+- **Bots com nome emprestável**: o cadastro não bloqueava variantes do nome de
+  bot. `botUsername` agora remove separadores (`Luna underdog` =
+  `luna_underdog` = `LUNAunderdog`) e `register` responde 409.
+- **Ticket da Liga fraco**: `matchId` era `rm-<usuário>-<seed>` com
+  `seed = Date.now() ^ rating·31` (colidia e era previsível), e o ticket não
+  assinava temporada nem `matchId`. Agora: seed de `crypto.getRandomValues`,
+  `nonce` por partida, `sid`/`mid` assinados, versão `v: 2` recusada se for
+  antiga, `t` no futuro (>60 s) recusado, TTL 2 h (142 → contrato em
+  `tests/ranked-api.test.ts`).
+- **Matchmaking congelado**: o pareamento olhava `initialRating` do roster, então
+  o topo da escada nunca mudava de alvo. `findOpponent` usa o rating
+  **persistido** (janela ±1–2 posições no ranking vivo).
+- **Temporada só no código**: `currentSeason()` era uma função pura e o worker
+  não consultava o banco. A temporada passou a ser lida de `seasons`
+  (`activeSeason`/`seasonAcceptsMatch`), com `SETTLE`/graça, `ensureSeasons`
+  abrindo a Season 2 e `settleSeason` gravando currículo por jogador.
+- **Escala da UI**: `RankedScreen` tinha uma cópia local da tabela de ranks e
+  não consultava a temporada; agora lê `/ranked/season` e
+  `/ranked/season/results` e mostra pico/melhor posição/`highestRank` do banco.
+
+### Adicionado
+
+- **Avaliador de estado para a IA** (`src/engine/ai/eval.ts`) + ruído puro
+  (`noise.ts`): planos condicionais (`conditionalEffect`, negação de recurso,
+  `marked`/`silence`/`root`, coinFlip) deixaram de ser invisíveis para a IA —
+  é por isso que R6/Caçada/Platinum jogavam mal. Blackout R6 foi tratado
+  **melhorando a IA antes de buffar carta**.
+- **Simulador de meta pareado** (`src/meta/simulator.ts`): ida/volta com o
+  mesmo seed, intervalo de confiança, espelhos, matriz de uso de cartas;
+  `scripts/meta-sim.ts` com gate 35–65% / matchup 20–80% e sementes literais
+  (mesmo commit ⇒ mesmo número, sem flaky de amostragem).
+- **Tick da escada** (`src/ranked/ladderTick.ts` + `scheduled()` no worker +
+  `crons = ["7 * * * *"]`): 2–8 partidas/hora por PRNG da hora, `matchId`
+  determinístico (reexecutar não pontua), purga de sessões vencidas.
+- **`worker/migrations/0002_ranked_seasons.sql`**: picos/melhor posição/
+  `highest_rank`/`season_id` em `ranked_profiles`, tabelas `seasons` e
+  `season_results` e semente da Season 1 (0001 publicada não é tocada).
+  Backfill, `INSERT OR IGNORE` e reabertura de banco são cobertos por
+  `tests/jet-d1-migrations.test.ts` (SQLite real, SQL das migrations).
+- **Fail-closed de segredo**: sem `JET_RANKED_SECRET` (mín. 32 chars) a escrita
+  da Liga responde **503** e a leitura continua 200; o fallback `'dev-secret-change-me'`
+  da 2.0 só vale com `NODE_ENV=development|test` ou `ALLOW_INSECURE_ORIGIN=1`.
+- **`worker/wrangler.example.toml`** com o passo a passo do D1 (`migrations_dir`,
+  `wrangler d1 migrations apply`) — sem `database_id` inventado no repo.
+- **`/health`** passou a expor `ranked.{d1, secretConfigured, devFallback}`
+  (só booleanos: nunca vaza configuração).
+- **CI**: o gate de meta roda **sem `--soft`** (8 partidas/par × 8 réplicas =
+  2304 partidas), o `ranked:sim` subiu para 1000 partidas, e o relatório de meta
+  virou artefato publicado (inclusive quando reprova).
+
+### Documentado como não verificado
+
+- Deploy real na Cloudflare (criação do D1, `--remote`, execução do cron na
+  borda): sem conta no ambiente, nada aqui é afirmado como "produção ativa" —
+  ver `docs/PRODUCTION-CHECKLIST.md`.
+- Fraqueza/resistência e Evolução/Suprema: as **regras** existem na engine; o
+  Core Set JET não tem conteúdo que as exercite (afinidade, estágio > 0,
+  `ultimate`). Não foram inventadas afinidades nem identidades para "fazer
+  número".
+
 ## [2.0.0] — Core Set completo, meta e Liga Ranqueada contra IA
 
 ### Adicionado

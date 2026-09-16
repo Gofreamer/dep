@@ -88,6 +88,9 @@ dominância universal (>65%).
   (subir exige vitória, cair exige derrota).
 - **Elo** com delta mínimo 1 e aplicação **idempotente** por `rankedMatchId`.
 - **22 bots** com perfis de IA escaláveis (Ferro→Rei da Liga);
+  *(2.1: o roster passou a ter **24** bots com apelidos de usuário, e a
+  contagem é derivada de `BOT_ROSTER.length`/`BOT_COUNT` em vez de digitada —
+  era isso que fazia doc e código divergirem.)*
   **StellaPrime** (#1 inicial, 90%, elite, aggro) e **Luna underdog** (#2
   inicial, 86%, hard, control) — **sem trava de posição**: humano pode
   ultrapassar e tomar o #1 (testado).

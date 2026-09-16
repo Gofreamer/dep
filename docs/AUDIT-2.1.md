@@ -42,9 +42,14 @@ Auditoria factual do commit `d54979b` (merge do PR #7). Cada item foi
    É a causa estrutural da dominância aggro. → piso de 1 Energia em
    `rules.ts` (fonte única, valendo para `legalActions` **e** `dispatch`).
 2. **Nenhum agente do Core Set tem fraqueza/resistência**, mas `ignoreResistance`
-   aparece no texto de 3 finishers e a README documenta "Fraqueza ×2,
-   resistência −30" como regra viva do JET. Regra existe na engine; o conteúdo
-   não a exercita. → adicionar fraqueza/resistência reais no conjunto.
+   aparece no texto de finishers e a README documentava "Fraqueza ×2,
+   resistência −30" como regra viva do JET. Regra existe na engine (`config.damage`
+   + `shared.ts:180`); o conteúdo não a exercita.
+   → **decisão revisada**: NÃO adicionar afinidades aos 18 agentes — isso seria
+   inventar conteúdo canônico. O que foi feito: os textos de carta que
+   prometiam `ignoreResistance` batem com a flag real (`equipment.ts:105,139`),
+   e a README passou a dizer exatamente onde a regra vale e onde o conjunto não
+   a usa.
 3. **Arquétipos de fação pequena são matematicamente inviáveis**: `platinum`,
    `weigon` e `salvatore` têm **1 identidade de agente** (limite de 4 cópias por
    identidade). Platinum entra em campo com **4 agentes** e `noActiveLoses` —

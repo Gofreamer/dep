@@ -32,14 +32,23 @@ A Liga usa o Worker + D1 (Cloudflare). Sem configurar, o jogo funciona
 normalmente (só a Liga fica indisponível):
 
 ```bash
-npx wrangler d1 create jet-tcg-db                        # anote o database_id
-npx wrangler d1 execute jet-tcg-db --file worker/migrations/0001_ranked.sql
-npx wrangler secret put JET_RANKED_SECRET                # segredo para tickets
-# adicione o bloco [[d1_databases]] em worker/wrangler.toml com o database_id
+cp worker/wrangler.example.toml worker/wrangler.local.toml
+npx wrangler d1 create jet-tcg-db                        # imprime o database_id
+npx wrangler d1 migrations apply jet-tcg-db --local      # 0001 + 0002 (migrations_dir)
+npx wrangler secret put JET_RANKED_SECRET                # >= 32 caracteres
+npx wrangler deploy --config worker/wrangler.local.toml
 VITE_RANKED_API_URL=<url-do-worker> npm run dev
 ```
 
-Veja `docs/RANKED.md` (rotas, auth, Elo, temporadas) e `docs/META.md` (meta).
+O `database_id` só existe depois do `d1 create` — por isso ele **não** está em
+`worker/wrangler.toml` (id inventado quebraria no primeiro SELECT). Sem
+`JET_RANKED_SECRET` a Liga **recusa escrita com 503** (`/ranked/start`,
+`/ranked/finish`) e mantém leitura no ar; sem o binding D1, `/auth/*` e
+`/ranked/*` devolvem 503 e o resto do jogo segue normal. O cron
+(`crons = ["7 * * * *"]`) mantém a escada dos bots viva.
+
+Veja `docs/RANKED.md` (rotas, ticket, auth, Elo, temporadas, o que é verificado)
+e `docs/META.md` (meta e o gate da CI).
 
 Configuração opcional: copie `.env.example` para `.env` e defina
 `VITE_MULTIPLAYER_URL` com o endereço do servidor de salas. **Sem isso o jogo
@@ -129,17 +138,39 @@ com tradeoffs — não "a mesma carta mais forte".
 - Vitória por PV (alvo 4, configurável) + derrotas alternativas (sem
   substituto para o Ativo, deck-out)
 - Só Base entra direto em campo; formas avançadas exigem Evolução (sem pular
-  estágios por padrão; exceção apenas por efeito explícito)
-- Fraqueza ×2, resistência −30, 1 slot de campo, 2 slots de equipamento
-  (padrão configurável), recuo paga Energia
+  estágios por padrão; exceção apenas por efeito explícito). **Conteúdo:**
+  nenhum `CardDef` do Core Set declara estágio acima de 0 — a regra está
+  implementada na engine e vale para conteúdo importado, não para as 155
+  cartas de JET hoje
+- Fraqueza ×2 / resistência −30 (`config.damage`, configurável) só se aplicam a
+  carta com `affinity`; **nenhum Agente do Core Set tem afinidade**, então a
+  regra não dispara no conjunto atual. As duas cartas que a exercitam são os
+  finishers de equipamento que a **ignoram** (`Colisão Tubarão`,
+  `Tiro Decisivo`). Inventar afinidade para agente não é opção: o conteúdo vem
+  do snapshot oficial
+- 1 slot de campo, 2 slots de equipamento (padrão configurável), recuo paga Energia
+- **1 ACTION por turno é regra da carta, não só do turno**: `ACTION` sem
+  restrição própria recebe `[{type:'oncePerTurn'}]` em
+  `src/data/jet/builders.ts`, e `checkRestrictions` (`rules.ts`) é a fonte única
+  consultada por `legalActions` e `dispatch`
+- Piso de custo de ataque (`attackCostFloor: 1`) e teto de redução
+  (`maxAttackCostReduce: 1`) — redução nenhuma zera o custo de um ataque
+- Limite por `identityId` (`maxCopiesPerIdentity: 4`) imposto por `validateDeck`
 - Efeitos/gatilhos/status/alvos 100% data-driven; `legalActions` e engine
   compartilham a mesma fonte de regras
 - Configuração parcial via deep merge (nunca apaga propriedades irmãs)
 - Baralho: 60 cartas, máx. 4 por carta, limite por `identityId`, exige
   agente inicial Base (`requireBasic`)
-- Suprema opcional data-driven (condição + custo + once-per-match)
+- Suprema (`CharacterDef.ultimate`) data-driven: condição + custo +
+  once-per-match, `USE_ULTIMATE` no engine e reconhecida pela IA. **Conteúdo:**
+  nenhuma carta do Core Set JET declara `ultimate`; o importador só preenche
+  quando a fonte marca explicitamente ("Suprema/ultimate oficial")
 - RNG centralizado e semeado (partidas reproduzíveis)
-- IA heurística com 3 dificuldades (usa as mesmas `legalActions`)
+- IA heurística com **4** perfis — Casual, Normal, Difícil, Elite
+  (`src/engine/ai/profile.ts`) — sobre um avaliador que pontua materialidade,
+  pressão de relógio, bench/recuo, status e finisher. Usa as MESMAS
+  `legalActions` do humano e **nunca** vê mão adversária, ordem do deck ou RNG
+  futuro; `blunderRate`/ruído vêm de um PRNG puro do perfil, sem tocar o estado
 - Tutorial interativo, painel de debug (apenas modo dev), rematch instantânea
 - **Multiplayer privado 1×1**: servidor autoritativo, código de sala de 6
   caracteres + link de convite, token de assento para reconexão, revisão
@@ -162,9 +193,9 @@ Guardian/Duelist/Commander) e checklist de carta nova.
 
 - **Novo Agente:** capture na fonte → `src/data/jet/raw/` → `npx tsx scripts/import-jet-tactics.ts` → cure o perfil em `src/data/jet/agentProfiles.ts` (status `CURATED`) → teste.
 - **Nova edição:** a fonte precisa listá-la; crie um perfil por edição com a MESMA `identityId` e sidegrade real.
+- **Suprema/estágio:** a engine já suporta (`USE_ULTIMATE`, `stage`, `ultimateCheck`, upgrade sem pular estágio). Para JET, só entra conteúdo que a fonte oficial descrever — nada é inventado para "fazer a regra ser usada".
 - **Nova Técnica/Equipamento/Campo:** adicione um `CardDef` em `src/data/jet/auxiliares.ts` (efeitos = `EffectStep[]` declarados em dados).
 - **Expansão de Domínio (futura):** `FieldDef` com `subtype: 'DOMAIN'` + `override` — só com informação oficial suficiente.
-- **Suprema (futura):** `CharacterDef.ultimate` (condição + custo + efeitos).
 
 ## Testes
 
