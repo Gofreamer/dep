@@ -51,3 +51,44 @@ export function corsHeaders(origin: string | null, cfg: WorkerConfig): Record<st
   }
   return headers;
 }
+
+// ---------------------------------------------------------------------------
+// Segredo da Liga Ranqueada — FALHA FECHADA em produção
+// ---------------------------------------------------------------------------
+
+/** Segredo de desenvolvimento: NUNCA aceitável fora de dev explícito. */
+export const DEV_RANKED_SECRET = 'dev-secret-change-me';
+/** Tamanho mínimo de um segredo de produção (256 bits em hex ≥ 32 chars). */
+export const MIN_SECRET_LENGTH = 32;
+
+/** Só o que as rotas da Liga precisam ler do ambiente. */
+export interface RankedEnvLike {
+  JET_RANKED_SECRET?: string;
+  ALLOW_INSECURE_ORIGIN?: string;
+  NODE_ENV?: string;
+}
+
+export type SecretResult = { ok: true; secret: string; devFallback: boolean } | { ok: false; error: string };
+
+/**
+ * Resolve o segredo de assinatura de tickets.
+ *
+ * - produção (default): exige `JET_RANKED_SECRET` com ≥32 caracteres. Sem isso,
+ *   as rotas da Liga respondem 503 em vez de assinar tickets com uma chave que
+ *   qualquer pessoa que leia o repositório também conhece (o fallback `'dev-
+ *   secret-change-me'` da 2.0 permitia forjar ticket de partida ranqueada).
+ * - dev: só aceita o fallback com opt-in EXPLÍCITO (`NODE_ENV=development` ou
+ *   `ALLOW_INSECURE_ORIGIN=1`, os mesmos sinais usados para liberar origem).
+ */
+export function resolveRankedSecret(env: RankedEnvLike | undefined | null): SecretResult {
+  const raw = typeof env?.JET_RANKED_SECRET === 'string' ? env.JET_RANKED_SECRET.trim() : '';
+  const devOk = env?.NODE_ENV === 'development' || env?.NODE_ENV === 'test' || env?.ALLOW_INSECURE_ORIGIN === '1';
+  if (raw) {
+    if (raw.length < MIN_SECRET_LENGTH) {
+      return { ok: false, error: `JET_RANKED_SECRET muito curto (${raw.length} < ${MIN_SECRET_LENGTH} caracteres)` };
+    }
+    return { ok: true, secret: raw, devFallback: raw === DEV_RANKED_SECRET };
+  }
+  if (devOk) return { ok: true, secret: DEV_RANKED_SECRET, devFallback: true };
+  return { ok: false, error: 'JET_RANKED_SECRET ausente — defina a variável no Worker (wrangler secret put JET_RANKED_SECRET)' };
+}

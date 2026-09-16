@@ -5,6 +5,7 @@ import { ARCHETYPE_DECKS } from '../src/data/jet/archetypes';
 import { registry } from '../src/engine/registry';
 import { expandDeck } from '../src/data/deckUtils';
 import { runLocalRankedMatch } from '../src/ranked/localMatch';
+import { signTicket } from '../worker/src/rankedApi';
 import { PROFILE_LEVELS } from '../src/engine/ai/profile';
 import { computeLegalActions } from '../src/engine/validation';
 import type { MatchEngine } from '../src/engine/engine';
@@ -45,6 +46,10 @@ function req(method: string, path: string, body?: unknown, token?: string): Requ
   return new Request(`http://localhost${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
 }
 
+/** Ambiente de teste: segredo com o tamanho mínimo de produção (≥32). */
+const TEST_SECRET = 'a'.repeat(64);
+const TEST_ENV = { JET_RANKED_SECRET: TEST_SECRET };
+
 describe('ranked API (worker handlers, sem D1 real)', () => {
   it('registro → login → me (senha nunca em claro)', async () => {
     const repo = new MemoryRankedRepo();
@@ -78,7 +83,7 @@ describe('ranked API (worker handlers, sem D1 real)', () => {
     const reg = await handleAuth(req('POST', '/auth/register', { username: 'Challenger', password: 'senha-forte-123' }), repo, null);
     const { token } = (await reg!.json()) as { token: string };
 
-    const start = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-midrange') }, token), { JET_RANKED_SECRET: 'test-secret' }, repo, null);
+    const start = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-midrange') }, token), TEST_ENV, repo, null);
     expect(start!.status).toBe(200);
     const startBody = (await start!.json()) as { ticket: string; seed: number; seat: 0 | 1; botId: string; botName: string };
 
@@ -96,7 +101,7 @@ describe('ranked API (worker handlers, sem D1 real)', () => {
       humanMove: (e) => deterministicHuman(e, startBody.seat)
     });
 
-    const finish = await handleRanked(req('POST', '/ranked/finish', { ticket: startBody.ticket, commands: local.humanCommands }, token), { JET_RANKED_SECRET: 'test-secret' }, repo, null);
+    const finish = await handleRanked(req('POST', '/ranked/finish', { ticket: startBody.ticket, commands: local.humanCommands }, token), TEST_ENV, repo, null);
     expect(finish!.status).toBe(200);
     const finishBody = (await finish!.json()) as { result: string; ratingAfter: number; rank: string };
 
@@ -105,7 +110,7 @@ describe('ranked API (worker handlers, sem D1 real)', () => {
     expect(typeof finishBody.ratingAfter).toBe('number');
 
     // reaplicar o mesmo finish é idempotente (não duplica rating)
-    const finish2 = await handleRanked(req('POST', '/ranked/finish', { ticket: startBody.ticket, commands: local.humanCommands }, token), { JET_RANKED_SECRET: 'test-secret' }, repo, null);
+    const finish2 = await handleRanked(req('POST', '/ranked/finish', { ticket: startBody.ticket, commands: local.humanCommands }, token), TEST_ENV, repo, null);
     const finish2Body = (await finish2!.json()) as { ratingAfter: number };
     expect(finish2Body.ratingAfter).toBe(finishBody.ratingAfter);
   });
@@ -114,11 +119,11 @@ describe('ranked API (worker handlers, sem D1 real)', () => {
     const repo = new MemoryRankedRepo();
     const reg = await handleAuth(req('POST', '/auth/register', { username: 'Hacker', password: 'senha-forte-123' }), repo, null);
     const { token } = (await reg!.json()) as { token: string };
-    const start = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-aggro') }, token), { JET_RANKED_SECRET: 'test-secret' }, repo, null);
+    const start = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-aggro') }, token), TEST_ENV, repo, null);
     const startBody = (await start!.json()) as { ticket: string; seed: number; seat: 0 | 1; botId: string };
 
     // tenta enviar um comando com uid inexistente (ilegal — setup rejeita)
-    const finish = await handleRanked(req('POST', '/ranked/finish', { ticket: startBody.ticket, commands: [{ type: 'SETUP_SET_ACTIVE', player: startBody.seat, uid: 'bogus-uid' }] }, token), { JET_RANKED_SECRET: 'test-secret' }, repo, null);
+    const finish = await handleRanked(req('POST', '/ranked/finish', { ticket: startBody.ticket, commands: [{ type: 'SETUP_SET_ACTIVE', player: startBody.seat, uid: 'bogus-uid' }] }, token), TEST_ENV, repo, null);
     expect(finish!.status).toBe(400);
     const body = (await finish!.json()) as { error: string };
     expect(body.error).toContain('partida rejeitada');
@@ -126,12 +131,152 @@ describe('ranked API (worker handlers, sem D1 real)', () => {
 
   it('ladder público lista bots e topo (sem login)', async () => {
     const repo = new MemoryRankedRepo();
-    const r = await handleRanked(req('GET', '/ranked/ladder?limit=10'), { JET_RANKED_SECRET: 'test-secret' }, repo, null);
+    const r = await handleRanked(req('GET', '/ranked/ladder?limit=10'), TEST_ENV, repo, null);
     expect(r!.status).toBe(200);
     const body = (await r!.json()) as { ladder: { username: string; position: number; isReiDaLiga: boolean }[] };
     expect(body.ladder.length).toBe(10);
     expect(body.ladder[0].position).toBe(1);
     expect(body.ladder[0].username).toBe('bot-stella-prime');
     expect(body.ladder[0].isReiDaLiga).toBe(true);
+  });
+});
+describe('segurança do ticket e recusa fechada (2.1)', () => {
+  /** Par (ticket, comandos) válido, obtido pelo fluxo real. */
+  async function realTicket(username = 'Player_A', deck = 'archetype-midrange', into?: MemoryRankedRepo) {
+    const repo = into ?? new MemoryRankedRepo();
+    const reg = await handleAuth(req('POST', '/auth/register', { username, password: 'senha-forte-123' }), repo, null);
+    const { token } = (await reg!.json()) as { token: string };
+    const start = (await handleRanked(req('POST', '/ranked/start', { deck: deckIds(deck) }, token), TEST_ENV, repo, null))!;
+    const body = (await start.json()) as { ticket: string; seed: number; seat: 0 | 1; botId: string };
+    return { repo, token, ...body };
+  }
+
+  it('sem JET_RANKED_SECRET: escrita 503 (falha fechada), leitura OK', async () => {
+    const { repo, token, ...t } = await realTicket();
+    const start2 = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-aggro') }, token), {}, repo, null);
+    expect(start2!.status).toBe(503);
+    const err = (await start2!.json()) as { error: string };
+    expect(err.error).toContain('JET_RANKED_SECRET');
+    const fin = await handleRanked(req('POST', '/ranked/finish', { ticket: t.ticket, commands: [] }, token), {}, repo, null);
+    expect(fin!.status).toBe(503);
+    // leitura continua no ar (ladder não exige chave)
+    const lb = await handleRanked(req('GET', '/ranked/ladder'), {}, repo, null);
+    expect(lb!.status).toBe(200);
+  });
+
+  it('segredo curto é recusado (não aceita chave fraca em produção)', async () => {
+    const { repo, token } = await realTicket();
+    const r = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-aggro') }, token), { JET_RANKED_SECRET: 'abc' }, repo, null);
+    expect(r!.status).toBe(503);
+    expect(((await r!.json()) as { error: string }).error).toContain('curto');
+  });
+
+  it('fallback dev só com opt-in explícito', async () => {
+    const { repo, token } = await realTicket();
+    const dev = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-aggro') }, token), { NODE_ENV: 'development' }, repo, null);
+    expect(dev!.status).toBe(200);
+    const insecure = await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-aggro') }, token), { ALLOW_INSECURE_ORIGIN: '1' }, repo, null);
+    expect(insecure!.status).toBe(200);
+  });
+
+  it('ticket forjado (segredo errado) é rejeitado', async () => {
+    const { repo, token, seed, seat, botId } = await realTicket();
+    const forged = await signTicket(
+      { v: 2, u: token, s: seed, b: botId, seat, d: deckIds('archetype-aggro'), t: Date.now(), sid: 'season-1', mid: 'rm-forged', n: 'deadbeef' },
+      'segredo-de-outra-pessoa-0123456789abcdef'
+    );
+    const fin = await handleRanked(req('POST', '/ranked/finish', { ticket: forged, commands: [] }, token), TEST_ENV, repo, null);
+    expect(fin!.status).toBe(403);
+  });
+
+  it('payload do ticket adulterado (deck/bot/seed/seat/season/matchId) quebra a assinatura', async () => {
+    const { repo, token, ticket } = await realTicket();
+    const [body, sig] = [ticket.slice(0, ticket.lastIndexOf('.')), ticket.slice(ticket.lastIndexOf('.') + 1)];
+    const payload = JSON.parse(Buffer.from(body.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')) as Record<string, unknown>;
+    const mutations: Record<string, unknown>[] = [
+      { d: deckIds('archetype-aggro') },           // troca o baralho jogado
+      // troca o oponente (para um id DIFERENTE do que o ticket já traz —
+      // senão a "mutação" produz o mesmo body assinado e não é forja)
+      { b: payload.b === 'bot-stella-prime' ? 'bot-luna-underdog' : 'bot-stella-prime' },
+      { s: (payload.s as number) + 1 },            // troca a seed
+      { seat: 1 },                                 // troca o assento
+      { sid: 'season-999' },                       // troca a temporada
+      { mid: 'rm-' + Math.random().toString(36).slice(2) }, // troca a chave de idempotência
+      { v: 1 }                                     // formato antigo
+    ];
+    for (const m of mutations) {
+      const tampered = JSON.stringify({ ...payload, ...m });
+      const b64 = Buffer.from(tampered, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const bad = `${b64}.${sig}`;
+      const fin = await handleRanked(req('POST', '/ranked/finish', { ticket: bad, commands: [] }, token), TEST_ENV, repo, null);
+      expect(fin!.status, `mutação ${JSON.stringify(m)} deveria ser rejeitada`).toBe(403);
+    }
+  });
+
+  it('ticket expirado (TTL 2h) e ticket "do futuro" são recusados', async () => {
+    const { repo, token, seed, seat, botId } = await realTicket();
+    const base = { v: 2 as const, u: token.toLowerCase(), s: seed, b: botId, seat, d: deckIds('archetype-midrange'), sid: 'season-1', mid: 'rm-time-1', n: 'aa' };
+    const old = await signTicket({ ...base, t: Date.now() - 3 * 60 * 60 * 1000 }, TEST_SECRET);
+    const future = await signTicket({ ...base, mid: 'rm-time-2', t: Date.now() + 3_600_000 }, TEST_SECRET);
+    expect((await handleRanked(req('POST', '/ranked/finish', { ticket: old, commands: [] }, token), TEST_ENV, repo, null))!.status).toBe(403);
+    expect((await handleRanked(req('POST', '/ranked/finish', { ticket: future, commands: [] }, token), TEST_ENV, repo, null))!.status).toBe(403);
+  });
+
+  it('ticket de outro usuário não vale (assinatura certa, dono errado)', async () => {
+    const repo = new MemoryRankedRepo();
+    const a = await realTicket('Player_A', 'archetype-midrange', repo);
+    const b = await realTicket('Player_B', 'archetype-midrange', repo);
+    // o ticket do A apresentado pelo B: mesmo banco, mesmo segredo, dono errado
+    const fin = await handleRanked(req('POST', '/ranked/finish', { ticket: a.ticket, commands: [] }, b.token), TEST_ENV, repo, null);
+    expect(fin!.status).toBe(403);
+  });
+
+  it('baralho fora das regras do construtor é recusado na entrada', async () => {
+    const repo = new MemoryRankedRepo();
+    const reg = await handleAuth(req('POST', '/auth/register', { username: 'Cheater', password: 'senha-forte-123' }), repo, null);
+    const { token } = (await reg!.json()) as { token: string };
+    // 60× a mesma carta: ids conhecidos, tamanho certo — mas ilegal
+    const spam = new Array(60).fill('agent-jenny-base');
+    const start = await handleRanked(req('POST', '/ranked/start', { deck: spam }, token), TEST_ENV, repo, null);
+    expect(start!.status).toBe(400);
+    expect(((await start!.json()) as { error: string }).error).toContain('baralho inválido');
+    // sem agente Base (só energia) também é recusado
+    const noBasic = new Array(60).fill('jres-energia');
+    const start2 = await handleRanked(req('POST', '/ranked/start', { deck: noBasic }, token), TEST_ENV, repo, null);
+    expect(start2!.status).toBe(400);
+  });
+
+  it('nomes de bot são reservados para humanos', async () => {
+    const repo = new MemoryRankedRepo();
+    for (const name of ['StellaPrime', 'stellaprime', 'Luna_underdog', 'Luna-Underdog', 'LUNAunderdog', 'Moirai', 'bot-stella-prime']) {
+      const r = await handleAuth(req('POST', '/auth/register', { username: name, password: 'senha-forte-123' }), repo, null);
+      expect(r!.status, `${name} não deveria poder ser registrado`).toBe(409);
+      const body = (await r!.json()) as { error: string };
+      expect(body.error).toContain('bot');
+    }
+    // pontuação não é normalizada para virar nome de bot: é rejeitada como
+    // username inválido (não passa por cima da reserva por acaso)
+    const dotted = await handleAuth(req('POST', '/auth/register', { username: 'Stella.Prime', password: 'senha-forte-123' }), repo, null);
+    expect(dotted!.status).toBe(400);
+    const dotted2 = await handleAuth(req('POST', '/auth/register', { username: 'luna.underdog', password: 'senha-forte-123' }), repo, null);
+    expect(dotted2!.status).toBe(400);
+    // e um nome parecido com o de bot, mas distinto, é livre
+    const okName = await handleAuth(req('POST', '/auth/register', { username: 'stellaprime_fan', password: 'senha-forte-123' }), repo, null);
+    expect(okName!.status).toBe(201);
+  });
+
+  it('sequência de comandos gigante é recusada antes de gastar CPU', async () => {
+    const { repo, token, ticket } = await realTicket();
+    const huge = new Array(4001).fill({ type: 'END_TURN', player: 0 });
+    const fin = await handleRanked(req('POST', '/ranked/finish', { ticket, commands: huge }, token), TEST_ENV, repo, null);
+    expect(fin!.status).toBe(413);
+  });
+
+  it('dois tickets diferentes do mesmo par não colidem na chave de rating', async () => {
+    const { repo, token } = await realTicket('Player_A');
+    const s1 = (await (await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-midrange') }, token), TEST_ENV, repo, null))!.json()) as { matchId: string };
+    const s2 = (await (await handleRanked(req('POST', '/ranked/start', { deck: deckIds('archetype-midrange') }, token), TEST_ENV, repo, null))!.json()) as { matchId: string };
+    expect(s2.matchId).not.toBe(s1.matchId);
+    expect(s1.matchId).toContain('season-1');
   });
 });

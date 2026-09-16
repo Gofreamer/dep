@@ -15,9 +15,10 @@
 
 import { PROTOCOL_VERSION } from '../../src/net/protocol';
 import { RoomDO, allocateRoomCode } from './room';
-import { corsHeaders, isAllowedOrigin, parseOrigins } from './config';
+import { corsHeaders, isAllowedOrigin, parseOrigins, resolveRankedSecret } from './config';
 import { D1RankedRepo } from './d1repo';
 import { handleAuth, handleRanked } from './rankedApi';
+import { runLadderTick } from '../../src/ranked/ladderTick';
 
 export { RoomDO };
 
@@ -27,6 +28,8 @@ export interface Env {
   JET_RANKED_SECRET?: string;
   CLIENT_ORIGINS?: string;
   ALLOW_INSECURE_ORIGIN?: string;
+  /** 'development' ativa o fallback dev do segredo (só local). */
+  NODE_ENV?: string;
 }
 
 const INFO_HTML = `<!doctype html>
@@ -39,6 +42,22 @@ const INFO_HTML = `<!doctype html>
 </body></html>`;
 
 const worker: ExportedHandler<Env> = {
+  /**
+   * Cron da escada (`[triggers] crons` em wrangler.toml). Mantém a liga viva
+   * entre partidas humanas: casa bots por rating vivo, aplica resultado com
+   * `matchId` idempotente por hora e purga sessões vencidas. Sem D1 bindado,
+   * não faz nada (casual/multiplayer privado continuam 100% funcionais).
+   */
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (!env.JET_DB) return;
+    const repo = new D1RankedRepo(env.JET_DB);
+    ctx.waitUntil(
+      runLadderTick(repo, { now: Date.now() }).catch((err) => {
+        console.error('[worker] ladder tick falhou', err);
+      })
+    );
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const cfg = parseOrigins(env.CLIENT_ORIGINS);
@@ -59,7 +78,7 @@ const worker: ExportedHandler<Env> = {
       const repo = new D1RankedRepo(env.JET_DB);
       const authRes = await handleAuth(request, repo, origin);
       if (authRes) return authRes;
-      const rankedRes = await handleRanked(request, { JET_RANKED_SECRET: env.JET_RANKED_SECRET }, repo, origin);
+      const rankedRes = await handleRanked(request, env, repo, origin);
       if (rankedRes) return rankedRes;
       return new Response(JSON.stringify({ ok: false, error: 'rota não encontrada' }), { status: 404, headers: { 'content-type': 'application/json; charset=utf-8', ...corsHeaders(origin, cfg) } });
     }
@@ -69,8 +88,16 @@ const worker: ExportedHandler<Env> = {
     }
 
     if (url.pathname === '/health') {
+      // Diagnóstico SEM segredo nenhum: só booleans de configuração, para o
+      // E2E/deploy saber se a Liga está pronta sem vazar nada.
+      const secret = resolveRankedSecret(env);
       return new Response(
-        JSON.stringify({ ok: true, service: 'jet-tcg-multiplayer', protocolVersion: PROTOCOL_VERSION }),
+        JSON.stringify({
+          ok: true,
+          service: 'jet-tcg-multiplayer',
+          protocolVersion: PROTOCOL_VERSION,
+          ranked: { d1: !!env.JET_DB, secretConfigured: secret.ok, devFallback: secret.ok && secret.devFallback }
+        }),
         { status: 200, headers: corsHeaders(origin, cfg) }
       );
     }
