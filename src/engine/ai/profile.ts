@@ -7,6 +7,8 @@
  * PÚBLICO + a profundidade do lookahead determinístico (seeded).
  */
 
+import type { AiLevel } from '../types';
+
 export interface AiProfile {
   id: string;
   label: string;
@@ -36,7 +38,7 @@ export interface AiProfile {
   timeBudgetMs: number;
 }
 
-export const PROFILE_LEVELS: Record<'easy' | 'normal' | 'hard' | 'elite', AiProfile> = {
+export const PROFILE_LEVELS: Record<AiLevel, AiProfile> = {
   easy: {
     id: 'easy', label: 'Casual', aggression: 0.55, riskTolerance: 0.3, resourcePreservation: 0.2,
     futurePlanning: 0.15, tempoWeight: 0.4, lethalWeight: 0.5, boardWeight: 0.4,
@@ -59,8 +61,10 @@ export const PROFILE_LEVELS: Record<'easy' | 'normal' | 'hard' | 'elite', AiProf
   }
 };
 
-export function profileForLevel(level: 'easy' | 'normal' | 'hard'): AiProfile {
-  return PROFILE_LEVELS[level];
+export function profileForLevel(level: AiLevel): AiProfile {
+  // Record total sobre AiLevel + fallback: um nível fora da união nunca pode
+  // devolver `undefined` (foi assim que o jogo quebraria com um nível novo).
+  return PROFILE_LEVELS[level] ?? DEFAULT_PROFILE;
 }
 
 export const DEFAULT_PROFILE: AiProfile = PROFILE_LEVELS.normal;
