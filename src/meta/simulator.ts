@@ -94,6 +94,13 @@ export interface SimReport {
     p0Wins: number; p1Wins: number; draws: number; games: number;
     /** espelhos isolados: única forma de medir o efeito PURO do assento. */
     mirrorP0Wins: number; mirrorGames: number;
+    /**
+     * Quem COMEÇOU o jogo (sorteado pelo engine) vs vencedor. Separa as duas
+     * coisas que o número de assento sozinha confunde: vantagem de regra
+     * (começar) e acoplamento de RNG/embaralhamento com assento (medição).
+     */
+    starterWins: number; starterGames: number;
+    mirrorStarterWins: number; mirrorStarterGames: number;
   };
   /** Partidas por par e por célula de espelho (para ler σ das taxas). */
   gamesPerPair: number;
@@ -341,7 +348,7 @@ export function simulateMeta(decks: DeckEntry[], opts: SimOptions = {}): SimRepo
 
   const totalGames = pairs.length * gamesPerPair * seeds.length;
   let game = 0;
-  const firstPlayer = { p0Wins: 0, p1Wins: 0, draws: 0, games: 0, mirrorP0Wins: 0, mirrorGames: 0 };
+  const firstPlayer = { p0Wins: 0, p1Wins: 0, draws: 0, games: 0, mirrorP0Wins: 0, mirrorGames: 0, starterWins: 0, starterGames: 0, mirrorStarterWins: 0, mirrorStarterGames: 0 };
   let pairNo = 0;
 
   for (const [a, b] of pairs) {
@@ -382,6 +389,16 @@ export function simulateMeta(decks: DeckEntry[], opts: SimOptions = {}): SimRepo
         if (isMirror) {
           firstPlayer.mirrorGames++;
           if (stats.winner === 0) firstPlayer.mirrorP0Wins++;
+        }
+        // vantagem de REGRA (quem abre) — `startingPlayer` é sorteado pelo
+        // engine, independente do assento; é a leitura que separa "começar vale
+        // mais" de "o RNG trata o assento 0 melhor".
+        const starter = engine.state.startingPlayer;
+        firstPlayer.starterGames++;
+        if (stats.winner === starter) firstPlayer.starterWins++;
+        if (isMirror) {
+          firstPlayer.mirrorStarterGames++;
+          if (stats.winner === starter) firstPlayer.mirrorStarterWins++;
         }
 
         // --- contagem global por deck: espelho conta como DUAS metas na mesma
@@ -580,9 +597,12 @@ export function formatSimReport(report: SimReport): string {
   // σ de uma proporção sobre n partidas independentes (para o leitor separar
   // "viés real de assento" de "ruído de amostra pequena").
   const sigma = (n: number) => (n > 0 ? Math.sqrt(0.25 / n) : 1);
+  const starterRate = fp.starterGames ? fp.starterWins / fp.starterGames : 0;
+  const mirrorStarterRate = fp.mirrorStarterGames ? fp.mirrorStarterWins / fp.mirrorStarterGames : 0;
   lines.push(`### Vantagem de quem abre (P0)
 - todas as partidas: P0 ${pct(p0Rate)} · P1 ${pct(fp.games ? fp.p1Wins / fp.games : 0)} · empates ${fp.draws} · n=${fp.games} (σ amostral ${(sigma(fp.games) * 100).toFixed(1)}pp)
 - **espelhos** (medida limpa do assento: mesmo baralho dos dois lados): P0 ${pct(mirrorRate)} · n=${fp.mirrorGames} (σ ${(sigma(fp.mirrorGames) * 100).toFixed(1)}pp)
+- quem **começou** (sorteado pelo engine, independente do assento) vence ${pct(starterRate)} no field e ${pct(mirrorStarterRate)} nos espelhos (n=${fp.starterGames}) — vantagem de REGRA é isso; assento é o que denuncia viés de MEDIÇÃO
 - por deck: ${report.decks.map((d) => `${d.name} ${pct(report.p0WinRate[d.id] ?? 0)}/${pct(report.p1WinRate[d.id] ?? 0)}`).join(' · ')}
 - delineamento: \`${report.design}\` — ${gamesDesc}`);
   lines.push('');

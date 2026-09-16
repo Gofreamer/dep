@@ -95,6 +95,7 @@ const fp = report.firstPlayer;
  * Só entra no gate com amostra ≥ 96 partidas de espelho; abaixo disso é aviso.
  */
 const mirrorP0 = fp.mirrorGames ? fp.mirrorP0Wins / fp.mirrorGames : 0.5;
+const starterRate = fp.starterGames ? fp.starterWins / fp.starterGames : 0.5;
 const mirrorTol = Math.max(0.05, 2 * sig(fp.mirrorGames));
 const mirrorSeatOk = Math.abs(mirrorP0 - 0.5) <= mirrorTol;
 

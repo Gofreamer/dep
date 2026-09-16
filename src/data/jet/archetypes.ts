@@ -105,8 +105,13 @@ export const ARCHETYPE_DECKS: DeckDef[] = [
       'agent-ran-yuki-base': 4, 'agent-xixim-base': 4, 'agent-shirakami-niku-base': 4, 'agent-jenny-base': 3,
       'jsyn-kof-furia': 2, 'jsyn-kof-ritmo': 2, 'jsyn-kof-troca-relampago': 2,
       'jact-primeiro-sangue': 2, 'jact-pressao-total': 2, 'jact-marca-quente': 2, 'jact-varredura': 2,
-      'jeq-lamina-rubra': 3, 'jeq-impulso-kof': 2, 'jeq-ultimato-kof': 1,
-      'jres-catalisador': 2, 'jfd-pressao-kof': 3
+      // 2.1: o motor de "dano quase grátis" é o que levou este deck a 68%.
+      // Redução de custo tem piso/teto na engine, e aqui ele também é mais raro:
+      // 1× impulso + 1× catalisador (eram 2+2) e 1× lâmina a menos. O campo de
+      // pressão sai de 3 para 2 cópias — a terceira era compra morta com o campo
+      // já de pé. O restante do plano (marca + exaustão + 15 corpos) é intacto.
+      'jeq-lamina-rubra': 2, 'jeq-impulso-kof': 1, 'jeq-ultimato-kof': 1,
+      'jres-catalisador': 1, 'jfd-pressao-kof': 2
     })
   },
   {
@@ -131,7 +136,10 @@ export const ARCHETYPE_DECKS: DeckDef[] = [
   {
     id: 'archetype-burst', name: 'Tubarões XYZ', description: 'Burst: janela explosiva e finisher 4E (Colisão Tubarão).',
     cards: complete({
-      'agent-kaio-base': 4, 'agent-ruby-base': 4,
+      // 2.1: com 2 identidades (8 corpos) o deck morria em qualquer corrida —
+      // `noActiveLoses` não dá tempo de resolver. Saki entra como terceiro corpo
+      // barato (1E/20) para sustentar a janela de burst.
+      'agent-kaio-base': 4, 'agent-ruby-base': 4, 'agent-saki-base': 4,
       'jsyn-tub-frenesi': 2, 'jsyn-tub-isca': 2, 'jsyn-tub-cacada-em-grupo': 2,
       'jact-ruptura': 3, 'jact-allin': 2, 'jact-dentes': 3, 'jact-troca-violenta': 2,
       'jeq-cristal': 3, 'jeq-colisao-tubarao': 2, 'jfd-mare-vermelha': 2, 'jfd-zona-de-troca': 1,
@@ -141,7 +149,11 @@ export const ARCHETYPE_DECKS: DeckDef[] = [
   {
     id: 'archetype-disruption', name: 'Blackout R6', description: 'Disrupção: negação de Energia/habilidades e finisher 5E (Blackout Total).',
     cards: complete({
-      'agent-wei-fang-base': 4, 'agent-wei-wang-base': 4,
+      // 2.1: 8 corpos e HP 110 nos dois agentes = o deck perdia o race antes de
+      // negar qualquer coisa. Tayna (Asgard, 110, 1E/10 + 2E/20) é o terceiro
+      // corpo que segura a linha enquanto o blackout acumula. Não é buff de
+      // carta: é densidade de corpos para o plano já existir.
+      'agent-wei-fang-base': 4, 'agent-wei-wang-base': 4, 'agent-tayna-lannister-muller-base': 4,
       'jsyn-r6-interceptacao': 2, 'jsyn-r6-cerco': 2, 'jsyn-r6-supressao': 2,
       'jact-blackout': 3, 'jact-sabotagem': 3, 'jact-interdicao': 2, 'jact-zona-de-combate': 2, 'jact-nevoa': 2,
       'jeq-gerador': 2, 'jeq-reflexo-r6': 2, 'jeq-protocolo-r6': 1, 'jfd-zona-silenciosa': 2, 'jfd-blackout-geral': 1,
@@ -151,7 +163,12 @@ export const ARCHETYPE_DECKS: DeckDef[] = [
   {
     id: 'archetype-tempo', name: 'Precisão Platinum', description: 'Tempo: controle de ritmo e finisher 4E (Tiro Decisivo).',
     cards: complete({
-      'agent-baek-seo-jin-base': 4,
+      // 2.1: DECK MATEMATICAMENTE INVIÁVEL ANTES — 1 identidade × 4 cópias =
+      // 4 agentes em campo com `noActiveLoses` ligado. Xixim dá o corpo rápido
+      // (1E/20) e Henry o corpo de 130 PV com bônus de reserva, que é exatamente
+      // o jogo de "ritmo" do Platinum. O plano (setup + Tiro Decisivo 4E que
+      // ignora Resistência) continua o mesmo.
+      'agent-baek-seo-jin-base': 4, 'agent-xixim-base': 4, 'agent-henry-base': 4,
       'jsyn-plat-mira': 2, 'jsyn-plat-plano': 2, 'jsyn-plat-execucao': 2,
       'jact-precisao': 3, 'jact-preparacao': 2, 'jact-gambito': 3, 'jact-antecipacao': 3, 'jact-contragolpe': 2,
       'jeq-luneta': 2, 'jeq-precisao-plat': 2, 'jfd-relogio': 2, 'jfd-zona-controlada': 2,
@@ -161,21 +178,28 @@ export const ARCHETYPE_DECKS: DeckDef[] = [
   {
     id: 'archetype-sustain', name: 'Âncora Weigon', description: 'Sustain: regeneração em equipe e finisher 5E (Âncora Final).',
     cards: complete({
-      'agent-olivia-mih-base': 4, 'agent-tarruh-base': 3,
+      // 2.1: 7 corpos → 12 (Tarruh a 4 + Alice Westland, que cura 20/turno).
+      // Para não virar "partida infinita", a Regeneração cai de 3 para 2 cópias
+      // e a Fonte de 2 para 1: o ganho de sobrevivência vem dos corpos, não de
+      // mais cura empilhada — os turnos médios são conferidos pelo meta-sim.
+      'agent-olivia-mih-base': 4, 'agent-tarruh-base': 4, 'agent-alice-westland-base': 4,
       'jsyn-weigon-mare': 2, 'jsyn-weigon-esta': 2, 'jsyn-weigon-respiro': 2,
-      'jact-regeneracao': 3, 'jact-ancora': 2, 'jact-resiliencia': 2, 'jact-fortaleza': 3,
-      'jeq-mochila': 2, 'jeq-essencia': 2, 'jeq-ancora-weigon': 2, 'jfd-fonte': 2, 'jfd-ancoradouro': 2,
+      'jact-regeneracao': 2, 'jact-ancora': 2, 'jact-resiliencia': 2, 'jact-fortaleza': 3,
+      'jeq-mochila': 2, 'jeq-essencia': 2, 'jeq-ancora-weigon': 2, 'jfd-fonte': 1, 'jfd-ancoradouro': 2,
       'jres-estabilizador': 2
     })
   },
   {
     id: 'archetype-combo', name: 'Caçada Salvatore', description: 'Combo: Marca + valor condicional e finisher 4E (Caçada Final).',
     cards: complete({
-      'agent-hashika-gloves-base': 4, 'agent-ruby-base': 4,
+      // 2.1: terceira identidade (Ran Yuki) para chegar a 12 corpos, e as duas
+      // cópias de Marca Quente entram porque o payoff do deck LÊ "Marcado" — sem
+      // aplicador extra de Marca o combo dependia de comprar a peça única.
+      'agent-hashika-gloves-base': 4, 'agent-ruby-base': 4, 'agent-ran-yuki-base': 4,
       'jsyn-salv-rastro': 2, 'jsyn-salv-emboscada': 2, 'jsyn-salv-espreita': 2,
-      'jact-cacada': 3, 'jact-cadeia': 3, 'jact-climax': 2,
-      'jeq-luva-rapida': 2, 'jeq-cacada-salv': 2, 'jfd-territorio-de-caca': 2,
-      'jres-dreno': 1
+      'jact-cacada': 3, 'jact-cadeia': 3, 'jact-climax': 2, 'jact-marca-quente': 2, 'jact-preparacao': 2,
+      'jeq-luva-rapida': 2, 'jeq-cacada-salv': 2, 'jeq-cristal': 2, 'jfd-territorio-de-caca': 2,
+      'jres-dreno': 2
     })
   }
 ];
