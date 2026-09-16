@@ -6,7 +6,7 @@
  * never hides one it would accept). No duplicated implementations.
  */
 
-import type { CardInstance, CharacterDef, MatchState, PlayerId } from './types';
+import type { CardInstance, CharacterDef, MatchState, PlayerId, ResourceCost } from './types';
 import { registry } from './registry';
 import {
   abilitiesBlocked, cannotRetreat, charDef, charactersInPlay, costSatisfied, defOf, equipmentSlots,
@@ -84,6 +84,7 @@ export function attachLimit(state: MatchState, pIdx: PlayerId): number {
   return limit;
 }
 
+/** Redução BRUTA concedida por equipamentos, campos e modificadores temporários. */
 export function attackCostReduce(state: MatchState, inst: CardInstance): number {
   let reduce = 0;
   for (const eq of inst.attached) {
@@ -99,6 +100,43 @@ export function attackCostReduce(state: MatchState, inst: CardInstance): number 
   }
   for (const ov of state.fieldOverrides) reduce += ov.attackCostMod ?? 0;
   return reduce;
+}
+
+/**
+ * Redução REALMENTE aplicável a um custo (FONTE ÚNICA — `legalActions` e
+ * `dispatch` passam por aqui).
+ *
+ * JET 2.1 fixa três limites estruturais que o texto das cartas sempre prometeu
+ * ("ataca com 1 Energia a menos (mínimo 1)") mas o código não aplicava:
+ *
+ *  1. **piso** — um custo não-vazio nunca é zerado: sempre sobra
+ *     `turn.attackCostFloor` (1) Energia a pagar. Sem isso, dois redutores
+ *     deixavam um agente com 0 Energia conectada atacar 40 de dano de graça;
+ *  2. **antiestouro** — a redução total é limitada a `turn.maxAttackCostReduce`
+ *     (1) ponto, ou seja redutores não empilham;
+ *  3. **imune a desconto** — ataques marcados com `costReduceImmune` (os
+ *     finishers de 4–5E) não recebem redução nenhuma: desconto de Energia não
+ *     pode comprar o payoff do jogo tardio.
+ */
+export function effectiveAttackCostReduce(
+  state: MatchState,
+  inst: CardInstance,
+  cost: ResourceCost | undefined,
+  attack?: { costReduceImmune?: boolean } | null
+): number {
+  const total = (cost ?? []).reduce((s, e) => s + Math.max(0, e.amount ?? 0), 0);
+  if (total <= 0) return 0;
+  if (attack?.costReduceImmune) return 0;
+  const cap = state.config.turn.maxAttackCostReduce ?? 1;
+  const floor = state.config.turn.attackCostFloor ?? 1;
+  const raw = Math.max(0, attackCostReduce(state, inst));
+  return Math.min(raw, cap, Math.max(0, total - floor));
+}
+
+/** Custo efetivo (após redução) de um ataque/habilidade, em Energia. */
+export function effectiveAttackCost(state: MatchState, inst: CardInstance, cost: ResourceCost | undefined, attack?: { costReduceImmune?: boolean } | null): number {
+  const total = (cost ?? []).reduce((s, e) => s + Math.max(0, e.amount ?? 0), 0);
+  return Math.max(0, total - effectiveAttackCostReduce(state, inst, cost, attack));
 }
 
 // ---------------------------------------------------------------------------
@@ -151,10 +189,26 @@ export function canPayRetreat(state: MatchState, pIdx: PlayerId): boolean {
 // character of the player (same evalCondition used by effects).
 // ---------------------------------------------------------------------------
 
-export function checkRestrictions(state: MatchState, pIdx: PlayerId, def: { id: string; restrictions?: any[] }): RuleCheck {
+export function checkRestrictions(
+  state: MatchState,
+  pIdx: PlayerId,
+  def: { id: string; kind?: string; restrictions?: any[] }
+): RuleCheck {
   const p = player(state, pIdx);
   const opp = player(state, pIdx === 0 ? 1 : 0);
-  for (const r of def.restrictions ?? []) {
+  const onceList = def.restrictions ?? [];
+  // Regra de espécie (ver TurnConfig.actionOncePerTurn): AÇÃO = 1 cópia por
+  // def por turno, mesmo quando a carta não declara `oncePerTurn`. Vale antes
+  // do loop para que `computeLegalActions` e o `dispatch` discordem nunca.
+  if (
+    def.kind === 'ACTION' &&
+    state.config.turn.actionOncePerTurn !== false &&
+    !onceList.some((r) => r?.type === 'oncePerTurn') &&
+    p.actionsPlayedTurn.includes(def.id)
+  ) {
+    return { ok: false, reason: 'restriction_once_per_turn' };
+  }
+  for (const r of onceList) {
     switch (r.type) {
       case 'oncePerTurn':
         if (p.actionsPlayedTurn.includes(def.id)) return { ok: false, reason: 'restriction_once_per_turn' };
@@ -199,7 +253,7 @@ export function abilityCheck(state: MatchState, pIdx: PlayerId, inst: CardInstan
   if (abilitiesBlocked(state, inst)) return { ok: false, reason: 'abilities_blocked' };
   if (ability.oncePerTurn && inst.usedTurn.includes(`ability:${ability.id}`)) return { ok: false, reason: 'already_used_turn' };
   if (ability.oncePerMatch && inst.usedMatch.includes(`ability:${ability.id}`)) return { ok: false, reason: 'already_used_match' };
-  if (ability.cost && ability.cost.some((x: any) => x.amount > 0) && !costSatisfied(inst, ability.cost, Math.max(0, attackCostReduce(state, inst)))) {
+  if (ability.cost && ability.cost.some((x: any) => x.amount > 0) && !costSatisfied(inst, ability.cost, effectiveAttackCostReduce(state, inst, ability.cost, ability))) {
     return { ok: false, reason: 'not_enough_resources' };
   }
   if (ability.condition && !evalCondition(state, { sourceUid: inst.uid, sourcePlayer: pIdx, bound: {}, depth: 0 }, ability.condition)) {
@@ -210,7 +264,7 @@ export function abilityCheck(state: MatchState, pIdx: PlayerId, inst: CardInstan
 
 export function ultimateCheck(state: MatchState, pIdx: PlayerId, inst: CardInstance, ult: any): RuleCheck {
   if (inst.usedMatch.includes(`ultimate:${ult.id}`)) return { ok: false, reason: 'already_used_match' };
-  if (ult.cost && ult.cost.some((x: any) => x.amount > 0) && !costSatisfied(inst, ult.cost, Math.max(0, attackCostReduce(state, inst)))) {
+  if (ult.cost && ult.cost.some((x: any) => x.amount > 0) && !costSatisfied(inst, ult.cost, effectiveAttackCostReduce(state, inst, ult.cost, ult))) {
     return { ok: false, reason: 'not_enough_resources' };
   }
   if (ult.activationCondition && !evalCondition(state, { sourceUid: inst.uid, sourcePlayer: pIdx, bound: {}, depth: 0 }, ult.activationCondition)) {

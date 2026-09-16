@@ -7,7 +7,7 @@ import {
   grantedAttacks, maxHp, opponentOf, player, retreatCostOf
 } from './queries';
 import {
-  abilityCheck, attackCostReduce as sharedAttackCostReduce, attachLimit as sharedAttachLimit,
+  abilityCheck, effectiveAttackCostReduce, attachLimit as sharedAttachLimit,
   canAttack as sharedCanAttack, canDeployCharacter, canPayRetreat, canSeatAtSetup, canUpgradeTo,
   checkRestrictions, retreatCheck, ultimateCheck, isDirectlyDeployable
 } from './rules';
@@ -691,7 +691,7 @@ export class MatchEngine {
     if (!check.ok) throw new EngineError(check.reason ?? 'condition_not_met');
     const ctx = { sourceUid: inst.uid, sourcePlayer: pIdx, bound: {}, depth: 0 };
     if (ability.cost && ability.cost.some((c) => c.amount > 0)) {
-      const reduce = Math.max(0, this.attackCostReduceFor(inst));
+      const reduce = effectiveAttackCostReduce(this.state, inst, ability.cost, ability);
       if (!costSatisfied(inst, ability.cost, reduce)) throw new EngineError('not_enough_resources');
       payAttackCost(this.g(), inst, ability.cost, reduce);
     }
@@ -715,17 +715,13 @@ export class MatchEngine {
     if (!check.ok) throw new EngineError(check.reason ?? 'condition_not_met');
     const ctx = { sourceUid: inst.uid, sourcePlayer: pIdx, bound: {}, depth: 0 };
     if (ult.cost && ult.cost.some((c) => c.amount > 0)) {
-      const reduce = Math.max(0, this.attackCostReduceFor(inst));
+      const reduce = effectiveAttackCostReduce(this.state, inst, ult.cost, ult);
       if (!costSatisfied(inst, ult.cost, reduce)) throw new EngineError('not_enough_resources');
       payAttackCost(this.g(), inst, ult.cost, reduce);
     }
     inst.usedMatch.push(`ultimate:${ult.id}`);
     emit(this.state, 'ABILITY_ACTIVATED', pIdx, { uid: inst.uid, abilityId: ult.id, ultimate: true });
     yield* runSteps(this.g(), ctx, ult.effects);
-  }
-
-  private attackCostReduceFor(inst: CardInstance): number {
-    return sharedAttackCostReduce(this.state, inst);
   }
 
   canAttackNow(inst: CardInstance): { ok: boolean; reason?: string } {
@@ -744,7 +740,7 @@ export class MatchEngine {
     if (!attack) throw new EngineError('unknown_attack');
     const ctx = { sourceUid: active.uid, sourcePlayer: pIdx, bound: { attacker: active.uid } as Record<string, string>, depth: 0 };
     if (attack.condition && !evalCondition(st, ctx, attack.condition)) throw new EngineError('condition_not_met');
-    const costReduce = Math.max(0, this.attackCostReduceFor(active));
+    const costReduce = effectiveAttackCostReduce(st, active, attack.cost, attack);
     if (!costSatisfied(active, attack.cost, costReduce)) throw new EngineError('not_enough_resources');
     if (!payAttackCost(g, active, attack.cost, costReduce)) throw new EngineError('not_enough_resources');
 

@@ -18,7 +18,7 @@ export type CardKind = 'CHARACTER' | 'RESOURCE' | 'ACTION' | 'EQUIPMENT' | 'FIEL
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
-export type AiLevel = 'easy' | 'normal' | 'hard';
+export type AiLevel = 'easy' | 'normal' | 'hard' | 'elite';
 
 // ---------------------------------------------------------------------------
 // Resources / costs
@@ -198,6 +198,8 @@ export interface AbilityDef {
   zone?: 'active' | 'bench' | 'any';
   /** True when the ability requires the opponent to choose targets. */
   opponentChooses?: boolean;
+  /** Ver `AttackDef.costReduceImmune` — custo de habilidade imune a desconto. */
+  costReduceImmune?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -227,6 +229,11 @@ export interface AttackDef {
   tags?: string[];
   ignoreWeakness?: boolean;
   ignoreResistance?: boolean;
+  /**
+   * Finishers de 4–5E: nenhum redutor de custo (`attackCostReduce`) se aplica a
+   * este ataque. O payoff do jogo tardio não pode ser comprado com desconto.
+   */
+  costReduceImmune?: boolean;
   condition?: ConditionSpec;
 }
 
@@ -299,6 +306,8 @@ export interface UltimateDef {
   effects: EffectStep[];
   /** Always enforced by the engine, kept explicit for readability. */
   oncePerMatch?: true;
+  /** Ver `AttackDef.costReduceImmune` — custo da Suprema imune a desconto. */
+  costReduceImmune?: boolean;
 }
 
 export interface ResourceDef extends CardBase {
@@ -601,6 +610,22 @@ export interface TurnConfig {
   attachPerTurn: number;
   retreatsPerTurn: number;
   attackEndsTurn: boolean;
+  /**
+   * Piso de Energia que sempre resta pago num custo de ataque/habilidade.
+   * Redutores de custo NUNCA zera um custo não-vazio (0 = regra desligada).
+   */
+  attackCostFloor?: number;
+  /** Máximo de pontos de redução que se aplicam a um mesmo custo (sem estouro). */
+  maxAttackCostReduce?: number;
+  /**
+   * Regra de espécie das AÇÕES (Técnicas): cada def de ação pode ser jogada
+   * UMA vez por turno. Ações não têm custo de Energia (são "grátis" por
+   * design — ver `toTechnique`), então o limite por def é o único freio da
+   * economia de cartas; sem ele, N cópias da mesma técnica viram N× o efeito
+   * no mesmo turno (o 2.0 só freava quem declarasse `oncePerTurn` — os
+   * `jsyn-*` passavam sem limite). `false` desliga (fixtures/testes).
+   */
+  actionOncePerTurn?: boolean;
 }
 
 export interface SetupConfig {
@@ -666,12 +691,18 @@ export const DEFAULT_CONFIG: GameConfig = {
     drawAmount: 1,
     attachPerTurn: 1,
     retreatsPerTurn: 1,
-    attackEndsTurn: true
+    attackEndsTurn: true,
+    attackCostFloor: 1,
+    maxAttackCostReduce: 1,
+    actionOncePerTurn: true
   },
   setup: { handSize: 7, requireBasic: true, mulligan: 'auto', mulliganBonusDraw: true, benchAtSetup: true },
   victory: { targetPoints: 4, deckOutLoses: true, noActiveLoses: true },
   damage: { weaknessMultiplier: 2, resistanceDefaultReduce: 30 },
-  deckRules: { min: 40, max: 60, maxCopies: 4, uniqueMax: 1, allowMultipleFactions: true, copyLimitExempt: ['RESOURCE'] },
+  // `maxCopiesPerIdentity` é o limite SOMANDO edições/variantes do mesmo agente
+  // (base + MVP + CHAMPION…). `validateDeck` já implementa a regra e o builder
+  // da UI já a consultava, mas o campo faltava aqui → a regra estava morta.
+  deckRules: { min: 40, max: 60, maxCopies: 4, maxCopiesPerIdentity: 4, uniqueMax: 1, allowMultipleFactions: true, copyLimitExempt: ['RESOURCE'] },
   progression: { stages: ['Base', 'Estágio 1', 'Estágio 2'], canSkipStages: false, damageCarriesOver: true, keepAttachedOnUpgrade: true }
 };
 

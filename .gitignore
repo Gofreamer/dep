@@ -19,3 +19,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# scripts locais de auditoria (não versionados)
+.scratch/

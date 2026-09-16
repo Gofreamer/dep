@@ -56,7 +56,7 @@ export const JET_ENERGY: ResourceDef[] = [
     tags: ['energia', 'agressão'], art: { motif: 'energia', seed: 'jres-catalisador' },
     resourceType: '*', amount: 1,
     mods: { attackCostReduce: 1 },
-    text: 'O Agente conectado ataca com 1 Energia a menos (mínimo 1).'
+    text: 'O Agente conectado ataca com 1 Energia a menos (mínimo 1; não empilha com outros redutores).'
   },
   {
     id: 'jres-overclock', kind: 'RESOURCE', name: 'Overclock', faction: 'neutro', rarity: 'rare',

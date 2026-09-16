@@ -8,7 +8,7 @@ import type { CardInstance, LegalActions, MatchState, PlayerId } from './types';
 import { charDef, charactersInPlay, defOf, grantedAttacks, player } from './queries';
 import {
   abilityCheck, attachLimit, canAttack, canDeployCharacter, canPayRetreat, canSeatAtSetup,
-  canUpgradeTo, checkRestrictions, equipmentTargets, retreatCheck, attackCostReduce, ultimateCheck
+  canUpgradeTo, checkRestrictions, equipmentTargets, retreatCheck, effectiveAttackCostReduce, ultimateCheck
 } from './rules';
 import { costSatisfied } from './queries';
 
@@ -120,7 +120,7 @@ export function computeLegalActions(state: MatchState, pIdx: PlayerId, version: 
         out.attacks.push({ attackId: atk.id, playable: false, reason: atkCheck.reason });
         continue;
       }
-      if (!costSatisfied(active, atk.cost, Math.max(0, attackCostReduce(state, active)))) {
+      if (!costSatisfied(active, atk.cost, effectiveAttackCostReduce(state, active, atk.cost, atk))) {
         out.attacks.push({ attackId: atk.id, playable: false, reason: 'not_enough_resources' });
         continue;
       }

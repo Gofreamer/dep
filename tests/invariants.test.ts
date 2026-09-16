@@ -452,9 +452,19 @@ describe('Identidade, edições, holo e raridade', () => {
     // 2 BASE + 2 MVP = 4 → válido
     const v2 = validateDeck({ 't-jenny-base': 2, 't-jenny-mvp': 2, 'res-neutro': 56 }, rules);
     expect(v2.valid).toBe(true);
-    // sem o limite configurado, 4+4 passa (comportamento antigo preservado)
+    // 2.1: o limite está LIGADO no config padrão. A 2.0 tinha a regra escrita em
+    // `validateDeck` e no builder da UI (que consultava o campo) e o número em
+    // `terminology.ts`, mas `DEFAULT_CONFIG.deckRules` não definia
+    // `maxCopiesPerIdentity` → 4 BASE + 4 MVP passavam e a regra estava morta.
     const v3 = validateDeck({ 't-jenny-base': 4, 't-jenny-mvp': 4, 'res-neutro': 52 }, DEFAULT_CONFIG.deckRules);
-    expect(v3.valid).toBe(true);
+    expect(v3.valid).toBe(false);
+    expect(v3.errors.some((e) => e.includes('por identidade'))).toBe(true);
+    // desligar exige opt-out explícito (fixtures podem querer 8 variantes)
+    const v4 = validateDeck(
+      { 't-jenny-base': 4, 't-jenny-mvp': 4, 'res-neutro': 52 },
+      { ...DEFAULT_CONFIG.deckRules, maxCopiesPerIdentity: undefined }
+    );
+    expect(v4.valid).toBe(true);
   });
 
   it('24. holo não modifica stats (cosmético)', () => {

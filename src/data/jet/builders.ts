@@ -14,11 +14,20 @@ import type { AbilityDef, ActionDef, AttackDef, EquipmentDef, EffectStep, FieldD
 export const FX = (op: string, params: Record<string, unknown> = {}): EffectStep => ({ op, ...params });
 
 /** Ataque concedido (finishers de 4–5 Energias vivem aqui, nunca em agente). */
+/**
+ * Finishers de 4–5E são imunes a redução de custo por construção (regra de
+ * power budget da 2.1): desconto de Energia acelera o jogo médio, não compra o
+ * payoff do jogo tardio. `costReduceImmune` pode ser sobrescrito explicitamente.
+ */
 export function grantAttack(
   id: string, name: string, cost: number, damage: number, text: string,
   extra: Partial<AttackDef> = {}
 ): AttackDef {
-  return { id, name, cost: [{ type: '*', amount: cost }], damage, text, ...extra };
+  return {
+    id, name, cost: [{ type: '*', amount: cost }], damage, text,
+    costReduceImmune: cost >= 4,
+    ...extra
+  };
 }
 
 export interface ActionOpts {

@@ -40,7 +40,7 @@ export const JET_EQUIPMENT: EquipmentDef[] = [
     mods: { damageDealtFlat: 15 }
   }),
   equip('jeq-impulso-kof', 'Impulso KOF', {
-    text: 'O Agente conectado ataca com 1 Energia a menos (mínimo 1).', rarity: 'rare', faction: 'kof-12', tags: ['equipamento', 'aggro'],
+    text: 'O Agente conectado ataca com 1 Energia a menos (mínimo 1; não empilha com outros redutores).', rarity: 'rare', faction: 'kof-12', tags: ['equipamento', 'aggro'],
     mods: { attackCostReduce: 1 }
   }),
   equip('jeq-ultimato-kof', 'Ultimato KOF', {
@@ -108,7 +108,7 @@ export const JET_EQUIPMENT: EquipmentDef[] = [
 
   // ---- Disrupção (Rainbow Six) -------------------------------------------
   equip('jeq-gerador', 'Gerador de Interferência', {
-    text: 'O Agente conectado ataca com 1 Energia a menos (mínimo 1).', rarity: 'rare', faction: 'rainbow-six', tags: ['equipamento', 'disrupção'],
+    text: 'O Agente conectado ataca com 1 Energia a menos (mínimo 1; não empilha com outros redutores).', rarity: 'rare', faction: 'rainbow-six', tags: ['equipamento', 'disrupção'],
     mods: { attackCostReduce: 1 }
   }),
   equip('jeq-reflexo-r6', 'Reflexos de Operação', {
