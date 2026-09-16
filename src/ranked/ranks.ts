@@ -35,6 +35,17 @@ export type RankId = 'FERRO' | 'BRONZE' | 'PRATA' | 'OURO' | 'PLATINA' | 'DIAMAN
 
 export const RANK_BY_ID: Record<RankId, RankDef> = Object.fromEntries(RANKS.map((r) => [r.id, r])) as Record<RankId, RankDef>;
 
+/**
+ * Ordem canônica (baixa → alta). Fonte ÚNICA para UI/ladder — a tela de Ranked
+ * mantinha uma cópia local da lista (fonte de divergência na 2.0).
+ */
+export const RANK_ORDER: RankId[] = RANKS.map((r) => r.id);
+
+/** Compara ranks pela ordem da liga (maior = mais forte). */
+export function rankOrderOf(id: RankId): number {
+  return RANK_BY_ID[id]?.order ?? -1;
+}
+
 /** Rank padrão para um rating — ignora transições dinâmicas (usa só o piso). */
 export function rankFor(rating: number): RankDef {
   let best = RANKS[0];

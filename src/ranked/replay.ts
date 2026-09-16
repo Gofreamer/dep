@@ -18,6 +18,8 @@ import { aiNextCommand, aiSmartChoice } from '../engine/ai/ai';
 import type { AiProfile } from '../engine/ai/profile';
 import type { CardDef, Command, PlayerId } from '../engine/types';
 import { registry } from '../engine/registry';
+import { DEFAULT_CONFIG } from '../engine/types';
+import { validateDeck } from '../data/deckUtils';
 
 export interface ReplayOutcome {
   winner: PlayerId;
@@ -143,10 +145,16 @@ export function replayMatch(input: ReplayInput): ReplayOutcome {
   return { winner, endReason: engine.state.endReason ?? '', turns: engine.state.turn, commandsReplayed: replayed };
 }
 
-/** Valida um baralho submetido (ids conhecidos, 60 cartas, regras de deck). */
+/**
+ * Valida um baralho submetido à Liga. NÃO é só "60 ids conhecidos": o servidor
+ * aplica as MESMAS regras do construtor (`DEFAULT_CONFIG.deckRules`) — cópias
+ * por carta, soma de variantes por identidade, únicas e "≥1 agente Base".
+ * Sem isso, 60× uma carta forte passava e virava resultado ranqueado válido.
+ */
 export function validateSubmittedDeck(cardIds: string[]): { ok: true; deck: CardDef[] } | { ok: false; error: string } {
   if (cardIds.length !== 60) return { ok: false, error: `baralho deve ter 60 cartas (recebido ${cardIds.length})` };
   const deck: CardDef[] = [];
+  const counts: Record<string, number> = {};
   for (const id of cardIds) {
     const def = registry.tryCard(id);
     if (!def) return { ok: false, error: `carta desconhecida: ${id}` };
@@ -154,6 +162,9 @@ export function validateSubmittedDeck(cardIds: string[]): { ok: true; deck: Card
       return { ok: false, error: `carta fora do catálogo JET: ${id}` };
     }
     deck.push(def);
+    counts[id] = (counts[id] ?? 0) + 1;
   }
+  const check = validateDeck(counts, DEFAULT_CONFIG.deckRules, { requireBasic: true });
+  if (!check.valid) return { ok: false, error: `baralho inválido: ${check.errors[0]}` };
   return { ok: true, deck };
 }

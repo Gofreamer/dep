@@ -4,7 +4,7 @@ import { rankFor, transition, RANK_BY_ID } from '../src/ranked/ranks';
 import { applyRankedResult, leaderboard } from '../src/ranked/ladder';
 import { MemoryRankedRepo } from '../src/ranked/repo';
 import { BOT_ROSTER, botById, profileForDifficulty } from '../src/ranked/bots';
-import { findOpponent, seedBots } from '../src/ranked/matchmaking';
+import { findOpponentFromRoster, pickOpponent, seedBots } from '../src/ranked/matchmaking';
 import { currentSeason, seasonAcceptsMatch, SEASON_1 } from '../src/ranked/seasons';
 
 describe('rating (Elo)', () => {
@@ -67,7 +67,7 @@ describe('bots', () => {
   });
 
   it('matchmaking escolhe bot próximo (nunca contra-pick: arquétipo fixo)', () => {
-    const c = findOpponent(2400, 'human');
+    const c = findOpponentFromRoster(2400, { rng: () => 0 });
     expect(c.bot.archetypeId).toBeTruthy();
     // bot mais próximo de 2400 = Luna underdog (2390, distância 10).
     expect(c.bot.name).toBe('Luna underdog');
